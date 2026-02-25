@@ -7,6 +7,8 @@ export const metadata = {
     description: 'SNS Agent24 - 最新のトレンドリサーチから投稿作成まで全自動。',
 }
 
+export const maxDuration = 60; // タイムアウトを最大60秒に延長
+
 export default function RootLayout({ children }) {
     return (
         <ClerkProvider localization={jaJP}>
