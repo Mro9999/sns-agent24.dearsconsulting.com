@@ -7,7 +7,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
 
 // モデル名
 const TEXT_MODEL = 'gemini-2.5-pro'; // Gemini 2.5 Pro (テキスト用最新)
-const IMAGE_MODEL = 'gemini-3.1-pro'; // Gemini 3.1 Pro (画像用最新)
+const IMAGE_MODEL = 'imagen-3.0-generate-001'; // Gemini 3 Pro Image (画像生成用最新モデル)
 
 /**
  * トレンドリサーチ
