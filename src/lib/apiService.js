@@ -104,21 +104,55 @@ ${siteContent ? `- サイト情報: ${siteContent.substring(0, 1000)}` : ''}
  */
 export async function generateImage(category, targetLabel, gender, imageContext, textContext, platformId, visualDescription, count = 1) {
     try {
-        console.log("Using Unsplash fallback for image generation.");
-        // カテゴリやターゲットから検索用のキーワードを抽出
-        let searchKeyword = 'business';
-        if (category?.label) searchKeyword = category.label;
-        if (imageContext && imageContext.length > 5 && imageContext.length < 50) {
-            searchKeyword = imageContext.replace(/[^a-zA-Z0-9 ]/g, "").trim();
+        const basePrompt = `High quality, commercial photography, engaging social media post for ${platformId}, targeting ${targetLabel} ${gender}. Category: ${category?.label || category}. ${imageContext}`;
+        const finalPrompt = visualDescription
+            ? `${basePrompt}, incorporating product style: ${visualDescription}`
+            : basePrompt;
+
+        // Gemini 4 ImagenのURL (v1beta) - APIキーを埋め込み
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                instances: [
+                    { prompt: finalPrompt }
+                ],
+                parameters: {
+                    sampleCount: count,
+                    outputOptions: {
+                        mimeType: 'image/jpeg'
+                    }
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Gemini Image 4 API Error: ${errText}`);
         }
 
-        const fallbackId = Math.floor(Math.random() * 1000);
-        const imageUrls = Array(count).fill(`https://source.unsplash.com/800x800/?${encodeURIComponent(searchKeyword)}&sig=${fallbackId}`);
+        const data = await response.json();
 
-        return count === 1 ? [imageUrls[0]] : imageUrls;
+        // Base64エンコードされた画像の配列を取得してData URIに変換
+        if (data && data.predictions && data.predictions.length > 0) {
+            const imageUrls = data.predictions.map(pred =>
+                `data:image/jpeg;base64,${pred.bytesBase64Encoded}`
+            );
+            return count === 1 ? [imageUrls[0]] : imageUrls;
+        } else {
+            throw new Error("No image data returned from API.");
+        }
     } catch (error) {
         console.error("generateImage error:", error);
-        return count === 1 ? [`https://source.unsplash.com/random/800x800/?business`] : Array(count).fill(`https://source.unsplash.com/random/800x800/?business`);
+        // フォールバック
+        let searchKeyword = 'business';
+        if (category?.label) searchKeyword = category.label;
+        const fallback = Array(count).fill(`https://source.unsplash.com/random/800x800/?${encodeURIComponent(searchKeyword)}`);
+        return count === 1 ? fallback : fallback;
     }
 }
 

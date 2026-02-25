@@ -342,7 +342,7 @@ export default function Home() {
 
                         <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 mb-8">
                             <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-orange-400">
-                                🎨 AI生成画像 (Gemini 3.1 Pro)
+                                🎨 AI生成画像 (Gemini 4 Imagen)
                             </h3>
                             <p className="text-xs text-gray-500 mb-4">{result.post.image_idea}</p>
 
