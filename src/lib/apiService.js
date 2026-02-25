@@ -104,10 +104,11 @@ ${siteContent ? `- サイト情報: ${siteContent.substring(0, 1000)}` : ''}
  */
 export async function generateImage(category, targetLabel, gender, imageContext, textContext, platformId, visualDescription, count = 1) {
     try {
-        const basePrompt = `High quality, commercial photography, engaging social media post for ${platformId}, targeting ${targetLabel} ${gender}. Category: ${category?.label || category}. ${imageContext}`;
+        // "Japanese" (日本人) を被写体として強力に指定
+        const basePrompt = `High quality, commercial photography, engaging social media post for ${platformId}, featuring Japanese ${targetLabel} ${gender}. Category: ${category?.label || category}. ${imageContext}`;
         const finalPrompt = visualDescription
-            ? `${basePrompt}, incorporating product style: ${visualDescription}`
-            : basePrompt;
+            ? `${basePrompt}, incorporating product style: ${visualDescription}, specifically featuring Japanese/Asian models.`
+            : `${basePrompt}, specifically featuring Japanese/Asian models.`;
 
         // Gemini 4 ImagenのURL (v1beta) - APIキーを埋め込み
         const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`;
