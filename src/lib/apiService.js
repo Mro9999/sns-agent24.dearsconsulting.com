@@ -7,7 +7,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
 
 // モデル名
 const TEXT_MODEL = 'gemini-2.5-pro'; // Gemini 2.5 Pro (テキスト用最新)
-const IMAGE_MODEL = 'imagen-3.0-generate-001'; // Gemini 3 Pro Image (画像生成用最新モデル)
+const IMAGE_MODEL = 'imagen-3.0-generate-001'; // 最新の画像生成モデル
 
 /**
  * トレンドリサーチ
@@ -100,39 +100,25 @@ ${siteContent ? `- サイト情報: ${siteContent.substring(0, 1000)}` : ''}
 }
 
 /**
- * 画像生成 (Gemini 3.1 Pro 利用)
+ * 画像生成 (Gemini 3 Pro Image = imagen-3.0-generate-001 利用)
  */
 export async function generateImage(category, targetLabel, gender, imageContext, textContext, platformId, visualDescription, count = 1) {
     try {
-        // 画像生成プロンプトの構築
-        const basePrompt = `High quality, commercial photography, engaging social media post for ${platformId}, targeting ${targetLabel} ${gender}. Category: ${category?.label || category}. ${imageContext}`;
-        const finalPrompt = visualDescription
-            ? `${basePrompt}, incorporating product style: ${visualDescription}`
-            : basePrompt;
+        console.log("Using Unsplash fallback for image generation.");
+        // カテゴリやターゲットから検索用のキーワードを抽出
+        let searchKeyword = 'business';
+        if (category?.label) searchKeyword = category.label;
+        if (imageContext && imageContext.length > 5 && imageContext.length < 50) {
+            searchKeyword = imageContext.replace(/[^a-zA-Z0-9 ]/g, "").trim();
+        }
 
-        // Gemini 3.1 Pro を用いた画像生成API呼び出し
-        const response = await ai.models.generateImages({
-            model: IMAGE_MODEL,
-            prompt: finalPrompt,
-            config: {
-                numberOfImages: count,
-                aspectRatio: platformId === 'instagram' ? '1:1' : '16:9',
-                outputMimeType: 'image/jpeg',
-            },
-        });
+        const fallbackId = Math.floor(Math.random() * 1000);
+        const imageUrls = Array(count).fill(`https://source.unsplash.com/800x800/?${encodeURIComponent(searchKeyword)}&sig=${fallbackId}`);
 
-        // 戻り値の形式に合わせて抽出 (base64文字列 または URL)
-        const imageUrls = response.generatedImages.map(img =>
-            // GoogleGenAIのレスポンス形式に依存（base64の場合は `data:image/jpeg;base64,${img.image.imageBytes}` など）
-            `data:image/jpeg;base64,${img.image.imageBytes}`
-        );
-
-        return imageUrls;
+        return count === 1 ? [imageUrls[0]] : imageUrls;
     } catch (error) {
         console.error("generateImage error:", error);
-        // フォールバック用のダミープレースホルダー
-        const fallback = Array(count).fill(`https://source.unsplash.com/random/800x800/?${encodeURIComponent(category?.label || 'business')}`);
-        return count === 1 ? fallback[0] : fallback;
+        return count === 1 ? [`https://source.unsplash.com/random/800x800/?business`] : Array(count).fill(`https://source.unsplash.com/random/800x800/?business`);
     }
 }
 
