@@ -18,8 +18,9 @@ export default function PricingSection({ onUpgrade, isPro }) {
                 "広告なし"
             ],
             buttonText: isPro ? "フリープラン" : "現在のプラン",
-            buttonStyle: "secondary",
-            disabled: true
+            buttonStyle: isPro ? "secondary" : "current",
+            disabled: true,
+            isCurrentPlan: !isPro
         },
         {
             name: "Pro Plan",
@@ -35,8 +36,9 @@ export default function PricingSection({ onUpgrade, isPro }) {
                 "商用利用完全OK"
             ],
             buttonText: isPro ? "ご契約内容の管理" : "Proにアップグレード",
-            buttonStyle: "primary",
-            action: () => onUpgrade(billingCycle)
+            buttonStyle: isPro ? "current" : "primary",
+            action: () => onUpgrade(billingCycle),
+            isCurrentPlan: isPro
         }
     ];
 
@@ -66,8 +68,9 @@ export default function PricingSection({ onUpgrade, isPro }) {
 
                 <div className={styles.grid}>
                     {plans.map((plan, index) => (
-                        <div key={index} className={`${styles.card} ${plan.name === 'Pro Plan' ? styles.proCard : ''}`}>
-                            {plan.badge && <div className={styles.badge}>{plan.badge}</div>}
+                        <div key={index} className={`${styles.card} ${plan.name === 'Pro Plan' ? styles.proCard : ''} ${plan.isCurrentPlan ? styles.currentPlanCard : ''}`}>
+                            {plan.isCurrentPlan && <div className={styles.currentBadge}>現在のプラン</div>}
+                            {!plan.isCurrentPlan && plan.badge && <div className={styles.badge}>{plan.badge}</div>}
                             <h3 className={styles.planName}>{plan.name}</h3>
                             <div className={styles.priceContainer}>
                                 <span className={styles.price}>{plan.price}</span>
