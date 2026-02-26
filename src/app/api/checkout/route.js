@@ -40,6 +40,11 @@ export async function POST(req) {
             metadata: {
                 userId: userId,
             },
+            subscription_data: {
+                metadata: {
+                    userId: userId,
+                },
+            },
         });
 
         return NextResponse.json({ url: session.url });

@@ -39,21 +39,15 @@ export async function POST(req) {
                     subscription.current_period_end * 1000
                 ),
             },
+            publicMetadata: {
+                role: 'pro'
+            }
         });
     }
 
     if (event.type === "customer.subscription.deleted") {
-        // Find user by stripeSubscriptionId or customerId
-        // We know subscription ID from event
-        const subscriptionId = session.id;
-
-        // Clerk API doesn't support search by metadata easily efficiently without listing?
-        // But we added userId to metadata in checkout!
-        // Wait, 'customer.subscription.deleted' event object is Subscription, not Session.
-        // Subscription metadata might have userId if we added it?
-        // We added metadata to subscription_data in checkout!
-
-        const userId = session.metadata.userId;
+        const subscription = event.data.object;
+        const userId = subscription.metadata?.userId;
 
         if (userId) {
             await clerkClient.users.updateUserMetadata(userId, {
@@ -62,6 +56,9 @@ export async function POST(req) {
                     stripePriceId: null,
                     stripeCurrentPeriodEnd: null,
                 },
+                publicMetadata: {
+                    role: null
+                }
             });
         }
     }
