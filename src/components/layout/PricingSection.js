@@ -31,6 +31,7 @@ export default function PricingSection({ onUpgrade, isPro }) {
             features: [
                 "無制限に生成可能",
                 "「富裕層向け」など高度なリサーチ",
+                "多言語対応（英語・中国語・韓国語）",
                 "優先サポート",
                 "新機能への早期アクセス",
                 "商用利用完全OK"
