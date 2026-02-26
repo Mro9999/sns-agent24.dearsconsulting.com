@@ -60,6 +60,29 @@ export default function Home() {
     const [checkoutError, setCheckoutError] = useState(null);
     const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
+    // 回数制限のチェック関数 (localStorageベース)
+    const checkLimitAndRecord = () => {
+        if (isPro) return true; // Proプランは無制限
+
+        const today = new Date().toLocaleDateString('ja-JP');
+        const usageDataStr = localStorage.getItem('snsAgent24_usage');
+        let usageData = usageDataStr ? JSON.parse(usageDataStr) : { date: today, count: 0 };
+
+        // 日付が変わっていればリセット
+        if (usageData.date !== today) {
+            usageData = { date: today, count: 0 };
+        }
+
+        if (usageData.count >= 1) {
+            return false; // 制限オーバー
+        }
+
+        // カウントアップして保存
+        usageData.count += 1;
+        localStorage.setItem('snsAgent24_usage', JSON.stringify(usageData));
+        return true;
+    };
+
     const handleCheckout = async (interval = 'month') => {
         try {
             if (!isSignedIn) {
@@ -122,6 +145,14 @@ export default function Home() {
             alert("すべての項目を選択してください");
             return;
         }
+
+        // 無料プランの回数制限チェック
+        if (!checkLimitAndRecord()) {
+            alert("本日の無料生成枠（1回）を使い切りました。\\n引き続き無制限でご利用いただくには、Proプランへのアップグレードをご検討ください！");
+            document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
+
         setLoading(true);
         try {
             let siteContent = null;
@@ -213,7 +244,7 @@ export default function Home() {
                                 <div className="bg-purple-900/40 border border-purple-500/50 rounded-xl p-5 mb-8 w-full text-center">
                                     <h3 className="text-lg font-bold text-white mb-2">🎉 まずは無料でスタート！</h3>
                                     <p className="text-gray-300 text-sm mb-4">
-                                        無料プランを利用するには、メールアドレスによるアカウント登録が必要です。（1日3回まで利用可能）
+                                        無料プランを利用するには、メールアドレスによるアカウント登録が必要です。（1日1回まで無料で利用可能）
                                     </p>
                                     <button
                                         onClick={() => openSignIn()}
