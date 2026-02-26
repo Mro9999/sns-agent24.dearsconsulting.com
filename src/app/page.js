@@ -172,7 +172,7 @@ export default function Home() {
                 siteContent = await scrapeWebsite(cleanProductContext.websiteUrl);
             }
 
-            const targetLabel = selectedTarget === 'teens' ? '10代' : selectedTarget === 'young_adults' ? '20-30代' : selectedTarget === 'parents' ? 'パパママ' : 'ビジネス層';
+            const targetLabel = selectedTarget === 'teens' ? '10代' : selectedTarget === 'young_adults' ? '20-30代' : selectedTarget === 'parents' ? 'パパママ' : selectedTarget === 'high_end' ? '富裕層・ハイエンド' : 'ビジネス層';
 
             // 1. リサーチ
             const research = await researchTrends(selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedPlatform, cleanProductContext?.location, siteContent);
@@ -363,7 +363,7 @@ export default function Home() {
 
                                 {selectedCategory && (
                                     <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-500">
-                                        <TargetSelector selected={selectedTarget} onSelect={setSelectedTarget} />
+                                        <TargetSelector selected={selectedTarget} onSelect={setSelectedTarget} isPro={isPro} />
 
                                         {selectedTarget && (
                                             <>

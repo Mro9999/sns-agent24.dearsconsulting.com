@@ -29,26 +29,34 @@ export function CategorySelector({ selected, onSelect }) {
     );
 }
 
-export function TargetSelector({ selected, onSelect }) {
+export function TargetSelector({ selected, onSelect, isPro }) {
     const targets = [
         { id: 'teens', label: '10代 (中高生)' },
         { id: 'young_adults', label: '20代〜30代' },
         { id: 'parents', label: 'ママ・パパ層' },
-        { id: 'business', label: 'ビジネス層' }
+        { id: 'business', label: 'ビジネス層' },
+        { id: 'high_end', label: '富裕層 (Pro限定)', isProOnly: true }
     ];
     return (
         <div className="w-full max-w-2xl mb-8">
             <h3 className="text-xl font-bold mb-4 text-center">メインターゲット層</h3>
             <div className="flex flex-wrap justify-center gap-3">
-                {targets.map(t => (
-                    <button
-                        key={t.id}
-                        onClick={() => onSelect(t.id)}
-                        className={`py-2 px-6 rounded-full text-sm font-bold transition-all border ${selected === t.id ? 'bg-blue-600/30 border-blue-500 text-white' : 'bg-transparent border-gray-600 text-gray-400 hover:border-gray-400 hover:text-white'}`}
-                    >
-                        {t.label}
-                    </button>
-                ))}
+                {targets.map(t => {
+                    const isDisabled = t.isProOnly && !isPro;
+                    return (
+                        <button
+                            key={t.id}
+                            disabled={isDisabled}
+                            onClick={() => onSelect(t.id)}
+                            className={`py-2 px-6 rounded-full text-sm font-bold transition-all border 
+                                ${isDisabled ? 'bg-black/40 border-gray-700 text-gray-600 cursor-not-allowed' :
+                                    selected === t.id ? 'bg-blue-600/30 border-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]' :
+                                        'bg-transparent border-gray-600 text-gray-400 hover:border-gray-400 hover:text-white'}`}
+                        >
+                            {t.label}
+                        </button>
+                    )
+                })}
             </div>
         </div>
     );
