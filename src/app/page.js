@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft } from 'lucide-react';
+import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit } from 'lucide-react';
 import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, ProductInput } from '@/components/features/Selectors';
@@ -423,32 +423,32 @@ export default function Home() {
 
                         <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 mb-6">
                             <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-blue-400">
-                                💡 3D AIトレンドリサーチ
+                                <BrainCircuit size={20} /> 3D AIトレンドリサーチ
                             </h3>
 
                             <div className="space-y-4">
                                 <div className="bg-white/5 p-4 rounded-xl border border-white/5">
                                     <h4 className="text-sm font-bold text-gray-200 mb-2 flex items-center gap-2">
-                                        <span className="text-lg">🌍</span> ① 世の中の大きなトレンド
+                                        <Globe size={16} className="text-gray-400" /> ① 世の中の大きなトレンド
                                     </h4>
                                     <p className="text-gray-400 text-sm leading-relaxed">{result.research.insight_macro}</p>
                                 </div>
                                 <div className="bg-white/5 p-4 rounded-xl border border-white/5">
                                     <h4 className="text-sm font-bold text-gray-200 mb-2 flex items-center gap-2">
-                                        <span className="text-lg">🏢</span> ② 業界内でのトレンド
+                                        <Building size={16} className="text-gray-400" /> ② 業界内でのトレンド
                                     </h4>
                                     <p className="text-gray-400 text-sm leading-relaxed">{result.research.insight_industry}</p>
                                 </div>
                                 <div className="bg-white/5 p-4 rounded-xl border border-white/5">
                                     <h4 className="text-sm font-bold text-gray-200 mb-2 flex items-center gap-2">
-                                        <span className="text-lg">🎯</span> ③ ターゲット層のトレンド
+                                        <Target size={16} className="text-gray-400" /> ③ ターゲット層のトレンド
                                     </h4>
                                     <p className="text-gray-400 text-sm leading-relaxed">{result.research.insight_target}</p>
                                 </div>
 
                                 <div className="mt-6 bg-blue-900/20 p-5 rounded-xl border border-blue-500/30">
                                     <h4 className="text-sm font-bold text-blue-300 mb-2 flex items-center gap-2">
-                                        <span className="text-lg">🧠</span> 統合インサイト（今回のアプローチ方針）
+                                        <Lightbulb size={16} className="text-blue-400" /> 統合インサイト（今回のアプローチ方針）
                                     </h4>
                                     <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
                                         {result.research.insight_summary}
@@ -459,7 +459,7 @@ export default function Home() {
 
                         <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 mb-6">
                             <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-green-400">
-                                📝 生成されたキャプション
+                                <PenTool size={20} /> 生成されたキャプション
                             </h3>
                             <div className="bg-white/5 border border-white/5 p-4 rounded-xl mb-4 text-sm leading-relaxed whitespace-pre-wrap">
                                 {result.post.caption}
@@ -481,7 +481,7 @@ export default function Home() {
 
                         <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 mb-8">
                             <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-orange-400">
-                                🎨 AI生成画像 (Gemini 4 Imagen)
+                                <ImageIcon size={20} /> AI生成画像 (Gemini 4 Imagen)
                             </h3>
                             <p className="text-xs text-gray-500 mb-4">{result.post.image_idea}</p>
 
