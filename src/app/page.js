@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft } from 'lucide-react';
 import { UserButton, useUser, useClerk } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
@@ -19,6 +19,41 @@ export default function Home() {
     const [selectedBusinessStyle, setSelectedBusinessStyle] = useState(null);
     const [selectedTone, setSelectedTone] = useState(null);
     const [productContext, setProductContext] = useState({});
+
+    const [isStateLoaded, setIsStateLoaded] = useState(false);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('snsAgent24_formState');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (parsed.selectedPlatform) setSelectedPlatform(parsed.selectedPlatform);
+                if (parsed.selectedCategory) setSelectedCategory(parsed.selectedCategory);
+                if (parsed.selectedTarget) setSelectedTarget(parsed.selectedTarget);
+                if (parsed.selectedGender) setSelectedGender(parsed.selectedGender);
+                if (parsed.selectedBusinessStyle) setSelectedBusinessStyle(parsed.selectedBusinessStyle);
+                if (parsed.selectedTone) setSelectedTone(parsed.selectedTone);
+                if (parsed.productContext) setProductContext(parsed.productContext);
+            } catch (e) {
+                console.error("Failed to parse form state", e);
+            }
+        }
+        setIsStateLoaded(true);
+    }, []);
+
+    useEffect(() => {
+        if (isStateLoaded) {
+            localStorage.setItem('snsAgent24_formState', JSON.stringify({
+                selectedPlatform,
+                selectedCategory,
+                selectedTarget,
+                selectedGender,
+                selectedBusinessStyle,
+                selectedTone,
+                productContext
+            }));
+        }
+    }, [selectedPlatform, selectedCategory, selectedTarget, selectedGender, selectedBusinessStyle, selectedTone, productContext, isStateLoaded]);
 
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
