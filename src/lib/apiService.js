@@ -80,8 +80,10 @@ export async function generatePost(research, platformId, category, targetLabel, 
 - ② 業界のトレンド: ${research.insight_industry}
 - ③ ターゲット層のトレンド: ${research.insight_target}
 - 総合アプローチ方針: ${research.insight_summary}
+- 自社・ブランド名: ${textContext?.companyName || '特になし'}
 - 訴求ポイント: ${textContext?.sellingPoint || '特になし'}
 ${siteContent ? `- サイト情報: ${siteContent.substring(0, 1000)}` : ''}
+${textContext?.companyName ? `\n※重要: キャプション文中に、不自然にならないように「${textContext.companyName}」という名前を適度に織り込んでください。` : ''}
 
 # 出力形式 (JSONのみ)
 {

@@ -139,6 +139,18 @@ export function ProductInput({ value = {}, onChange }) {
 
             <div className="space-y-4">
                 <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">自社・店舗名（ブランド名）</label>
+                    <input
+                        type="text"
+                        name="companyName"
+                        value={value.companyName || ''}
+                        onChange={handleChange}
+                        className="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                        placeholder="例：SNS Agent24"
+                    />
+                </div>
+
+                <div>
                     <label className="block text-sm font-medium text-gray-400 mb-1">訴求したいポイントや特徴</label>
                     <textarea
                         name="sellingPoint"
