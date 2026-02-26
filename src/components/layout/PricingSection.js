@@ -17,7 +17,7 @@ export default function PricingSection({ onUpgrade, isPro }) {
                 "Instagram / X / Facebook 対応",
                 "広告なし"
             ],
-            buttonText: isPro ? "Current Plan" : "現在のプラン",
+            buttonText: isPro ? "フリープラン" : "現在のプラン",
             buttonStyle: "secondary",
             disabled: true
         },
@@ -34,7 +34,7 @@ export default function PricingSection({ onUpgrade, isPro }) {
                 "新機能への早期アクセス",
                 "商用利用完全OK"
             ],
-            buttonText: isPro ? "契約中 (Manage)" : "Proにアップグレード",
+            buttonText: isPro ? "ご契約内容の管理" : "Proにアップグレード",
             buttonStyle: "primary",
             action: () => onUpgrade(billingCycle)
         }
