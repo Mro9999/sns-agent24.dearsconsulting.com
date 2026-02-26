@@ -159,22 +159,26 @@ export default function Home() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         try {
+            // APIに巨大な画像データ(Base64)が含まれたまま送るとVercelの制限(Server Action)でエラーになる原因を防ぐため、裏側へ送信するデータからはlogoUrlを除外する
+            const cleanProductContext = { ...productContext };
+            delete cleanProductContext.logoUrl;
+
             let siteContent = null;
-            if (productContext?.websiteUrl) {
-                siteContent = await scrapeWebsite(productContext.websiteUrl);
+            if (cleanProductContext?.websiteUrl) {
+                siteContent = await scrapeWebsite(cleanProductContext.websiteUrl);
             }
 
             const targetLabel = selectedTarget === 'teens' ? '10代' : selectedTarget === 'young_adults' ? '20-30代' : selectedTarget === 'parents' ? 'パパママ' : 'ビジネス層';
 
             // 1. リサーチ
-            const research = await researchTrends(selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedPlatform, productContext?.location, siteContent);
+            const research = await researchTrends(selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedPlatform, cleanProductContext?.location, siteContent);
 
             // 2. キャプション生成
-            const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, productContext, siteContent);
+            const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, cleanProductContext, siteContent);
 
             // 3. 画像生成 (Gemini 3.1 Pro利用)
             const imgContext = post.image_idea || research.insight_summary;
-            const imageUrls = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, productContext, selectedPlatform, null, 1);
+            const imageUrls = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, 1);
 
             setResult({ research, post, imageUrls });
             setStep(2);
