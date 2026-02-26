@@ -63,8 +63,19 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
 /**
  * 投稿内容生成
  */
-export async function generatePost(research, platformId, category, targetLabel, gender, businessStyle, tone, textContext, siteContent) {
+export async function generatePost(research, platformId, category, targetLabel, gender, businessStyle, tone, language, textContext, siteContent) {
     try {
+        let languageInstruction = "キャプション文章およびハッシュタグは【日本語】で作成してください。";
+        if (language === 'ja_en') {
+            languageInstruction = "【インバウンド対応】キャプション文章は【日本語】とネイティブな【英語】の両方を併記してください。ハッシュタグも日本語と英語を混ぜて生成してください。";
+        } else if (language === 'ja_zh') {
+            languageInstruction = "【インバウンド対応】キャプション文章は【日本語】と自然な【中国語(繁体字)】の両方を併記してください。ハッシュタグも日本語と中国語を混ぜて生成してください。";
+        } else if (language === 'ja_ko') {
+            languageInstruction = "【インバウンド対応】キャプション文章は【日本語】と自然な【韓国語】の両方を併記してください。ハッシュタグも日本語と韓国語を混ぜて生成してください。";
+        } else if (language === 'all') {
+            languageInstruction = "【インバウンド最強対応】キャプション文章は【日本語】【英語】【中国語(繁体字)】【韓国語】の4ヶ国語すべてを各段落に分けて併記してください。ハッシュタグも4言語のハイブリッドで幅広く生成してください。";
+        }
+
         const prompt = `
 あなたはプロのSNS運用代行者です。以下の「3方向のトレンドリサーチ結果」とコンテキストに基づいて、読者の心を動かす極めて質の高い投稿キャプションと画像の一貫したアイデアを生成してください。
 「AIが診断しました」「AIとしての提案です」などの言葉は絶対に使わず、ビジネスオーナーが直接顧客に語りかける自然な投稿文を作成してください。
@@ -74,6 +85,7 @@ export async function generatePost(research, platformId, category, targetLabel, 
 - 業種: ${category?.label}
 - ターゲット: ${targetLabel} (${gender})
 - トーン&マナー: ${tone?.label || tone}
+- 言語仕様: ${languageInstruction}
 
 # リサーチ結果・商材情報
 - ① 世の中のトレンド: ${research.insight_macro}

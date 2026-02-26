@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft } from 'lucide-react';
 import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
-import { CategorySelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, ProductInput } from '@/components/features/Selectors';
+import { CategorySelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
 
 export default function Home() {
@@ -22,6 +22,7 @@ export default function Home() {
     const [selectedGender, setSelectedGender] = useState(null);
     const [selectedBusinessStyle, setSelectedBusinessStyle] = useState(null);
     const [selectedTone, setSelectedTone] = useState(null);
+    const [selectedLanguage, setSelectedLanguage] = useState('ja'); // デフォルトは日本語
     const [productContext, setProductContext] = useState({});
 
     const [isStateLoaded, setIsStateLoaded] = useState(false);
@@ -37,6 +38,7 @@ export default function Home() {
                 if (parsed.selectedGender) setSelectedGender(parsed.selectedGender);
                 if (parsed.selectedBusinessStyle) setSelectedBusinessStyle(parsed.selectedBusinessStyle);
                 if (parsed.selectedTone) setSelectedTone(parsed.selectedTone);
+                if (parsed.selectedLanguage) setSelectedLanguage(parsed.selectedLanguage);
                 if (parsed.productContext) setProductContext(parsed.productContext);
             } catch (e) {
                 console.error("Failed to parse form state", e);
@@ -54,10 +56,11 @@ export default function Home() {
                 selectedGender,
                 selectedBusinessStyle,
                 selectedTone,
+                selectedLanguage,
                 productContext
             }));
         }
-    }, [selectedPlatform, selectedCategory, selectedTarget, selectedGender, selectedBusinessStyle, selectedTone, productContext, isStateLoaded]);
+    }, [selectedPlatform, selectedCategory, selectedTarget, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, productContext, isStateLoaded]);
 
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -177,8 +180,8 @@ export default function Home() {
             // 1. リサーチ
             const research = await researchTrends(selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedPlatform, cleanProductContext?.location, siteContent);
 
-            // 2. キャプション生成
-            const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, cleanProductContext, siteContent);
+            // 2. キャプション生成 (言語指定を追加)
+            const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, cleanProductContext, siteContent);
 
             // 3. 画像生成 (Gemini 3.1 Pro利用)
             const imgContext = post.image_idea || research.insight_summary;
@@ -379,6 +382,8 @@ export default function Home() {
 
                                                                 {selectedTone && (
                                                                     <>
+                                                                        <LanguageSelector selected={selectedLanguage} onSelect={setSelectedLanguage} isPro={isPro} />
+
                                                                         <ProductInput value={productContext} onChange={setProductContext} />
 
                                                                         <button

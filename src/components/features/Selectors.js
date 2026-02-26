@@ -136,6 +136,39 @@ export function ToneSelector({ selected, onSelect }) {
     );
 }
 
+export function LanguageSelector({ selected, onSelect, isPro }) {
+    const languages = [
+        { id: 'ja', label: '日本語のみ' },
+        { id: 'ja_en', label: '日本語 ＋ 英語 (Pro)', isProOnly: true },
+        { id: 'ja_zh', label: '日本語 ＋ 繁体字 (Pro)', isProOnly: true },
+        { id: 'ja_ko', label: '日本語 ＋ 韓国語 (Pro)', isProOnly: true },
+        { id: 'all', label: '4ヶ国語全て (Pro)', isProOnly: true }
+    ];
+    return (
+        <div className="w-full max-w-2xl mb-8">
+            <h3 className="text-xl font-bold mb-4 text-center">出力言語（インバウンド対応）</h3>
+            <div className="flex flex-wrap justify-center gap-2">
+                {languages.map(l => {
+                    const isDisabled = l.isProOnly && !isPro;
+                    return (
+                        <button
+                            key={l.id}
+                            disabled={isDisabled}
+                            onClick={() => onSelect(l.id)}
+                            className={`py-2 px-4 rounded-full font-bold transition-all text-sm border 
+                                ${isDisabled ? 'bg-black/40 border-gray-700 text-gray-600 cursor-not-allowed' :
+                                    selected === l.id ? 'bg-indigo-600/30 border-indigo-500 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)]' :
+                                        'bg-transparent border-gray-600 text-gray-400 hover:border-gray-400 hover:text-white'}`}
+                        >
+                            {l.label}
+                        </button>
+                    )
+                })}
+            </div>
+        </div>
+    );
+}
+
 export function ProductInput({ value = {}, onChange }) {
     const handleChange = (e) => {
         onChange({ ...value, [e.target.name]: e.target.value });
