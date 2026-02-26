@@ -26,9 +26,18 @@ export async function researchTrends(category, targetLabel, gender, businessStyl
 ${location ? `- 地域: ${location}` : ''}
 ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` : ''}
 
+# 分析要件
+以下の3方向から最新情報をリサーチし、キャプション案と生成画像に活かせる具体的な「統合インサイト」を導き出してください。
+1. 世の中の大きなトレンド（社会情勢、流行語、価値観の変化など）
+2. 業界内でのトレンド（競合の動き、最新のビジネスモデルや提供価値など）
+3. ターゲット層のトレンド（対象ユーザーが今一番関心を持っていること、行動・消費パターンなど）
+
 # 出力形式 (JSONのみ)
 {
-    "insight": "最新トレンドと見込み客の深い心理分析、効果的なアプローチ方法（300文字程度）",
+    "insight_macro": "①世の中の大きなトレンド (100文字程度)",
+    "insight_industry": "②業界内でのトレンド (100文字程度)",
+    "insight_target": "③ターゲット層のトレンド (100文字程度)",
+    "insight_summary": "これら3方向のトレンドを掛け合わせた、今回の投稿内容や画像生成に活かすべき見込み客の深い心理と具体的なアプローチ方針（200文字程度）",
     "logic": {
         "query": "リサーチで使用した想定検索キーワード",
         "model": "使用モデル名"
@@ -57,7 +66,7 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
 export async function generatePost(research, platformId, category, targetLabel, gender, businessStyle, tone, textContext, siteContent) {
     try {
         const prompt = `
-あなたはプロのSNS運用代行者です。以下のリサーチ結果とコンテキストに基づいて、投稿キャプションと画像の一貫したアイデアを生成してください。
+あなたはプロのSNS運用代行者です。以下の「3方向のトレンドリサーチ結果」とコンテキストに基づいて、読者の心を動かす極めて質の高い投稿キャプションと画像の一貫したアイデアを生成してください。
 「AIが診断しました」「AIとしての提案です」などの言葉は絶対に使わず、ビジネスオーナーが直接顧客に語りかける自然な投稿文を作成してください。
 
 # 前提
@@ -67,7 +76,10 @@ export async function generatePost(research, platformId, category, targetLabel, 
 - トーン&マナー: ${tone?.label || tone}
 
 # リサーチ結果・商材情報
-- トレンドインサイト: ${research.insight}
+- ① 世の中のトレンド: ${research.insight_macro}
+- ② 業界のトレンド: ${research.insight_industry}
+- ③ ターゲット層のトレンド: ${research.insight_target}
+- 総合アプローチ方針: ${research.insight_summary}
 - 訴求ポイント: ${textContext?.sellingPoint || '特になし'}
 ${siteContent ? `- サイト情報: ${siteContent.substring(0, 1000)}` : ''}
 

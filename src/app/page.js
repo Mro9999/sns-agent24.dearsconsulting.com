@@ -138,7 +138,7 @@ export default function Home() {
             const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, productContext, siteContent);
 
             // 3. 画像生成 (Gemini 3.1 Pro利用)
-            const imgContext = post.image_idea || research.insight;
+            const imgContext = post.image_idea || research.insight_summary;
             const imageUrls = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, productContext, selectedPlatform, null, 1);
 
             setResult({ research, post, imageUrls });
@@ -345,12 +345,39 @@ export default function Home() {
                         </h2>
 
                         <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 mb-6">
-                            <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-blue-400">
-                                💡 AIトレンドリサーチ
+                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-blue-400">
+                                💡 3D AIトレンドリサーチ
                             </h3>
-                            <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
-                                {result.research.insight}
-                            </p>
+
+                            <div className="space-y-4">
+                                <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                    <h4 className="text-sm font-bold text-gray-200 mb-2 flex items-center gap-2">
+                                        <span className="text-lg">🌍</span> ① 世の中の大きなトレンド
+                                    </h4>
+                                    <p className="text-gray-400 text-sm leading-relaxed">{result.research.insight_macro}</p>
+                                </div>
+                                <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                    <h4 className="text-sm font-bold text-gray-200 mb-2 flex items-center gap-2">
+                                        <span className="text-lg">🏢</span> ② 業界内でのトレンド
+                                    </h4>
+                                    <p className="text-gray-400 text-sm leading-relaxed">{result.research.insight_industry}</p>
+                                </div>
+                                <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                    <h4 className="text-sm font-bold text-gray-200 mb-2 flex items-center gap-2">
+                                        <span className="text-lg">🎯</span> ③ ターゲット層のトレンド
+                                    </h4>
+                                    <p className="text-gray-400 text-sm leading-relaxed">{result.research.insight_target}</p>
+                                </div>
+
+                                <div className="mt-6 bg-blue-900/20 p-5 rounded-xl border border-blue-500/30">
+                                    <h4 className="text-sm font-bold text-blue-300 mb-2 flex items-center gap-2">
+                                        <span className="text-lg">🧠</span> 統合インサイト（今回のアプローチ方針）
+                                    </h4>
+                                    <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+                                        {result.research.insight_summary}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 mb-6">
