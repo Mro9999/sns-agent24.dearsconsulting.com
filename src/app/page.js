@@ -383,7 +383,14 @@ export default function Home() {
 
                             <div className="w-full aspect-square bg-[#1a1a1a] rounded-xl overflow-hidden mb-4 relative">
                                 {result.imageUrls && result.imageUrls[0] ? (
-                                    <img src={result.imageUrls[0]} alt="Generated" className="w-full h-full object-cover" />
+                                    <>
+                                        <img src={result.imageUrls[0]} alt="Generated" className="w-full h-full object-cover" />
+                                        {productContext?.logoUrl && (
+                                            <div className="absolute bottom-4 right-4 max-w-[25%] max-h-[25%] opacity-90 drop-shadow-lg pointer-events-none">
+                                                <img src={productContext.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                                            </div>
+                                        )}
+                                    </>
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm">画像生成に失敗しました（または制限）</div>
                                 )}
@@ -391,11 +398,53 @@ export default function Home() {
 
                             {result.imageUrls && result.imageUrls[0] && !result.imageUrls[0].startsWith('http') && (
                                 <button
-                                    onClick={() => {
-                                        const a = document.createElement('a');
-                                        a.href = result.imageUrls[0];
-                                        a.download = `sns-image-${Date.now()}.jpg`;
-                                        a.click();
+                                    onClick={async (e) => {
+                                        if (productContext?.logoUrl) {
+                                            const btn = e.currentTarget;
+                                            const prevText = btn.innerHTML;
+                                            btn.innerHTML = '<span class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4 mr-2"></span>合成中...';
+                                            try {
+                                                const canvas = document.createElement('canvas');
+                                                const ctx = canvas.getContext('2d');
+                                                const mainImg = new Image();
+                                                mainImg.crossOrigin = 'anonymous';
+                                                await new Promise((res, rej) => { mainImg.onload = res; mainImg.onerror = rej; mainImg.src = result.imageUrls[0]; });
+
+                                                canvas.width = mainImg.width;
+                                                canvas.height = mainImg.height;
+                                                ctx.drawImage(mainImg, 0, 0);
+
+                                                const logoImg = new Image();
+                                                await new Promise((res, rej) => { logoImg.onload = res; logoImg.onerror = rej; logoImg.src = productContext.logoUrl; });
+
+                                                const maxLogoW = canvas.width * 0.25;
+                                                const maxLogoH = canvas.height * 0.25;
+                                                const scale = Math.min(maxLogoW / logoImg.width, maxLogoH / logoImg.height);
+                                                const w = logoImg.width * scale;
+                                                const h = logoImg.height * scale;
+                                                const padding = canvas.width * 0.04;
+
+                                                ctx.globalAlpha = 0.9;
+                                                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                                                ctx.shadowBlur = 10;
+                                                ctx.drawImage(logoImg, canvas.width - w - padding, canvas.height - h - padding, w, h);
+
+                                                const a = document.createElement('a');
+                                                a.href = canvas.toDataURL('image/jpeg', 0.95);
+                                                a.download = `sns-image-with-logo-${Date.now()}.jpg`;
+                                                a.click();
+                                            } catch (err) {
+                                                console.error(err);
+                                                alert("ロゴ画像の合成に失敗しました");
+                                            } finally {
+                                                btn.innerHTML = prevText;
+                                            }
+                                        } else {
+                                            const a = document.createElement('a');
+                                            a.href = result.imageUrls[0];
+                                            a.download = `sns-image-${Date.now()}.jpg`;
+                                            a.click();
+                                        }
                                     }}
                                     className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 rounded-lg text-sm font-bold flex flex-row items-center justify-center gap-2 transition-all shadow-lg"
                                 >

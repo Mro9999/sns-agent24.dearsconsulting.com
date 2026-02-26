@@ -163,7 +163,7 @@ export function ProductInput({ value = {}, onChange }) {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-1">参考Webサイト URL</label>
+                        <label className="block text-sm font-medium text-gray-400 mb-1">自社・店舗URL、または参考サイトURL</label>
                         <input
                             type="url"
                             name="websiteUrl"
@@ -173,6 +173,43 @@ export function ProductInput({ value = {}, onChange }) {
                             placeholder="https://..."
                         />
                     </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-1">ブランドロゴ・透かし画像 (任意)</label>
+                    <div className="flex items-center gap-4">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                    if (file.size > 2 * 1024 * 1024) {
+                                        alert("ロゴ画像は2MB以下にしてください");
+                                        return;
+                                    }
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                        onChange({ ...value, logoUrl: reader.result });
+                                    };
+                                    reader.readAsDataURL(file);
+                                }
+                            }}
+                            className="flex-1 bg-black/50 border border-gray-700 rounded-lg p-2 text-white text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500 transition-colors"
+                        />
+                        {value.logoUrl && (
+                            <div className="h-12 w-12 shrink-0 rounded overflow-hidden border border-gray-600 relative group bg-white/10">
+                                <img src={value.logoUrl} alt="Logo" className="h-full w-full object-contain" />
+                                <button
+                                    onClick={() => onChange({ ...value, logoUrl: null })}
+                                    className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px]"
+                                >
+                                    削除
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">※登録すると生成された画像の右下に自動で合成されます（2MB以下）</p>
                 </div>
             </div>
         </div>
