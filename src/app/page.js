@@ -1,15 +1,19 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft } from 'lucide-react';
-import { UserButton, useUser, useClerk } from "@clerk/nextjs";
+import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
 
 export default function Home() {
     const { user, isLoaded, isSignedIn } = useUser();
+    const { session } = useSession();
     const { openSignIn } = useClerk();
-    const isPro = user?.publicMetadata?.role === 'pro';
+
+    // JWTトークン内のメタデータ（ユーザー自身またはカスタムクレーム）を確実に取得
+    const sessionRole = session?.user?.publicMetadata?.role || null;
+    const isPro = sessionRole === 'pro' || user?.publicMetadata?.role === 'pro';
 
     const [step, setStep] = useState(0); // 0: Platform, 1: Process, 2: Result
     const [selectedPlatform, setSelectedPlatform] = useState(null);
