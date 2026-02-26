@@ -154,6 +154,10 @@ export default function Home() {
         }
 
         setLoading(true);
+
+        // ユーザーが生成中画面(ローディング)に気づけるように一番上へ一時的にスクロールする
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
         try {
             let siteContent = null;
             if (productContext?.websiteUrl) {
