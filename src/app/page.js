@@ -281,53 +281,82 @@ export default function Home() {
                 {step === 1 && (
                     <div className="w-full max-w-2xl px-4 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="w-full flex items-center mb-8">
-                            <button onClick={() => setStep(0)} className="text-gray-400 hover:text-white flex items-center gap-1">
+                            <button onClick={() => setStep(0)} disabled={loading} className={`text-gray-400 hover:text-white flex items-center gap-1 transition-opacity ${loading ? 'opacity-0 cursor-default' : 'opacity-100'}`}>
                                 <ChevronLeft size={20} /> <span className="text-sm">戻る</span>
                             </button>
                         </div>
 
-                        <CategorySelector selected={{ id: selectedCategory }} onSelect={(c) => setSelectedCategory(c.id)} />
+                        {loading ? (
+                            <div className="w-full flex flex-col items-center justify-center py-10 animate-in fade-in zoom-in duration-500">
+                                <div className="relative w-40 h-40 mb-10 flex items-center justify-center">
+                                    <div className="absolute inset-0 rounded-full border border-purple-500/30 animate-[spin_4s_linear_infinite]">
+                                        <div className="absolute top-0 left-1/2 w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#a855f7]"></div>
+                                    </div>
+                                    <div className="absolute inset-2 rounded-full border border-cyan-500/30 animate-[spin_3s_linear_infinite_reverse]">
+                                        <div className="absolute bottom-0 left-1/2 w-2 h-2 bg-cyan-500 rounded-full shadow-[0_0_10px_#06b6d4]"></div>
+                                    </div>
+                                    <div className="absolute inset-6 rounded-full border border-pink-500/30 animate-ping shadow-[0_0_20px_rgba(236,72,153,0.4)]"></div>
+                                    <div className="absolute inset-10 bg-gradient-to-tr from-purple-600 to-cyan-500 rounded-full animate-pulse shadow-[0_0_40px_rgba(168,85,247,0.6)] flex items-center justify-center">
+                                        <Sparkles className="text-white w-8 h-8" />
+                                    </div>
+                                </div>
 
-                        {selectedCategory && (
-                            <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-500">
-                                <TargetSelector selected={selectedTarget} onSelect={setSelectedTarget} />
+                                <h3 className="text-2xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-cyan-400 to-pink-400 mb-8 animate-pulse">
+                                    AI PROCESSING...
+                                </h3>
 
-                                {selectedTarget && (
-                                    <>
-                                        <GenderSelector selected={selectedGender} onSelect={setSelectedGender} />
+                                <div className="flex flex-col items-start space-y-4 font-medium text-sm text-gray-300">
+                                    <p className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span> 3方向から最新のトレンドをリサーチ中...</p>
+                                    <p className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" style={{ animationDelay: '0.4s' }}></span> ターゲット心理に刺さるキャプションを構成中...</p>
+                                    <p className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-pink-500 animate-pulse" style={{ animationDelay: '0.8s' }}></span> 高解像度のプロフェッショナル画像を生成中...</p>
+                                </div>
 
-                                        {selectedGender && (
+                                <div className="w-64 h-[1px] bg-gradient-to-r from-transparent via-purple-500 to-transparent mt-12 animate-pulse"></div>
+                                <p className="text-xs text-gray-500 mt-4">※通常10〜20秒ほどかかります。そのままお待ちください。</p>
+                            </div>
+                        ) : (
+                            <>
+                                <CategorySelector selected={{ id: selectedCategory }} onSelect={(c) => setSelectedCategory(c.id)} />
+
+                                {selectedCategory && (
+                                    <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-500">
+                                        <TargetSelector selected={selectedTarget} onSelect={setSelectedTarget} />
+
+                                        {selectedTarget && (
                                             <>
-                                                <BusinessStyleSelector selected={selectedBusinessStyle} onSelect={setSelectedBusinessStyle} />
+                                                <GenderSelector selected={selectedGender} onSelect={setSelectedGender} />
 
-                                                {selectedBusinessStyle && (
+                                                {selectedGender && (
                                                     <>
-                                                        <ToneSelector selected={selectedTone} onSelect={setSelectedTone} />
+                                                        <BusinessStyleSelector selected={selectedBusinessStyle} onSelect={setSelectedBusinessStyle} />
 
-                                                        {selectedTone && (
+                                                        {selectedBusinessStyle && (
                                                             <>
-                                                                <ProductInput value={productContext} onChange={setProductContext} />
+                                                                <ToneSelector selected={selectedTone} onSelect={setSelectedTone} />
 
-                                                                <button
-                                                                    onClick={handleGenerate}
-                                                                    disabled={loading}
-                                                                    className={`w-[280px] h-14 mt-4 rounded overflow-hidden shadow-[0_0_30px_rgba(200,50,50,0.4)] ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:scale-105'} transition-all`}
-                                                                    style={{ background: 'linear-gradient(90deg, #A85500, #9A2833)' }}
-                                                                >
-                                                                    <span className="text-white font-bold text-lg flex items-center justify-center gap-2">
-                                                                        {loading ? <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></span> : <Sparkles size={20} />}
-                                                                        {loading ? 'AIが生成中...' : '生成する'}
-                                                                    </span>
-                                                                </button>
+                                                                {selectedTone && (
+                                                                    <>
+                                                                        <ProductInput value={productContext} onChange={setProductContext} />
+
+                                                                        <button
+                                                                            onClick={handleGenerate}
+                                                                            className="w-[280px] h-14 mt-4 rounded overflow-hidden shadow-[0_0_30px_rgba(200,50,50,0.4)] hover:scale-105 transition-all text-white font-bold text-lg flex items-center justify-center gap-2"
+                                                                            style={{ background: 'linear-gradient(90deg, #A85500, #9A2833)' }}
+                                                                        >
+                                                                            <Sparkles size={20} />
+                                                                            生成する
+                                                                        </button>
+                                                                    </>
+                                                                )}
                                                             </>
                                                         )}
                                                     </>
                                                 )}
                                             </>
                                         )}
-                                    </>
+                                    </div>
                                 )}
-                            </div>
+                            </>
                         )}
                     </div>
                 )}
