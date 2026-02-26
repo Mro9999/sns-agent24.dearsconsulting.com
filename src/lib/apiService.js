@@ -130,8 +130,8 @@ ${textContext?.companyName ? `\n※重要: キャプション文中に、不自�
  */
 export async function generateImage(category, targetLabel, gender, imageContext, textContext, platformId, visualDescription, count = 1) {
     try {
-        // "Japanese" (日本人) を被写体として強力に指定
-        const basePrompt = `High quality, commercial photography, engaging social media post for ${platformId}, featuring Japanese ${targetLabel} ${gender}. Category: ${category?.label || category}. ${imageContext}`;
+        // "Japanese" (日本人) を被写体として強力に指定し、かつ「文字を絶対に入れない」ようにネガティブプロンプト的に指示
+        const basePrompt = `High quality, commercial photography, engaging social media post for ${platformId}, featuring Japanese ${targetLabel} ${gender}. Category: ${category?.label || category}. ${imageContext}. IMPORTANT: Absolutely NO text, NO words, NO letters, NO characters, NO typography, NO watermark in the generated image. Pure visual content only.`;
         const finalPrompt = visualDescription
             ? `${basePrompt}, incorporating product style: ${visualDescription}, specifically featuring Japanese/Asian models.`
             : `${basePrompt}, specifically featuring Japanese/Asian models.`;
