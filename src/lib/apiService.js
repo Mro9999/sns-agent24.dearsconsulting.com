@@ -50,6 +50,7 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
             config: {
                 responseMimeType: "application/json",
                 temperature: 0.7,
+                tools: [{ googleSearch: {} }] // ← ここでGoogle Search Grounding（最新情報検索機能）を有効化
             }
         });
 
@@ -116,6 +117,7 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 投稿�
             config: {
                 responseMimeType: "application/json",
                 temperature: 0.8,
+                tools: [{ googleSearch: {} }] // ← 投稿内容生成時にもネットの最新情報を統合
             }
         });
 
