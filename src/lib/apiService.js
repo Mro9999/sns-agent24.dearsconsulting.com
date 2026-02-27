@@ -95,11 +95,12 @@ export async function generatePost(research, platformId, category, targetLabel, 
 - 自社・ブランド名: ${textContext?.companyName || '特になし'}
 - 訴求ポイント: ${textContext?.sellingPoint || '特になし'}
 ${siteContent ? `- サイト情報: ${siteContent.substring(0, 1000)}` : ''}
-${textContext?.companyName ? `\n※重要: キャプション文中に、不自然にならないように「${textContext.companyName}」という名前を適度に織り込んでください。` : ''}
+${textContext?.companyName ? `\n※重要事項1: キャプション文中に、不自然にならないように「${textContext.companyName}」という名前を適度に織り込んでください。` : ''}
+${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 投稿の最後付近で、「詳しくはこちら」「プロフィールのリンクから」「${textContext.snsUrl || textContext.websiteUrl}」など、読者に行動を促す動線（CTA）を自然な形で必ず配置してください。` : ''}
 
 # 出力形式 (JSONのみ)
 {
-    "caption": "絵文字を適切に使った、ターゲットに響く魅力的な投稿文",
+    "caption": "絵文字を適切に使った、ターゲットに響く魅力的な投稿文（最後にCTAやURLを含む）",
     "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
     "image_idea": "この投稿文に合う、${IMAGE_MODEL}で生成するための詳細な画像プロンプト案（英語、50単語程度）",
     "variants": [

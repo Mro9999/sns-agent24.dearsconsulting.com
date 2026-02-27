@@ -215,17 +215,6 @@ export function ProductInput({ value = {}, onChange }) {
                             placeholder="例：東京都渋谷区"
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-1">自社・店舗URL、または参考サイトURL</label>
-                        <input
-                            type="url"
-                            name="websiteUrl"
-                            value={value.websiteUrl || ''}
-                            onChange={handleChange}
-                            className="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
-                            placeholder="https://..."
-                        />
-                    </div>
                 </div>
 
                 <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl">
@@ -249,36 +238,34 @@ export function ProductInput({ value = {}, onChange }) {
 
                                 const reader = new FileReader();
                                 reader.onloadend = () => {
-                                    // 画像の自動リサイズ（圧縮）処理
+                                    // 画像の自動リサイズ（丸型クリッピング・圧縮）処理
                                     const img = new Image();
                                     img.onload = () => {
+                                        const minSize = Math.min(img.width, img.height);
                                         const canvas = document.createElement('canvas');
-                                        const MAX_SIZE = 800; // 長辺を最大800pxに縮小
-                                        let width = img.width;
-                                        let height = img.height;
+                                        const MAX_SIZE = 800;
 
-                                        if (width > height) {
-                                            if (width > MAX_SIZE) {
-                                                height *= MAX_SIZE / width;
-                                                width = MAX_SIZE;
-                                            }
-                                        } else {
-                                            if (height > MAX_SIZE) {
-                                                width *= MAX_SIZE / height;
-                                                height = MAX_SIZE;
-                                            }
-                                        }
+                                        // 最終的なキャンバスのサイズ（真円を作るために正方形にする）
+                                        let finalSize = minSize > MAX_SIZE ? MAX_SIZE : minSize;
 
-                                        canvas.width = width;
-                                        canvas.height = height;
+                                        canvas.width = finalSize;
+                                        canvas.height = finalSize;
                                         const ctx = canvas.getContext('2d');
-                                        ctx.drawImage(img, 0, 0, width, height);
 
-                                        // 元の画像がPNGなら透過を維持するためにPNGで出力、それ以外はJPEGで軽量化
-                                        const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
-                                        const quality = outputType === 'image/jpeg' ? 0.8 : undefined;
+                                        // 真円にクリッピングするためのパスを作成
+                                        ctx.beginPath();
+                                        ctx.arc(finalSize / 2, finalSize / 2, finalSize / 2, 0, Math.PI * 2, true);
+                                        ctx.closePath();
+                                        ctx.clip();
 
-                                        const compressedDataUrl = canvas.toDataURL(outputType, quality);
+                                        // 中央を基準に画像を正方形に切り抜いて描画
+                                        const sx = (img.width - minSize) / 2;
+                                        const sy = (img.height - minSize) / 2;
+
+                                        ctx.drawImage(img, sx, sy, minSize, minSize, 0, 0, finalSize, finalSize);
+
+                                        // 丸く切り抜いた部分以外を透明にするため、必ずPNGで出力する
+                                        const compressedDataUrl = canvas.toDataURL('image/png');
                                         onChange({ ...value, logoUrl: compressedDataUrl });
                                     };
                                     img.src = reader.result;
@@ -288,8 +275,8 @@ export function ProductInput({ value = {}, onChange }) {
                             className="flex-1 bg-black/50 border border-gray-700 rounded-lg p-2 text-white text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500 transition-colors"
                         />
                         {value.logoUrl && (
-                            <div className="h-12 w-12 shrink-0 rounded overflow-hidden border border-gray-600 relative group bg-white/10">
-                                <img src={value.logoUrl} alt="Logo" className="h-full w-full object-contain" />
+                            <div className="h-12 w-12 shrink-0 rounded-full overflow-hidden border-2 border-white/20 relative group bg-black/40">
+                                <img src={value.logoUrl} alt="Logo" className="h-full w-full object-cover" />
                                 <button
                                     onClick={() => onChange({ ...value, logoUrl: null })}
                                     className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px]"
@@ -300,9 +287,9 @@ export function ProductInput({ value = {}, onChange }) {
                         )}
                     </div>
                     <p className="text-xs text-orange-200/70 mt-3 leading-relaxed">
-                        ✨ <strong>大きな写真も自動的に圧縮・軽量化されます（上限10MB）。</strong><br />
-                        生成された画像の右下に自動でロゴが合成されます。<br />
-                        <span className="text-yellow-300">※綺麗に合成するため、背景が透明な【PNG形式】の画像を強く推奨します。</span>
+                        ✨ <strong>自動で「綺麗な丸型（真円）」に切り抜かれ、軽量化されます（上限10MB）。</strong><br />
+                        生成された画像の右下に自動でロゴとして合成されます。<br />
+                        <span className="text-yellow-300">※四角い画像を入れても自動で丸く加工されます。</span>
                     </p>
                 </div>
             </div>
