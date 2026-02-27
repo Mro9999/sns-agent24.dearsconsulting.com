@@ -352,7 +352,11 @@ export default function Home() {
                                     <div className="absolute w-24 h-24 bg-gradient-to-tr from-purple-900 via-indigo-900 to-black rounded-full shadow-[0_0_50px_rgba(6,182,212,0.6)] flex items-center justify-center overflow-hidden">
                                         {/* スキャンラインエフェクト */}
                                         <div className="absolute w-full h-[2px] bg-cyan-400 opacity-80 blur-[1px] shadow-[0_0_10px_#06b6d4] animate-pulse-scan top-0 bottom-0 m-auto"></div>
-                                        <BrainCircuit size={36} className="text-cyan-300 relative z-10 animate-pulse" strokeWidth={1.5} />
+
+                                        {/* 3D回転するテキスト (BrainCircuitの代替) */}
+                                        <div className="relative z-10 animate-spin-3d-y font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-br from-cyan-300 to-purple-400 text-sm">
+                                            Agent 24
+                                        </div>
                                     </div>
 
                                     {/* 周囲のデータパーティクル（疑似） */}
