@@ -228,8 +228,10 @@ export function ProductInput({ value = {}, onChange }) {
                     </div>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-1">ブランドロゴ・透かし画像 (任意)</label>
+                <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl">
+                    <label className="block text-sm font-bold text-orange-300 mb-2">
+                        ブランドロゴ・透かし画像 (任意) <span className="text-red-400 ml-2">※必須：2MB以下</span>
+                    </label>
                     <div className="flex items-center gap-4">
                         <input
                             type="file"
@@ -238,7 +240,8 @@ export function ProductInput({ value = {}, onChange }) {
                                 const file = e.target.files[0];
                                 if (file) {
                                     if (file.size > 2 * 1024 * 1024) {
-                                        alert("ロゴ画像は2MB以下にしてください");
+                                        alert("【サイズオーバー エラー】\n選択された画像は2MBを超えています。\n\n※スマホ本体に保存されていない写真の場合、読み込みに時間がかかった後にエラーが出ることがあります。\n必ず「2MB以下の軽い画像」を選び直してください。");
+                                        e.target.value = ''; // 選択状態をリセット
                                         return;
                                     }
                                     const reader = new FileReader();
@@ -262,7 +265,10 @@ export function ProductInput({ value = {}, onChange }) {
                             </div>
                         )}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">※登録すると生成された画像の右下に自動で合成されます（2MB以下）</p>
+                    <p className="text-xs text-orange-200/70 mt-3 leading-relaxed">
+                        ⚠️ <strong>注意：必ず【 2MB以下 】の軽い画像を選択してください。</strong><br />
+                        生成された画像の右下に自動でロゴが合成されます（背景透過のPNG形式がおすすめです）。<br />
+                    </p>
                 </div>
             </div>
         </div>
