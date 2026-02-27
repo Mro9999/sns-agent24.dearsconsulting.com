@@ -2,8 +2,14 @@
 // src/lib/apiService.js
 import { GoogleGenAI } from '@google/genai';
 
-// Gemini SDK 初期化
-const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
+// Gemini SDK 初期化関数 (モジュール読み込み時のエラーを防ぐための遅延評価)
+// Vercelの本番環境で環境変数がロードされる前に呼ばれてクラッシュするのを防ぎます
+const getAI = () => {
+    if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+        console.error("Gemini API Key is missing!");
+    }
+    return new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || '' });
+};
 
 // モデル名
 const TEXT_MODEL = 'gemini-2.5-pro'; // Gemini 2.5 Pro (テキスト用最新)
@@ -44,6 +50,7 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
     }
 }
 `;
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: TEXT_MODEL,
             contents: prompt,
@@ -111,6 +118,7 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 投稿�
     ]
 }
 `;
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: TEXT_MODEL,
             contents: prompt,
@@ -203,6 +211,7 @@ export async function analyzeProductImage(base64Images) {
             };
         });
 
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: TEXT_MODEL,
             contents: [
