@@ -342,26 +342,34 @@ export default function Home() {
                         {loading ? (
                             <div className="w-full flex flex-col items-center justify-center py-10 animate-in fade-in zoom-in duration-500">
                                 <div className="relative w-40 h-40 mb-10 flex items-center justify-center">
-                                    <div className="absolute inset-0 rounded-full border border-purple-500/30 animate-[spin_4s_linear_infinite]">
-                                        <div className="absolute top-0 left-1/2 w-2 h-2 bg-purple-500 rounded-full shadow-[0_0_10px_#a855f7]"></div>
-                                    </div>
-                                    <div className="absolute inset-2 rounded-full border border-cyan-500/30 animate-[spin_3s_linear_infinite_reverse]">
-                                        <div className="absolute bottom-0 left-1/2 w-2 h-2 bg-cyan-500 rounded-full shadow-[0_0_10px_#06b6d4]"></div>
-                                    </div>
-                                    <div className="absolute inset-6 rounded-full border border-pink-500/30 animate-ping shadow-[0_0_20px_rgba(236,72,153,0.4)]"></div>
-                                    <div className="absolute inset-10 bg-gradient-to-tr from-purple-600 to-cyan-500 rounded-full animate-pulse shadow-[0_0_40px_rgba(168,85,247,0.6)] flex items-center justify-center">
-                                        <Sparkles className="text-white w-8 h-8" />
+                                    {/* 波紋エフェクト 1 */}
+                                    <div className="absolute inset-0 rounded-full border border-indigo-500/40 animate-zen-ripple"></div>
+                                    {/* 波紋エフェクト 2 (遅延) */}
+                                    <div className="absolute inset-0 rounded-full border border-purple-500/30 animate-zen-ripple-delayed"></div>
+
+                                    {/* 中央の「呼吸」する光の球体 */}
+                                    <div className="absolute w-20 h-20 bg-gradient-to-tr from-indigo-900 via-purple-800 to-black rounded-full shadow-[0_0_50px_rgba(99,102,241,0.6)] animate-deep-breathing flex items-center justify-center">
+                                        <BrainCircuit size={28} className="text-indigo-200 opacity-80" strokeWidth={1.5} />
                                     </div>
                                 </div>
 
-                                <h3 className="text-2xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-cyan-400 to-pink-400 mb-8 animate-pulse">
-                                    AI PROCESSING...
+                                <h3 className="text-xl font-light tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-300 mb-8 animate-pulse text-center">
+                                    GENERATING...
                                 </h3>
 
-                                <div className="flex flex-col items-start space-y-4 font-medium text-sm text-gray-300">
-                                    <p className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span> 3方向から最新のトレンドをリサーチ中...</p>
-                                    <p className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" style={{ animationDelay: '0.4s' }}></span> ターゲット心理に刺さるキャプションを構成中...</p>
-                                    <p className="flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-pink-500 animate-pulse" style={{ animationDelay: '0.8s' }}></span> 高解像度のプロフェッショナル画像を生成中...</p>
+                                <div className="flex flex-col items-center space-y-5 font-light text-sm text-gray-400">
+                                    <p className="flex items-center gap-4 transition-all duration-1000">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500/50 animate-pulse"></span>
+                                        真理を探求しています...
+                                    </p>
+                                    <p className="flex items-center gap-4 transition-all duration-1000" style={{ animationDelay: '2s' }}>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500/50 animate-pulse"></span>
+                                        言葉の核を抽出しています...
+                                    </p>
+                                    <p className="flex items-center gap-4 transition-all duration-1000" style={{ animationDelay: '4s' }}>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400/50 animate-pulse"></span>
+                                        イメージを具現化しています...
+                                    </p>
                                 </div>
 
                                 <div className="w-64 h-[1px] bg-gradient-to-r from-transparent via-purple-500 to-transparent mt-12 animate-pulse"></div>
