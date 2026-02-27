@@ -69,6 +69,7 @@ export async function POST(req) {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
+                        action: 'add',
                         userId: id,
                         email: primaryEmail,
                         firstName: first_name || '',

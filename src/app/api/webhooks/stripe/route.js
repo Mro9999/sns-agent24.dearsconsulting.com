@@ -43,6 +43,25 @@ export async function POST(req) {
                 role: 'pro'
             }
         });
+
+        // スプレッドシート側の「有料プラン登録日時(E列)」をアップデート
+        if (process.env.GOOGLE_SCRIPT_URL) {
+            try {
+                const date = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+                const response = await fetch(process.env.GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'update',
+                        userId: session.metadata.userId,
+                        date: date
+                    })
+                });
+                if (!response.ok) console.error('Failed to update Google Sheets (Stripe):', await response.text());
+            } catch (error) {
+                console.error('Error updating Google Sheets from Stripe webhook:', error);
+            }
+        }
     }
 
     if (event.type === "customer.subscription.deleted") {
