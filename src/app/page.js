@@ -343,31 +343,31 @@ export default function Home() {
                             <div className="w-full flex flex-col items-center justify-center py-10 animate-in fade-in zoom-in duration-500">
                                 <div className="relative w-40 h-40 mb-10 flex items-center justify-center">
                                     {/* 波紋エフェクト 1 */}
-                                    <div className="absolute inset-0 rounded-full border border-indigo-500/40 animate-zen-ripple"></div>
+                                    <div className="absolute inset-0 rounded-full border border-gray-500/20 animate-zen-ripple"></div>
                                     {/* 波紋エフェクト 2 (遅延) */}
-                                    <div className="absolute inset-0 rounded-full border border-purple-500/30 animate-zen-ripple-delayed"></div>
+                                    <div className="absolute inset-0 rounded-full border border-white/5 animate-zen-ripple-delayed"></div>
 
-                                    {/* 中央の「呼吸」する光の球体 */}
-                                    <div className="absolute w-20 h-20 bg-gradient-to-tr from-indigo-900 via-purple-800 to-black rounded-full shadow-[0_0_50px_rgba(99,102,241,0.6)] animate-deep-breathing flex items-center justify-center">
-                                        <BrainCircuit size={28} className="text-indigo-200 opacity-80" strokeWidth={1.5} />
+                                    {/* 中央の「呼吸」する特異点（完全抽象化・モノトーンミニマル） */}
+                                    <div className="absolute w-12 h-12 bg-[#0a0a0a] border border-gray-800 rounded-full shadow-[0_0_30px_rgba(200,200,200,0.05)] animate-deep-breathing flex items-center justify-center">
+                                        <div className="w-1.5 h-1.5 bg-gray-300 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)] animate-pulse"></div>
                                     </div>
                                 </div>
 
-                                <h3 className="text-xl font-light tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-300 mb-8 animate-pulse text-center">
-                                    GENERATING...
+                                <h3 className="text-lg font-light tracking-[0.4em] text-gray-300 mb-8 animate-pulse text-center">
+                                    GENERATING
                                 </h3>
 
-                                <div className="flex flex-col items-center space-y-5 font-light text-sm text-gray-400">
+                                <div className="flex flex-col items-center space-y-5 font-light text-sm text-gray-500">
                                     <p className="flex items-center gap-4 transition-all duration-1000">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500/50 animate-pulse"></span>
+                                        <span className="w-1 h-1 rounded-full bg-gray-400 animate-pulse"></span>
                                         真理を探求しています...
                                     </p>
                                     <p className="flex items-center gap-4 transition-all duration-1000" style={{ animationDelay: '2s' }}>
-                                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500/50 animate-pulse"></span>
+                                        <span className="w-1 h-1 rounded-full bg-gray-400 animate-pulse"></span>
                                         言葉の核を抽出しています...
                                     </p>
                                     <p className="flex items-center gap-4 transition-all duration-1000" style={{ animationDelay: '4s' }}>
-                                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400/50 animate-pulse"></span>
+                                        <span className="w-1 h-1 rounded-full bg-gray-400 animate-pulse"></span>
                                         イメージを具現化しています...
                                     </p>
                                 </div>
