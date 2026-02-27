@@ -497,8 +497,8 @@ export default function Home() {
                                     <>
                                         <img src={result.imageUrls[0]} alt="Generated" className="w-full h-full object-cover" />
                                         {productContext?.logoUrl && (
-                                            <div className="absolute bottom-4 right-4 max-w-[25%] max-h-[25%] opacity-90 drop-shadow-lg pointer-events-none">
-                                                <img src={productContext.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                                            <div className="absolute bottom-4 right-4 max-w-[25%] max-h-[25%] opacity-90 drop-shadow-lg pointer-events-none rounded-full overflow-hidden border-2 border-white/20 bg-black/40">
+                                                <img src={productContext.logoUrl} alt="Logo" className="w-full h-full object-cover" />
                                             </div>
                                         )}
                                     </>
@@ -530,15 +530,50 @@ export default function Home() {
 
                                                 const maxLogoW = canvas.width * 0.25;
                                                 const maxLogoH = canvas.height * 0.25;
-                                                const scale = Math.min(maxLogoW / logoImg.width, maxLogoH / logoImg.height);
-                                                const w = logoImg.width * scale;
-                                                const h = logoImg.height * scale;
+                                                // ロゴは正方形（丸型）を前提とするため最小値をとる
+                                                const size = Math.min(maxLogoW, maxLogoH, logoImg.width, logoImg.height);
                                                 const padding = canvas.width * 0.04;
 
-                                                ctx.globalAlpha = 0.9;
-                                                ctx.shadowColor = 'rgba(0,0,0,0.3)';
-                                                ctx.shadowBlur = 10;
-                                                ctx.drawImage(logoImg, canvas.width - w - padding, canvas.height - h - padding, w, h);
+                                                // 描画位置の中心点と半径を計算
+                                                const cw = canvas.width;
+                                                const ch = canvas.height;
+                                                const r = size / 2;
+                                                const cx = cw - padding - r;
+                                                const cy = ch - padding - r;
+
+                                                // 影の設定（影はパスではなく元のコンテキストの状態でかける）
+                                                ctx.save();
+                                                ctx.globalAlpha = 0.95;
+                                                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                                                ctx.shadowBlur = 15;
+                                                ctx.shadowOffsetX = 2;
+                                                ctx.shadowOffsetY = 2;
+
+                                                // 丸いパス（背景）を描画して影をつける
+                                                ctx.beginPath();
+                                                ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
+                                                ctx.fillStyle = 'rgba(20,20,20,0.5)'; // 透過用の半黒背景
+                                                ctx.fill();
+                                                ctx.restore();
+
+                                                // 丸にクリッピングして画像を描画する
+                                                ctx.save();
+                                                ctx.beginPath();
+                                                ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
+                                                ctx.clip();
+
+                                                // 画像を描画
+                                                ctx.drawImage(logoImg, cx - r, cy - r, size, size);
+                                                ctx.restore();
+
+                                                // 白い枠線を描画（よりクオリティを上げるため）
+                                                ctx.save();
+                                                ctx.beginPath();
+                                                ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
+                                                ctx.lineWidth = 2;
+                                                ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+                                                ctx.stroke();
+                                                ctx.restore();
 
                                                 const a = document.createElement('a');
                                                 a.href = canvas.toDataURL('image/jpeg', 0.95);
