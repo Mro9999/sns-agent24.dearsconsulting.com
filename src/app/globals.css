@@ -58,3 +58,51 @@ body {
 .animate-deep-breathing {
   animation: deep-breathing 6s ease-in-out infinite;
 }
+
+/* ダイナミックローディング用 回転アニメーション */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-fast {
+  animation: spin 1s linear infinite;
+}
+
+.animate-spin-slow-reverse {
+  animation: spin 2s linear infinite reverse;
+}
+
+.animate-spin-very-slow {
+  animation: spin 10s linear infinite;
+}
+
+@keyframes pulse-scan {
+
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-pulse-scan {
+  animation: pulse-scan 2s ease-in-out infinite;
+}
+
+/* アニメーション遅延用ユーティリティ */
+.animation-delay-500 {
+  animation-delay: 0.5s !important;
+}
+
+.animation-delay-1500 {
+  animation-delay: 1.5s !important;
+}
+
+.animation-delay-3000 {
+  animation-delay: 3s !important;
+}

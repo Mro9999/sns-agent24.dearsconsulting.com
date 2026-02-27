@@ -343,21 +343,21 @@ export default function Home() {
                             <div className="w-full flex flex-col items-center justify-center py-10 animate-in fade-in zoom-in duration-500">
                                 <div className="relative w-48 h-48 mb-8 flex items-center justify-center">
                                     {/* 外側の高速回転データリング */}
-                                    <div className="absolute inset-0 rounded-full border border-t-[3px] border-r-transparent border-b-transparent border-l-transparent border-cyan-400 animate-[spin_1s_linear_infinite]"></div>
-                                    <div className="absolute inset-2 rounded-full border border-b-[3px] border-t-transparent border-r-transparent border-l-transparent border-pink-500 animate-[spin_2s_linear_infinite_reverse]"></div>
-                                    <div className="absolute inset-6 rounded-full border border-dashed border-purple-500/50 animate-[spin_10s_linear_infinite]"></div>
+                                    <div className="absolute inset-0 rounded-full border border-t-[3px] border-r-transparent border-b-transparent border-l-transparent border-cyan-400 animate-spin-fast"></div>
+                                    <div className="absolute inset-2 rounded-full border border-b-[3px] border-t-transparent border-r-transparent border-l-transparent border-pink-500 animate-spin-slow-reverse"></div>
+                                    <div className="absolute inset-6 rounded-full border border-dashed border-purple-500/50 animate-spin-very-slow"></div>
                                     <div className="absolute inset-8 rounded-full border-[0.5px] border-white/20"></div>
 
                                     {/* 中央の「AI・データ解析」コア部分 */}
                                     <div className="absolute w-24 h-24 bg-gradient-to-tr from-purple-900 via-indigo-900 to-black rounded-full shadow-[0_0_50px_rgba(6,182,212,0.6)] flex items-center justify-center overflow-hidden">
                                         {/* スキャンラインエフェクト */}
-                                        <div className="absolute w-full h-[2px] bg-cyan-400 opacity-80 blur-[1px] shadow-[0_0_10px_#06b6d4] animate-[pulse_2s_ease-in-out_infinite] top-0 bottom-0 m-auto"></div>
+                                        <div className="absolute w-full h-[2px] bg-cyan-400 opacity-80 blur-[1px] shadow-[0_0_10px_#06b6d4] animate-pulse-scan top-0 bottom-0 m-auto"></div>
                                         <BrainCircuit size={36} className="text-cyan-300 relative z-10 animate-pulse" strokeWidth={1.5} />
                                     </div>
 
                                     {/* 周囲のデータパーティクル（疑似） */}
                                     <div className="absolute top-0 right-8 w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_8px_#06b6d4] animate-ping"></div>
-                                    <div className="absolute bottom-4 left-4 w-1.5 h-1.5 bg-pink-500 rounded-full shadow-[0_0_8px_#ec4899] animate-ping" style={{ animationDelay: '0.5s' }}></div>
+                                    <div className="absolute bottom-4 left-4 w-1.5 h-1.5 bg-pink-500 rounded-full shadow-[0_0_8px_#ec4899] animate-ping animation-delay-500"></div>
                                 </div>
 
                                 <h3 className="text-2xl font-black tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 mb-8 animate-pulse text-center drop-shadow-[0_0_15px_rgba(6,182,212,0.4)]">
@@ -377,9 +377,9 @@ export default function Home() {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start gap-4 transition-all duration-300" style={{ animationDelay: '1.5s' }}>
+                                        <div className="flex items-start gap-4 transition-all duration-300 animation-delay-1500">
                                             <div className="mt-1 relative flex items-center justify-center w-3 h-3">
-                                                <span className="absolute w-full h-full rounded-full bg-purple-500 opacity-75 animate-ping" style={{ animationDelay: '1.5s' }}></span>
+                                                <span className="absolute w-full h-full rounded-full bg-purple-500 opacity-75 animate-ping animation-delay-1500"></span>
                                                 <span className="relative w-1.5 h-1.5 rounded-full bg-purple-400"></span>
                                             </div>
                                             <div className="flex-1">
@@ -388,9 +388,9 @@ export default function Home() {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start gap-4 transition-all duration-300" style={{ animationDelay: '3s' }}>
+                                        <div className="flex items-start gap-4 transition-all duration-300 animation-delay-3000">
                                             <div className="mt-1 relative flex items-center justify-center w-3 h-3">
-                                                <span className="absolute w-full h-full rounded-full bg-pink-500 opacity-75 animate-ping" style={{ animationDelay: '3s' }}></span>
+                                                <span className="absolute w-full h-full rounded-full bg-pink-500 opacity-75 animate-ping animation-delay-3000"></span>
                                                 <span className="relative w-1.5 h-1.5 rounded-full bg-pink-400"></span>
                                             </div>
                                             <div className="flex-1">
