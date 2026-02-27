@@ -204,12 +204,18 @@ export default function Home() {
         }
     };
 
+    // Hydration Mismatch防止: クライアントサイドでのマウント完了を検知する
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     return (
         <div className="min-h-screen bg-[#111112] text-white font-sans selection:bg-purple-500/30 flex flex-col pt-4">
             {/* Header */}
             <header className="w-full flex justify-end items-center px-6 py-2">
                 <div className="flex items-center gap-4">
-                    {!isPro ? (
+                    {mounted && !isPro ? (
                         <button
                             onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
                             className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-bold py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all shadow-[0_0_15px_rgba(147,51,234,0.3)]"
@@ -217,7 +223,7 @@ export default function Home() {
                             <Gem size={16} className="text-cyan-300" />
                             Proにアップグレード
                         </button>
-                    ) : (
+                    ) : mounted && isPro ? (
                         <button
                             onClick={handlePortal}
                             className="bg-white/10 hover:bg-white/20 border border-white/20 text-white py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
@@ -225,8 +231,11 @@ export default function Home() {
                             <Gem size={16} className="text-cyan-300" />
                             Proプラン管理
                         </button>
+                    ) : (
+                        <div className="w-32 h-8 rounded-full bg-gray-800 animate-pulse"></div> // マウント前のプレースホルダー
                     )}
-                    {isLoaded && isSignedIn ? (
+
+                    {mounted && isLoaded && isSignedIn ? (
                         <UserButton afterSignOutUrl="/" />
                     ) : (
                         <div className="w-8 h-8 rounded-full bg-gray-700 animate-pulse border-2 border-transparent"></div>
@@ -257,7 +266,7 @@ export default function Home() {
 
                         {/* Platforms selection */}
                         <div className="w-full max-w-2xl px-4 flex flex-col items-center min-h-[400px]">
-                            {!isLoaded ? (
+                            {!mounted || !isLoaded ? (
                                 <div className="flex flex-col items-center justify-center h-48">
                                     <div className="animate-spin border-4 border-purple-500 border-t-transparent rounded-full w-12 h-12 mb-4"></div>
                                     <p className="text-gray-400 text-sm">ユーザー情報を確認中...</p>
@@ -277,15 +286,15 @@ export default function Home() {
                                 </div>
                             ) : null}
 
-                            <h2 className={`text-xl md:text-2xl font-bold mb-8 text-center drop-shadow-sm ${!isLoaded ? 'opacity-0' : isSignedIn ? 'text-white' : 'text-gray-500'}`}>
+                            <h2 className={`text-xl md:text-2xl font-bold mb-8 text-center drop-shadow-sm ${!mounted || !isLoaded ? 'opacity-0' : isSignedIn ? 'text-white' : 'text-gray-500'}`}>
                                 投稿するプラットフォームを選択
                             </h2>
 
-                            <div className={`grid grid-cols-2 lg:grid-cols-3 gap-4 mb-16 w-full px-4 md:px-12 transition-all duration-500 ${!isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+                            <div className={`grid grid-cols-2 lg:grid-cols-3 gap-4 mb-16 w-full px-4 md:px-12 transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                                 {/* Instagram */}
                                 <button
                                     onClick={() => setSelectedPlatform('instagram')}
-                                    disabled={!isLoaded || !isSignedIn}
+                                    disabled={!mounted || !isLoaded || !isSignedIn}
                                     className={`flex flex-col items-center justify-center py-8 px-4 rounded-2xl border ${selectedPlatform === 'instagram' ? 'bg-white/10 border-white text-white scale-105' : 'bg-transparent border-white/10 text-gray-400 hover:bg-white/5 hover:border-white/30'} transition-all duration-300 group`}
                                 >
                                     <Instagram size={36} className={`mb-4 ${selectedPlatform === 'instagram' ? 'text-white' : 'group-hover:text-white'}`} strokeWidth={1.5} />
@@ -295,7 +304,7 @@ export default function Home() {
                                 {/* X (Twitter) */}
                                 <button
                                     onClick={() => setSelectedPlatform('twitter')}
-                                    disabled={!isLoaded || !isSignedIn}
+                                    disabled={!mounted || !isLoaded || !isSignedIn}
                                     className={`flex flex-col items-center justify-center py-8 px-4 rounded-2xl border ${selectedPlatform === 'twitter' ? 'bg-white/10 border-white text-white scale-105' : 'bg-transparent border-white/10 text-gray-400 hover:bg-white/5 hover:border-white/30'} transition-all duration-300 group`}
                                 >
                                     <Twitter size={36} className={`mb-4 ${selectedPlatform === 'twitter' ? 'text-white' : 'group-hover:text-white'}`} strokeWidth={1.5} />
@@ -305,7 +314,7 @@ export default function Home() {
                                 {/* Facebook */}
                                 <button
                                     onClick={() => setSelectedPlatform('facebook')}
-                                    disabled={!isLoaded || !isSignedIn}
+                                    disabled={!mounted || !isLoaded || !isSignedIn}
                                     className={`col-span-2 lg:col-span-1 flex flex-col items-center justify-center py-8 px-4 rounded-2xl border ${selectedPlatform === 'facebook' ? 'bg-white/10 border-white text-white scale-105' : 'bg-transparent border-white/10 text-gray-400 hover:bg-white/5 hover:border-white/30'} transition-all duration-300 group`}
                                 >
                                     <Facebook size={36} className={`mb-4 ${selectedPlatform === 'facebook' ? 'text-white' : 'group-hover:text-white'}`} strokeWidth={1.5} />
@@ -316,15 +325,15 @@ export default function Home() {
                             {/* START Button */}
                             <button
                                 onClick={handleStart}
-                                disabled={!isLoaded || !isSignedIn}
-                                className={`w-[280px] h-14 rounded overflow-hidden relative group text-xl font-bold tracking-wider transition-all duration-500 ${!isLoaded ? 'opacity-0 scale-95' : isSignedIn ? 'opacity-100 shadow-[0_0_30px_rgba(200,50,50,0.4)] cursor-pointer scale-100' : 'opacity-40 cursor-not-allowed grayscale'}`}
+                                disabled={!mounted || !isLoaded || !isSignedIn}
+                                className={`w-[280px] h-14 rounded overflow-hidden relative group text-xl font-bold tracking-wider transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : isSignedIn ? 'opacity-100 shadow-[0_0_30px_rgba(200,50,50,0.4)] cursor-pointer scale-100' : 'opacity-40 cursor-not-allowed grayscale'}`}
                                 style={{
                                     background: 'linear-gradient(90deg, #A85500, #9A2833)'
                                 }}
                             >
                                 <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 <span className="relative z-10 text-white drop-shadow-md">
-                                    {!isLoaded ? '...' : isSignedIn ? 'START' : 'ログインしてください'}
+                                    {!mounted || !isLoaded ? '...' : isSignedIn ? 'START' : 'ログインしてください'}
                                 </span>
                             </button>
                         </div>
