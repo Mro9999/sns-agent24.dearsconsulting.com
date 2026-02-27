@@ -144,7 +144,9 @@ export default function Home() {
             return;
         }
         setStep(1);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
     };
 
     const handleGenerate = async () => {
@@ -162,8 +164,10 @@ export default function Home() {
 
         setLoading(true);
 
-        // ユーザーが生成中画面(ローディング)に気づけるように一番上へ一時的にスクロールする
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // ユーザーが生成中画面(ローディング)に気づけるようにDOM更新後に一番上へスクロールする
+        setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
 
         try {
             // APIに巨大な画像データ(Base64)が含まれたまま送るとVercelの制限(Server Action)でエラーになる原因を防ぐため、裏側へ送信するデータからはlogoUrlを除外する
@@ -189,6 +193,9 @@ export default function Home() {
 
             setResult({ research, post, imageUrls });
             setStep(2);
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100);
         } catch (e) {
             console.error(e);
             alert("エラーが発生しました: " + e.message);
