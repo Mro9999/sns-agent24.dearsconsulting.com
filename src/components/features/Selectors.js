@@ -274,8 +274,11 @@ export function ProductInput({ value = {}, onChange }) {
                                         const ctx = canvas.getContext('2d');
                                         ctx.drawImage(img, 0, 0, width, height);
 
-                                        // WebP または JPEG で圧縮（品質0.8）して超軽量化
-                                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                                        // 元の画像がPNGなら透過を維持するためにPNGで出力、それ以外はJPEGで軽量化
+                                        const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+                                        const quality = outputType === 'image/jpeg' ? 0.8 : undefined;
+
+                                        const compressedDataUrl = canvas.toDataURL(outputType, quality);
                                         onChange({ ...value, logoUrl: compressedDataUrl });
                                     };
                                     img.src = reader.result;
@@ -299,6 +302,7 @@ export function ProductInput({ value = {}, onChange }) {
                     <p className="text-xs text-orange-200/70 mt-3 leading-relaxed">
                         ✨ <strong>大きな写真も自動的に圧縮・軽量化されます（上限10MB）。</strong><br />
                         生成された画像の右下に自動でロゴが合成されます。<br />
+                        <span className="text-yellow-300">※綺麗に合成するため、背景が透明な【PNG形式】の画像を強く推奨します。</span>
                     </p>
                 </div>
             </div>
