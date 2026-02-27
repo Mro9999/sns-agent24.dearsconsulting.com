@@ -230,7 +230,7 @@ export function ProductInput({ value = {}, onChange }) {
 
                 <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl">
                     <label className="block text-sm font-bold text-orange-300 mb-2">
-                        ブランドロゴ・透かし画像 (任意) <span className="text-red-400 ml-2">※必須：2MB以下</span>
+                        ブランドロゴ・透かし画像 (任意) <span className="text-gray-300 font-normal ml-2">※自動で軽量化されます</span>
                     </label>
                     <div className="flex items-center gap-4">
                         <input
@@ -238,18 +238,49 @@ export function ProductInput({ value = {}, onChange }) {
                             accept="image/*"
                             onChange={(e) => {
                                 const file = e.target.files[0];
-                                if (file) {
-                                    if (file.size > 2 * 1024 * 1024) {
-                                        alert("【サイズオーバー エラー】\n選択された画像は2MBを超えています。\n\n※スマホ本体に保存されていない写真の場合、読み込みに時間がかかった後にエラーが出ることがあります。\n必ず「2MB以下の軽い画像」を選び直してください。");
-                                        e.target.value = ''; // 選択状態をリセット
-                                        return;
-                                    }
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                        onChange({ ...value, logoUrl: reader.result });
-                                    };
-                                    reader.readAsDataURL(file);
+                                if (!file) return;
+
+                                // 上限を10MBに引き上げ
+                                if (file.size > 10 * 1024 * 1024) {
+                                    alert("【サイズオーバー】\n画像が10MBを超えています。もう少し軽い画像を選んでください。");
+                                    e.target.value = '';
+                                    return;
                                 }
+
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                    // 画像の自動リサイズ（圧縮）処理
+                                    const img = new Image();
+                                    img.onload = () => {
+                                        const canvas = document.createElement('canvas');
+                                        const MAX_SIZE = 800; // 長辺を最大800pxに縮小
+                                        let width = img.width;
+                                        let height = img.height;
+
+                                        if (width > height) {
+                                            if (width > MAX_SIZE) {
+                                                height *= MAX_SIZE / width;
+                                                width = MAX_SIZE;
+                                            }
+                                        } else {
+                                            if (height > MAX_SIZE) {
+                                                width *= MAX_SIZE / height;
+                                                height = MAX_SIZE;
+                                            }
+                                        }
+
+                                        canvas.width = width;
+                                        canvas.height = height;
+                                        const ctx = canvas.getContext('2d');
+                                        ctx.drawImage(img, 0, 0, width, height);
+
+                                        // WebP または JPEG で圧縮（品質0.8）して超軽量化
+                                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                                        onChange({ ...value, logoUrl: compressedDataUrl });
+                                    };
+                                    img.src = reader.result;
+                                };
+                                reader.readAsDataURL(file);
                             }}
                             className="flex-1 bg-black/50 border border-gray-700 rounded-lg p-2 text-white text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500 transition-colors"
                         />
@@ -266,8 +297,8 @@ export function ProductInput({ value = {}, onChange }) {
                         )}
                     </div>
                     <p className="text-xs text-orange-200/70 mt-3 leading-relaxed">
-                        ⚠️ <strong>注意：必ず【 2MB以下 】の軽い画像を選択してください。</strong><br />
-                        生成された画像の右下に自動でロゴが合成されます（背景透過のPNG形式がおすすめです）。<br />
+                        ✨ <strong>大きな写真も自動的に圧縮・軽量化されます（上限10MB）。</strong><br />
+                        生成された画像の右下に自動でロゴが合成されます。<br />
                     </p>
                 </div>
             </div>
