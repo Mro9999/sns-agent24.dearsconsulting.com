@@ -11,6 +11,21 @@ const getAI = () => {
     return new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || '' });
 };
 
+// Google Search利用時はresponseMimeType: "application/json"が使えないため、
+// 返却されたテキスト（マークダウン等）からJSON部分だけを安全に抽出してパースする関数
+const extractJSON = (text, fallbackData = {}) => {
+    try {
+        // "```json ... ```" のようなマークダウンブロックがあれば除去
+        const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanText);
+    } catch (e) {
+        console.error("Failed to parse JSON from AI response:", text);
+        console.error("Parse Error Details:", e);
+        // エラーで画面がクラッシュしないよう、安全なデフォルトデータを返す
+        return fallbackData;
+    }
+};
+
 // モデル名
 const TEXT_MODEL = 'gemini-2.5-pro'; // Gemini 2.5 Pro (テキスト用最新)
 const IMAGE_MODEL = 'imagen-3.0-generate-001'; // 最新の画像生成モデル
@@ -55,13 +70,12 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
             model: TEXT_MODEL,
             contents: prompt,
             config: {
-                responseMimeType: "application/json",
                 temperature: 0.7,
                 tools: [{ googleSearch: {} }] // ← ここでGoogle Search Grounding（最新情報検索機能）を有効化
             }
         });
 
-        return JSON.parse(response.text);
+        return extractJSON(response.text);
     } catch (error) {
         console.error("researchTrends error:", error);
         throw new Error("トレンドリサーチに失敗しました。");
@@ -123,13 +137,12 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 投稿�
             model: TEXT_MODEL,
             contents: prompt,
             config: {
-                responseMimeType: "application/json",
                 temperature: 0.8,
                 tools: [{ googleSearch: {} }] // ← 投稿内容生成時にもネットの最新情報を統合
             }
         });
 
-        return JSON.parse(response.text);
+        return extractJSON(response.text);
     } catch (error) {
         console.error("generatePost error:", error);
         throw new Error("投稿内容の生成に失敗しました。");
