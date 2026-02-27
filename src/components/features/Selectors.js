@@ -217,6 +217,31 @@ export function ProductInput({ value = {}, onChange }) {
                     </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1">自社・店舗URL、または参考サイトURL</label>
+                        <input
+                            type="url"
+                            name="websiteUrl"
+                            value={value.websiteUrl || ''}
+                            onChange={handleChange}
+                            className="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                            placeholder="https://..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1">SNSリンク（Instagram, X, LINE等）</label>
+                        <input
+                            type="url"
+                            name="snsUrl"
+                            value={value.snsUrl || ''}
+                            onChange={handleChange}
+                            className="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                            placeholder="https://instagram.com/..."
+                        />
+                    </div>
+                </div>
+
                 <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl">
                     <label className="block text-sm font-bold text-orange-300 mb-2">
                         ブランドロゴ・透かし画像 (任意) <span className="text-gray-300 font-normal ml-2">※自動で軽量化されます</span>
