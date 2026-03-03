@@ -128,6 +128,37 @@ export async function POST(req) {
                 console.error('Error sending data to Google Sheets script:', error);
             }
         }
+
+        // 管理者へ通知メール自動送信 (scuderia.ct@gmail.com宛)
+        if (process.env.SENDGRID_API_KEY) {
+            try {
+                const adminEmail = 'scuderia.ct@gmail.com';
+                const userName = `${first_name || ''} ${last_name || ''}`.trim() || '名称未設定';
+                const emailContent = `SNS Agent24に新しいユーザー登録がありました。\n\nお名前: ${userName}\nメールアドレス: ${primaryEmail}\nユーザーID: ${id}\n登録日時: ${new Date(created_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}`;
+
+                const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        personalizations: [{ to: [{ email: adminEmail }] }],
+                        from: { email: 'notifications@dearsconsulting.com', name: 'SNS Agent24 通知システム' },
+                        subject: `【新規アカウント登録】${userName} 様`,
+                        content: [{ type: 'text/plain', value: emailContent }]
+                    })
+                });
+
+                if (response.ok) {
+                    console.log('Successfully sent registration notification email to Admin.');
+                } else {
+                    console.error('Failed to send registration notification to Admin:', await response.text());
+                }
+            } catch (error) {
+                console.error('Error sending admin notification (user.created):', error);
+            }
+        }
     }
 
     return new NextResponse('', { status: 200 })
