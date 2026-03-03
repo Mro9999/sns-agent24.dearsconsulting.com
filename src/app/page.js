@@ -9,7 +9,7 @@ import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/li
 export default function Home() {
     const { user, isLoaded, isSignedIn } = useUser();
     const { session } = useSession();
-    const { openSignIn } = useClerk();
+    const { openSignIn, openSignUp } = useClerk();
 
     // JWTトークン内のメタデータ（ユーザー自身またはカスタムクレーム）を確実に取得
     const sessionRole = session?.user?.publicMetadata?.role || null;
@@ -93,7 +93,7 @@ export default function Home() {
     const handleCheckout = async (interval = 'month') => {
         try {
             if (!isSignedIn) {
-                openSignIn();
+                openSignUp();
                 return;
             }
             setCheckoutError(null);
@@ -136,7 +136,7 @@ export default function Home() {
 
     const handleStart = () => {
         if (!isSignedIn) {
-            openSignIn();
+            openSignUp();
             return;
         }
         if (!selectedPlatform) {
@@ -272,17 +272,32 @@ export default function Home() {
                                     <p className="text-gray-400 text-sm">ユーザー情報を確認中...</p>
                                 </div>
                             ) : !isSignedIn ? (
-                                <div className="bg-purple-900/40 border border-purple-500/50 rounded-xl p-5 mb-8 w-full text-center">
-                                    <h3 className="text-lg font-bold text-white mb-2">🎉 まずは無料でスタート！</h3>
-                                    <p className="text-gray-300 text-sm mb-4">
-                                        無料プランを利用するには、メールアドレスによるアカウント登録が必要です。（1日1回まで無料で利用可能）
+                                <div className="bg-[#1a1a24] border border-purple-500/30 rounded-2xl p-6 mb-10 w-full max-w-lg text-center shadow-2xl relative overflow-hidden">
+                                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500"></div>
+                                    <h3 className="text-xl font-bold text-white mb-2">🎉 まずは無料でスタート！</h3>
+                                    <p className="text-gray-400 text-[13px] md:text-sm mb-6 leading-relaxed">
+                                        最初から最後まで全自動でキャプションや画像を生成できる<br className="hidden md:block" />
+                                        プロ向けAIエージェントを、1日1回無料で体験できます。
                                     </p>
-                                    <button
-                                        onClick={() => openSignIn()}
-                                        className="bg-white text-black font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition-all shadow-lg"
-                                    >
-                                        無料でアカウント登録 / ログイン
-                                    </button>
+
+                                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full px-4">
+                                        <button
+                                            onClick={() => openSignUp()}
+                                            className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3.5 px-8 rounded-full transition-all shadow-[0_0_20px_rgba(219,39,119,0.4)] hover:shadow-[0_0_30px_rgba(219,39,119,0.6)] transform hover:-translate-y-0.5"
+                                        >
+                                            🚀 新規アカウント登録 (無料)
+                                        </button>
+
+                                        <button
+                                            onClick={() => openSignIn()}
+                                            className="w-full sm:w-auto bg-transparent border border-white/20 text-white font-bold py-3.5 px-8 rounded-full hover:bg-white/10 transition-all"
+                                        >
+                                            ログイン
+                                        </button>
+                                    </div>
+                                    <p className="text-[11px] text-gray-500 mt-4">
+                                        ※登録でクレジットカード等は不要です
+                                    </p>
                                 </div>
                             ) : null}
 
