@@ -285,6 +285,7 @@ export function ProductInput({ value = {}, onChange }) {
                     </label>
                     <div className="flex items-center gap-4">
                         <input
+                            id="baseImageInput"
                             type="file"
                             accept="image/*"
                             onChange={handleBaseImageUpload}
@@ -292,9 +293,21 @@ export function ProductInput({ value = {}, onChange }) {
                         />
                     </div>
                     {value.baseImage && (
-                        <div className="mt-4 p-2 bg-black/50 rounded-lg inline-block border border-blue-500/20 shadow-lg">
-                            <p className="text-xs text-gray-400 mb-2">アップロード済みプレビュー</p>
-                            <img src={value.baseImage} alt="Base Preview" className="h-32 object-contain rounded border border-gray-700" />
+                        <div className="mt-4 p-3 bg-black/50 rounded-lg inline-flex items-start gap-4 border border-blue-500/20 shadow-lg">
+                            <div>
+                                <p className="text-xs text-gray-400 mb-2">アップロード済みプレビュー</p>
+                                <img src={value.baseImage} alt="Base Preview" className="h-32 object-contain rounded border border-gray-700" />
+                            </div>
+                            <button
+                                onClick={() => {
+                                    onChange({ ...value, baseImage: null });
+                                    const input = document.getElementById('baseImageInput');
+                                    if (input) input.value = '';
+                                }}
+                                className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded-lg hover:bg-red-500/40 transition-colors border border-red-500/30"
+                            >
+                                ✕ 削除
+                            </button>
                         </div>
                     )}
                 </div>
@@ -305,6 +318,7 @@ export function ProductInput({ value = {}, onChange }) {
                     </label>
                     <div className="flex items-center gap-4">
                         <input
+                            id="logoImageInput"
                             type="file"
                             accept="image/*"
                             onChange={(e) => {
@@ -313,7 +327,7 @@ export function ProductInput({ value = {}, onChange }) {
 
                                 // 上限を10MBに引き上げ
                                 if (file.size > 10 * 1024 * 1024) {
-                                    alert("【サイズオーバー】\n画像が10MBを超えています。もう少し軽い画像を選んでください。");
+                                    alert("【サイズオーバー】\\n画像が10MBを超えています。もう少し軽い画像を選んでください。");
                                     e.target.value = '';
                                     return;
                                 }
@@ -360,7 +374,11 @@ export function ProductInput({ value = {}, onChange }) {
                             <div className="h-12 w-12 shrink-0 rounded-full overflow-hidden border-2 border-white/20 relative group bg-black/40">
                                 <img src={value.logoUrl} alt="Logo" className="h-full w-full object-cover" />
                                 <button
-                                    onClick={() => onChange({ ...value, logoUrl: null })}
+                                    onClick={() => {
+                                        onChange({ ...value, logoUrl: null });
+                                        const input = document.getElementById('logoImageInput');
+                                        if (input) input.value = '';
+                                    }}
                                     className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px]"
                                 >
                                     削除
