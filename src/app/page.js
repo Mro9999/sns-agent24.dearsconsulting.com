@@ -335,7 +335,7 @@ export default function Home() {
                 imageUrls = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, 1);
             }
 
-            setResult({ research, post, imageUrls });
+            setResult({ research, post, imageUrls, isSynthesized: !!productContext.baseImage });
             setStep(2);
             setTimeout(() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -705,7 +705,8 @@ export default function Home() {
                                 {result.imageUrls && result.imageUrls[0] ? (
                                     <>
                                         <img src={result.imageUrls[0]} alt="Generated" className="w-full h-full object-cover" />
-                                        {productContext?.logoUrl && (
+                                        {/* CSSでロゴを重ねる処理（既に合成済みの場合は実行しない） */}
+                                        {productContext?.logoUrl && !result.isSynthesized && (
                                             <div className="absolute bottom-4 right-4 max-w-[25%] max-h-[25%] opacity-90 drop-shadow-lg pointer-events-none rounded-full overflow-hidden border-2 border-white/20 bg-black/40">
                                                 <img src={productContext.logoUrl} alt="Logo" className="w-full h-full object-cover" />
                                             </div>
@@ -719,7 +720,8 @@ export default function Home() {
                             {result.imageUrls && result.imageUrls[0] && !result.imageUrls[0].startsWith('http') && (
                                 <button
                                     onClick={async (e) => {
-                                        if (productContext?.logoUrl) {
+                                        // ダウンロード時の合成分岐（既に合成済みの場合はそのままダウンロード）
+                                        if (productContext?.logoUrl && !result.isSynthesized) {
                                             const btn = e.currentTarget;
                                             const prevText = btn.innerHTML;
                                             btn.innerHTML = '<span class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4 mr-2"></span>合成中...';
