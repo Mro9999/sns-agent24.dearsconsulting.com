@@ -63,6 +63,7 @@ export default function Home() {
     }, [selectedPlatform, selectedCategory, selectedTarget, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, productContext, isStateLoaded]);
 
     const [loading, setLoading] = useState(false);
+    const [loadingPhase, setLoadingPhase] = useState(0);
     const [result, setResult] = useState(null);
     const [checkoutError, setCheckoutError] = useState(null);
     const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
@@ -542,38 +543,71 @@ export default function Home() {
                                     AI ANALYSIS & GENERATION
                                 </h3>
 
-                                <div className="w-full max-w-sm bg-black/50 border border-white/10 rounded-xl p-5 shadow-2xl backdrop-blur-sm">
-                                    <div className="flex flex-col space-y-4 font-medium text-sm text-gray-300">
-                                        <div className="flex items-start gap-4 transition-all duration-300">
+                                <div className="w-full max-w-sm bg-black/50 border border-white/10 rounded-xl p-6 shadow-2xl backdrop-blur-sm relative overflow-hidden">
+                                    {/* background progress */}
+                                    <div
+                                        className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-cyan-900/20 to-purple-900/20 transition-all duration-[9000ms] ease-linear"
+                                        style={{ width: `${(loadingPhase + 1) * 20}%` }}
+                                    ></div>
+
+                                    <div className="flex flex-col space-y-5 font-medium text-sm text-gray-300 relative z-10">
+                                        {/* Phase 1 */}
+                                        <div className={`flex items-start gap-4 transition-all duration-700 ${loadingPhase >= 0 ? 'opacity-100' : 'opacity-30 blur-[1px]'}`}>
                                             <div className="mt-1 relative flex items-center justify-center w-3 h-3">
-                                                <span className="absolute w-full h-full rounded-full bg-cyan-500 opacity-75 animate-ping"></span>
-                                                <span className="relative w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                                                {loadingPhase === 0 && <span className="absolute w-full h-full rounded-full bg-cyan-500 opacity-75 animate-ping"></span>}
+                                                <span className={`relative w-2 h-2 rounded-full ${loadingPhase >= 0 ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]' : 'bg-gray-600'}`}></span>
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-white font-bold mb-0.5">STEP 1: アルゴリズム解析</p>
-                                                <p className="text-xs text-gray-500">選択されたプラットフォームの最新トレンドと検索ボリュームをスキャン</p>
+                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 0 ? 'text-white' : 'text-gray-500'}`}>1. 市場・競合スキャン中</p>
+                                                <p className="text-[11px] text-gray-400 leading-tight">指定プラットフォームの最新トレンドデータと検索ボリュームを抽出</p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start gap-4 transition-all duration-300 animation-delay-1500">
+                                        {/* Phase 2 */}
+                                        <div className={`flex items-start gap-4 transition-all duration-700 ${loadingPhase >= 1 ? 'opacity-100' : 'opacity-30 blur-[1px]'}`}>
                                             <div className="mt-1 relative flex items-center justify-center w-3 h-3">
-                                                <span className="absolute w-full h-full rounded-full bg-purple-500 opacity-75 animate-ping animation-delay-1500"></span>
-                                                <span className="relative w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                                                {loadingPhase === 1 && <span className="absolute w-full h-full rounded-full bg-blue-500 opacity-75 animate-ping"></span>}
+                                                <span className={`relative w-2 h-2 rounded-full ${loadingPhase >= 1 ? 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]' : 'bg-gray-600'}`}></span>
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-white font-bold mb-0.5">STEP 2: インサイト抽出</p>
-                                                <p className="text-xs text-gray-500">ターゲット心理に基づくエンゲージメント最適化テキストを構築中</p>
+                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 1 ? 'text-white' : 'text-gray-500'}`}>2. ユーザー心理プロファイリング</p>
+                                                <p className="text-[11px] text-gray-400 leading-tight">ターゲット情報から深層心理・行動パターンを解析中</p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-start gap-4 transition-all duration-300 animation-delay-3000">
+                                        {/* Phase 3 */}
+                                        <div className={`flex items-start gap-4 transition-all duration-700 ${loadingPhase >= 2 ? 'opacity-100' : 'opacity-30 blur-[1px]'}`}>
                                             <div className="mt-1 relative flex items-center justify-center w-3 h-3">
-                                                <span className="absolute w-full h-full rounded-full bg-pink-500 opacity-75 animate-ping animation-delay-3000"></span>
-                                                <span className="relative w-1.5 h-1.5 rounded-full bg-pink-400"></span>
+                                                {loadingPhase === 2 && <span className="absolute w-full h-full rounded-full bg-purple-500 opacity-75 animate-ping"></span>}
+                                                <span className={`relative w-2 h-2 rounded-full ${loadingPhase >= 2 ? 'bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.8)]' : 'bg-gray-600'}`}></span>
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-white font-bold mb-0.5">STEP 3: クリエイティブ生成</p>
-                                                <p className="text-xs text-gray-500">テキストと文脈を統合し、反応率を高める高品質な画像を生成中...</p>
+                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 2 ? 'text-white' : 'text-gray-500'}`}>3. コアバリュー最適化</p>
+                                                <p className="text-[11px] text-gray-400 leading-tight">貴社・サービス情報を独自の強み（USP）に変換・統合</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Phase 4 */}
+                                        <div className={`flex items-start gap-4 transition-all duration-700 ${loadingPhase >= 3 ? 'opacity-100' : 'opacity-30 blur-[1px]'}`}>
+                                            <div className="mt-1 relative flex items-center justify-center w-3 h-3">
+                                                {loadingPhase === 3 && <span className="absolute w-full h-full rounded-full bg-pink-500 opacity-75 animate-ping"></span>}
+                                                <span className={`relative w-2 h-2 rounded-full ${loadingPhase >= 3 ? 'bg-pink-400 shadow-[0_0_8px_rgba(244,114,182,0.8)]' : 'bg-gray-600'}`}></span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 3 ? 'text-white' : 'text-gray-500'}`}>4. コピーライティング構築</p>
+                                                <p className="text-[11px] text-gray-400 leading-tight">エンゲージメントを最大化する構文とハッシュタグを生成中</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Phase 5 */}
+                                        <div className={`flex items-start gap-4 transition-all duration-700 ${loadingPhase >= 4 ? 'opacity-100' : 'opacity-30 blur-[1px]'}`}>
+                                            <div className="mt-1 relative flex items-center justify-center w-3 h-3">
+                                                {loadingPhase === 4 && <span className="absolute w-full h-full rounded-full bg-rose-500 opacity-75 animate-ping"></span>}
+                                                <span className={`relative w-2 h-2 rounded-full ${loadingPhase >= 4 ? 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.8)]' : 'bg-gray-600'}`}></span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 4 ? 'text-white' : 'text-gray-500'}`}>5. ビジュアルクリエイティブ合成</p>
+                                                <p className="text-[11px] text-gray-400 leading-tight">コンテキストに最適化した高精細クリエイティブを最終出力</p>
                                             </div>
                                         </div>
                                     </div>
