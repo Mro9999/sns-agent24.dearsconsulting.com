@@ -269,9 +269,11 @@ export default function Home() {
                             ctx.fillText(line.trim(), canvas.width / 2, startY + (index * lineHeight));
                         });
 
-                        // 影のエフェクトをリセット
-                        ctx.shadowColor = 'transparent';
+                        // 影のエフェクトを完全にリセット（これがないと後のロゴにも影が落ちて二重に見えてしまう）
+                        ctx.shadowColor = 'rgba(0,0,0,0)';
                         ctx.shadowBlur = 0;
+                        ctx.shadowOffsetX = 0;
+                        ctx.shadowOffsetY = 0;
 
                         // もしロゴ画像があれば、右下（または左上）に合成
                         if (productContext.logoUrl) {
@@ -293,6 +295,13 @@ export default function Home() {
                                 const centerY = y + size / 2;
 
                                 ctx.save();
+
+                                // シャドウリセットの念押し
+                                ctx.shadowColor = 'rgba(0,0,0,0)';
+                                ctx.shadowBlur = 0;
+                                ctx.shadowOffsetX = 0;
+                                ctx.shadowOffsetY = 0;
+
                                 // 既にSelectors.js側で丸く透過PNG化されているので、そのまま描画
                                 ctx.drawImage(logoImg, x, y, size, size);
 
