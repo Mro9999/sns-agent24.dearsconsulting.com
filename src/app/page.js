@@ -207,9 +207,11 @@ export default function Home() {
                     bgImg.onload = async () => {
                         // アスペクト比を維持しつつカバー全面に描画(中央切り抜き)
                         const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
-                        const dx = (canvas.width / scale - bgImg.width) / 2;
-                        const dy = (canvas.height / scale - bgImg.height) / 2;
-                        ctx.drawImage(bgImg, dx, dy, bgImg.width, bgImg.height, 0, 0, bgImg.width * scale, bgImg.height * scale);
+                        const drawWidth = bgImg.width * scale;
+                        const drawHeight = bgImg.height * scale;
+                        const dx = (canvas.width - drawWidth) / 2;
+                        const dy = (canvas.height - drawHeight) / 2;
+                        ctx.drawImage(bgImg, dx, dy, drawWidth, drawHeight);
 
                         // テキストを読みやすくするためのダークグラデーションフィルターを追加
                         const grad = ctx.createLinearGradient(0, canvas.height * 0.3, 0, canvas.height);
@@ -219,6 +221,7 @@ export default function Home() {
                         ctx.fillStyle = grad;
                         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+                        // AIが考えたキャッチコピー（overlay_copy）の描画
                         const text = post.overlay_copy || `${cleanProductContext.companyName ? cleanProductContext.companyName + '\\n' : ''}最新のトレンド情報をチェック！`;
 
                         // 動的フォントサイズ初期設定 (文字量が多い場合は少し小さくする)
@@ -226,7 +229,7 @@ export default function Home() {
                         ctx.font = `bold ${fontSize}px sans-serif`;
 
                         // 文字の自動折り返し（ワードラップ）処理
-                        const maxWidth = canvas.width - 120; // 左右に60pxずつの余白
+                        const maxWidth = canvas.width - 160; // 左右に80pxずつの広めの余白
                         const segmentLines = text.split('\\n');
                         const lines = [];
 
@@ -285,14 +288,10 @@ export default function Home() {
                                 const cx = canvas.width - padding - (size / 2);
                                 const cy = canvas.height - padding - (size / 2);
 
-                                ctx.save();
-                                ctx.beginPath();
-                                ctx.arc(cx, cy, size / 2, 0, Math.PI * 2, true);
-                                ctx.clip();
+                                // 既にSelectors.js側で丸く透過PNG化されているので、そのまま描画
                                 ctx.drawImage(logoImg, cx - size / 2, cy - size / 2, size, size);
-                                ctx.restore();
 
-                                // ロゴを囲う白枠
+                                // ロゴの外周を囲う白枠
                                 ctx.save();
                                 ctx.beginPath();
                                 ctx.arc(cx, cy, size / 2, 0, Math.PI * 2, true);
