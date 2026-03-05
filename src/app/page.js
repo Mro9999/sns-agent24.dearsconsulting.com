@@ -535,7 +535,7 @@ export default function Home() {
                                 </div>
 
                                 <div className="w-64 h-[1px] bg-gradient-to-r from-transparent via-purple-500 to-transparent mt-12 animate-pulse"></div>
-                                <p className="text-xs text-gray-500 mt-4">※通常10〜20秒ほどかかります。そのままお待ちください。</p>
+                                <p className="text-xs text-gray-500 mt-4">※高精度な解析と画像生成を行うため、通常50〜60秒ほどかかります。そのままお待ちください。</p>
                             </div>
                         ) : (
                             <>
