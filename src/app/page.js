@@ -228,28 +228,34 @@ export default function Home() {
                         let fontSize = text.length > 30 ? 60 : 80;
                         ctx.font = `bold ${fontSize}px sans-serif`;
 
-                        // 文字の自動折り返し（ワードラップ）処理
+                        // 文字の自動折り返し（ワードラップ）処理（単語単位で自然に）
                         const maxWidth = canvas.width - 160; // 左右に80pxずつの広めの余白
                         const segmentLines = text.split('\\n');
                         const lines = [];
 
+                        // 日本語対応の単語セグメンター（形態素や単語の区切りを判定）
+                        const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
+
                         segmentLines.forEach(segment => {
                             let currentLine = '';
-                            // 日本語は1文字ずつ幅を判定する
-                            for (let i = 0; i < segment.length; i++) {
-                                const char = segment[i];
-                                const testLine = currentLine + char;
+                            const words = Array.from(segmenter.segment(segment)).map(s => s.segment);
+
+                            words.forEach((word) => {
+                                const testLine = currentLine + word;
                                 const metrics = ctx.measureText(testLine);
                                 const testWidth = metrics.width;
 
-                                if (testWidth > maxWidth && i > 0) {
+                                // 単語を追加して幅を超えたら、一つ前の状態(currentLine)を確定させて改行
+                                if (testWidth > maxWidth && currentLine !== '') {
                                     lines.push(currentLine);
-                                    currentLine = char;
+                                    currentLine = word; // 新しい行は今の単語から始める
                                 } else {
                                     currentLine = testLine;
                                 }
+                            });
+                            if (currentLine) {
+                                lines.push(currentLine);
                             }
-                            lines.push(currentLine);
                         });
 
                         ctx.fillStyle = '#ffffff';
