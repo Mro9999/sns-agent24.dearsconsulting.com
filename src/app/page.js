@@ -170,9 +170,10 @@ export default function Home() {
         }, 100);
 
         try {
-            // APIに巨大な画像データ(Base64)が含まれたまま送るとVercelの制限(Server Action)でエラーになる原因を防ぐため、裏側へ送信するデータからはlogoUrlを除外する
+            // APIに巨大な画像データ(Base64)が含まれたまま送るとVercelの制限(Server Action)でエラーになる原因を防ぐため、裏側へ送信するデータからは画像を除外する
             const cleanProductContext = { ...productContext };
             delete cleanProductContext.logoUrl;
+            delete cleanProductContext.baseImage; // APIに渡さないように除外
 
             let siteContent = null;
             if (cleanProductContext?.websiteUrl) {
@@ -187,9 +188,113 @@ export default function Home() {
             // 2. キャプション生成 (言語指定を追加)
             const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, cleanProductContext, siteContent);
 
-            // 3. 画像生成 (Gemini 3.1 Pro利用)
-            const imgContext = post.image_idea || research.insight_summary;
-            const imageUrls = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, 1);
+            // 3. 画像合成または生成
+            let imageUrls = [];
+
+            if (productContext.baseImage) {
+                // 【新機能】ユーザー提供の生写真＋AIテキスト自動合成 (Image-to-Image代替の自動デザイン機能)
+                imageUrls = await new Promise((resolve) => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 1080;
+                    canvas.height = 1080;
+                    const ctx = canvas.getContext('2d');
+
+                    const bgImg = new Image();
+                    bgImg.crossOrigin = 'anonymous';
+
+                    bgImg.onload = async () => {
+                        // アスペクト比を維持しつつカバー全面に描画(中央切り抜き)
+                        const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
+                        const dx = (canvas.width / scale - bgImg.width) / 2;
+                        const dy = (canvas.height / scale - bgImg.height) / 2;
+                        ctx.drawImage(bgImg, dx, dy, bgImg.width, bgImg.height, 0, 0, bgImg.width * scale, bgImg.height * scale);
+
+                        // テキストを読みやすくするためのダークグラデーションフィルターを追加
+                        const grad = ctx.createLinearGradient(0, canvas.height * 0.3, 0, canvas.height);
+                        grad.addColorStop(0, 'rgba(0,0,0,0)');
+                        grad.addColorStop(0.5, 'rgba(0,0,0,0.4)');
+                        grad.addColorStop(1, 'rgba(0,0,0,0.85)');
+                        ctx.fillStyle = grad;
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                        // AIが考えたキャッチコピー（overlay_copy）の描画
+                        const text = post.overlay_copy || `${cleanProductContext.companyName ? cleanProductContext.companyName + '\\n' : ''}最新のトレンド情報をチェック！`;
+                        const lines = text.split('\\n');
+
+                        ctx.fillStyle = '#ffffff';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+
+                        // 文字のドロップシャドウ
+                        ctx.shadowColor = 'rgba(0,0,0,0.9)';
+                        ctx.shadowBlur = 25;
+                        ctx.shadowOffsetX = 3;
+                        ctx.shadowOffsetY = 3;
+
+                        // 動的フォントサイズ調整
+                        const fontSize = lines.length >= 3 ? 70 : 85;
+                        ctx.font = `bold ${fontSize}px sans-serif`;
+
+                        // 行ごとに中央やや下寄りに描画
+                        const startY = canvas.height * 0.65 - ((lines.length - 1) * (fontSize * 1.5)) / 2;
+                        lines.forEach((line, index) => {
+                            ctx.fillText(line.trim(), canvas.width / 2, startY + (index * fontSize * 1.5));
+                        });
+
+                        // 影のエフェクトをリセット
+                        ctx.shadowColor = 'transparent';
+                        ctx.shadowBlur = 0;
+
+                        // もしロゴ画像があれば、右下（または左上）に合成
+                        if (productContext.logoUrl) {
+                            try {
+                                const logoImg = new Image();
+                                logoImg.crossOrigin = 'anonymous';
+                                await new Promise((res, rej) => { logoImg.onload = res; logoImg.onerror = rej; logoImg.src = productContext.logoUrl; });
+
+                                const maxLogoSize = 250;
+                                const size = Math.min(maxLogoSize, logoImg.width, logoImg.height);
+                                const padding = 40;
+                                const cx = canvas.width - padding - (size / 2);
+                                const cy = canvas.height - padding - (size / 2);
+
+                                ctx.save();
+                                ctx.beginPath();
+                                ctx.arc(cx, cy, size / 2, 0, Math.PI * 2, true);
+                                ctx.clip();
+                                ctx.drawImage(logoImg, cx - size / 2, cy - size / 2, size, size);
+                                ctx.restore();
+
+                                // ロゴを囲う白枠
+                                ctx.save();
+                                ctx.beginPath();
+                                ctx.arc(cx, cy, size / 2, 0, Math.PI * 2, true);
+                                ctx.lineWidth = 4;
+                                ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+                                ctx.stroke();
+                                ctx.restore();
+                            } catch (e) {
+                                console.log("ロゴの合成に失敗しました", e);
+                            }
+                        }
+
+                        // 完成した画像をBase64として出力
+                        resolve([canvas.toDataURL('image/jpeg', 0.95)]);
+                    };
+
+                    bgImg.onerror = () => {
+                        console.error('Base Image load error');
+                        resolve([]); // エラー時は空配列を返す
+                    };
+
+                    bgImg.src = productContext.baseImage;
+                });
+
+            } else {
+                // 従来のAIフル画像生成 (Gemini Imagen API)
+                const imgContext = post.image_idea || research.insight_summary;
+                imageUrls = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, 1);
+            }
 
             setResult({ research, post, imageUrls });
             setStep(2);

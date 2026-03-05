@@ -242,6 +242,26 @@ export function ProductInput({ value = {}, onChange }) {
                     </div>
                 </div>
 
+                <div className="bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl mt-4">
+                    <label className="block text-sm font-bold text-blue-300 mb-2 flex items-center gap-2">
+                        ベース写真・商品画像 <span className="text-gray-300 font-normal text-xs">(推奨) AIがこれをもとにSNSバナーを作ります</span>
+                    </label>
+                    <div className="flex items-center gap-4">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageUpload(e, 'baseImage')}
+                            className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500/20 file:text-blue-300 hover:file:bg-blue-500/30 transition-all cursor-pointer"
+                        />
+                    </div>
+                    {value.baseImage && (
+                        <div className="mt-4 p-2 bg-black/50 rounded-lg inline-block border border-blue-500/20 shadow-lg">
+                            <p className="text-xs text-gray-400 mb-2">アップロード済みプレビュー</p>
+                            <img src={value.baseImage} alt="Base Preview" className="h-32 object-contain rounded border border-gray-700" />
+                        </div>
+                    )}
+                </div>
+
                 <div className="bg-orange-500/10 border border-orange-500/30 p-4 rounded-xl">
                     <label className="block text-sm font-bold text-orange-300 mb-2">
                         ブランドロゴ・透かし画像 (任意) <span className="text-gray-300 font-normal ml-2">※自動で軽量化されます</span>

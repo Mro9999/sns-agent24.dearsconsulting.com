@@ -125,6 +125,7 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 投稿�
     "caption": "絵文字を適切に使った、ターゲットに響く魅力的な投稿文（最後にCTAやURLを含む）",
     "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
     "image_idea": "この投稿文に合う、${IMAGE_MODEL}で生成するための詳細な画像プロンプト案（英語、50単語程度）",
+    "overlay_copy": "写真上にデカデカと表示する短く強烈なキャッチコピー（10文字〜最大25文字程度。視覚的に美しくするために途中に改行記号 '\\n' を入れることを推奨）",
     "variants": [
         { "style": "標準", "caption": "...", "hashtags": ["..."] },
         { "style": "エモーショナル", "caption": "...", "hashtags": ["..."] },
