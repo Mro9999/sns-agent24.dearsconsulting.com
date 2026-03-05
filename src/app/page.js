@@ -285,16 +285,20 @@ export default function Home() {
                                 const maxLogoSize = 250;
                                 const size = Math.min(maxLogoSize, logoImg.width, logoImg.height);
                                 const padding = 40;
-                                const cx = canvas.width - padding - (size / 2);
-                                const cy = canvas.height - padding - (size / 2);
+                                // 右下に配置（画像そのものの左上座標）
+                                const x = canvas.width - padding - size;
+                                const y = canvas.height - padding - size;
+                                // 円の中心座標
+                                const centerX = x + size / 2;
+                                const centerY = y + size / 2;
 
+                                ctx.save();
                                 // 既にSelectors.js側で丸く透過PNG化されているので、そのまま描画
-                                ctx.drawImage(logoImg, cx - size / 2, cy - size / 2, size, size);
+                                ctx.drawImage(logoImg, x, y, size, size);
 
                                 // ロゴの外周を囲う白枠
-                                ctx.save();
                                 ctx.beginPath();
-                                ctx.arc(cx, cy, size / 2, 0, Math.PI * 2, true);
+                                ctx.arc(centerX, centerY, size / 2, 0, Math.PI * 2, true);
                                 ctx.lineWidth = 4;
                                 ctx.strokeStyle = 'rgba(255,255,255,0.6)';
                                 ctx.stroke();

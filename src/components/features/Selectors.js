@@ -348,7 +348,11 @@ export function ProductInput({ value = {}, onChange }) {
                                         canvas.height = finalSize;
                                         const ctx = canvas.getContext('2d');
 
+                                        // 背景を完全に透過クリアする
+                                        ctx.clearRect(0, 0, finalSize, finalSize);
+
                                         // 真円にクリッピングするためのパスを作成
+                                        ctx.save();
                                         ctx.beginPath();
                                         ctx.arc(finalSize / 2, finalSize / 2, finalSize / 2, 0, Math.PI * 2, true);
                                         ctx.closePath();
@@ -359,6 +363,7 @@ export function ProductInput({ value = {}, onChange }) {
                                         const sy = (img.height - minSize) / 2;
 
                                         ctx.drawImage(img, sx, sy, minSize, minSize, 0, 0, finalSize, finalSize);
+                                        ctx.restore();
 
                                         // 丸く切り抜いた部分以外を透明にするため、必ずPNGで出力する
                                         const compressedDataUrl = canvas.toDataURL('image/png');
