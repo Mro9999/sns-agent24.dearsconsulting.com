@@ -219,28 +219,51 @@ export default function Home() {
                         ctx.fillStyle = grad;
                         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                        // AIが考えたキャッチコピー（overlay_copy）の描画
                         const text = post.overlay_copy || `${cleanProductContext.companyName ? cleanProductContext.companyName + '\\n' : ''}最新のトレンド情報をチェック！`;
-                        const lines = text.split('\\n');
+
+                        // 動的フォントサイズ初期設定 (文字量が多い場合は少し小さくする)
+                        let fontSize = text.length > 30 ? 60 : 80;
+                        ctx.font = `bold ${fontSize}px sans-serif`;
+
+                        // 文字の自動折り返し（ワードラップ）処理
+                        const maxWidth = canvas.width - 120; // 左右に60pxずつの余白
+                        const segmentLines = text.split('\\n');
+                        const lines = [];
+
+                        segmentLines.forEach(segment => {
+                            let currentLine = '';
+                            // 日本語は1文字ずつ幅を判定する
+                            for (let i = 0; i < segment.length; i++) {
+                                const char = segment[i];
+                                const testLine = currentLine + char;
+                                const metrics = ctx.measureText(testLine);
+                                const testWidth = metrics.width;
+
+                                if (testWidth > maxWidth && i > 0) {
+                                    lines.push(currentLine);
+                                    currentLine = char;
+                                } else {
+                                    currentLine = testLine;
+                                }
+                            }
+                            lines.push(currentLine);
+                        });
 
                         ctx.fillStyle = '#ffffff';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
 
-                        // 文字のドロップシャドウ
-                        ctx.shadowColor = 'rgba(0,0,0,0.9)';
-                        ctx.shadowBlur = 25;
-                        ctx.shadowOffsetX = 3;
-                        ctx.shadowOffsetY = 3;
-
-                        // 動的フォントサイズ調整
-                        const fontSize = lines.length >= 3 ? 70 : 85;
-                        ctx.font = `bold ${fontSize}px sans-serif`;
+                        // 文字のドロップシャドウ (可読性向上のため強化)
+                        ctx.shadowColor = 'rgba(0,0,0,0.95)';
+                        ctx.shadowBlur = 30;
+                        ctx.shadowOffsetX = 4;
+                        ctx.shadowOffsetY = 4;
 
                         // 行ごとに中央やや下寄りに描画
-                        const startY = canvas.height * 0.65 - ((lines.length - 1) * (fontSize * 1.5)) / 2;
+                        const lineHeight = fontSize * 1.4;
+                        const startY = canvas.height * 0.65 - ((lines.length - 1) * lineHeight) / 2;
                         lines.forEach((line, index) => {
-                            ctx.fillText(line.trim(), canvas.width / 2, startY + (index * fontSize * 1.5));
+                            ctx.fillText(line.trim(), canvas.width / 2, startY + (index * lineHeight));
                         });
 
                         // 影のエフェクトをリセット
