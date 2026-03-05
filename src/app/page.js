@@ -200,7 +200,9 @@ export default function Home() {
                     const ctx = canvas.getContext('2d');
 
                     const bgImg = new Image();
-                    bgImg.crossOrigin = 'anonymous';
+                    if (productContext.baseImage.startsWith('http')) {
+                        bgImg.crossOrigin = 'anonymous';
+                    }
 
                     bgImg.onload = async () => {
                         // アスペクト比を維持しつつカバー全面に描画(中央切り抜き)
@@ -249,7 +251,9 @@ export default function Home() {
                         if (productContext.logoUrl) {
                             try {
                                 const logoImg = new Image();
-                                logoImg.crossOrigin = 'anonymous';
+                                if (productContext.logoUrl.startsWith('http')) {
+                                    logoImg.crossOrigin = 'anonymous';
+                                }
                                 await new Promise((res, rej) => { logoImg.onload = res; logoImg.onerror = rej; logoImg.src = productContext.logoUrl; });
 
                                 const maxLogoSize = 250;

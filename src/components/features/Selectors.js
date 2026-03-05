@@ -174,6 +174,43 @@ export function ProductInput({ value = {}, onChange }) {
         onChange({ ...value, [e.target.name]: e.target.value });
     };
 
+    const handleBaseImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 15 * 1024 * 1024) {
+            alert("【サイズオーバー】\\n画像が15MBを超えています。もう少し軽い画像を選んでください。");
+            e.target.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 1200;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > MAX_WIDTH) {
+                    height = Math.round((height * MAX_WIDTH) / width);
+                    width = MAX_WIDTH;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                onChange({ ...value, baseImage: dataUrl });
+            };
+            img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    };
+
     return (
         <div className="w-full max-w-2xl mb-8 bg-white/5 p-6 rounded-2xl border border-white/10">
             <h3 className="text-xl font-bold mb-6 text-center text-white">詳細情報（任意・推奨）</h3>
@@ -250,7 +287,7 @@ export function ProductInput({ value = {}, onChange }) {
                         <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => handleImageUpload(e, 'baseImage')}
+                            onChange={handleBaseImageUpload}
                             className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500/20 file:text-blue-300 hover:file:bg-blue-500/30 transition-all cursor-pointer"
                         />
                     </div>
