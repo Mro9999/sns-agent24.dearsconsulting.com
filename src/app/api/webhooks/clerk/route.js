@@ -59,7 +59,26 @@ export async function POST(req) {
 
         if (to_email_address && process.env.SENDGRID_API_KEY) {
             try {
-                // SendGridの送信APIへ直接fetchでリクエスト
+                // Ensure we have valid string content for SendGrid, avoiding empty string errors
+                const hasHtml = typeof htmlBody === 'string' && htmlBody.trim().length > 0;
+                const hasPlain = typeof body_plain === 'string' && body_plain.trim().length > 0;
+
+                const fallbackContent = "【SNS Agent24 / 認証コードのご案内】\n新しい環境からのログインが確認されました。認証を完了するため、お手続きをお願いいたします。";
+
+                // Construct content array ensuring at least one valid object exists
+                let emailContentArray = [];
+                if (hasHtml) {
+                    emailContentArray.push({ type: 'text/html', value: htmlBody });
+                }
+                if (hasPlain) {
+                    emailContentArray.push({ type: 'text/plain', value: body_plain });
+                }
+
+                // If both are still empty (Clerk sent blank strings), use the fallback
+                if (emailContentArray.length === 0) {
+                    emailContentArray.push({ type: 'text/plain', value: fallbackContent });
+                }
+
                 const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
                     method: 'POST',
                     headers: {
@@ -69,13 +88,8 @@ export async function POST(req) {
                     body: JSON.stringify({
                         personalizations: [{ to: [{ email: to_email_address }] }],
                         from: { email: 'notifications@dearsconsulting.com', name: from_email_name || 'SNS Agent24' },
-                        subject: subject || '認証コードのご案内',
-                        content: [
-                            ...(htmlBody ? [{ type: 'text/html', value: htmlBody }] : []),
-                            ...(body_plain ? [{ type: 'text/plain', value: body_plain }] : []),
-                            // 万が一どちらも空だった場合のエラー回避用ダミーパラメーター
-                            ...(!htmlBody && !body_plain ? [{ type: 'text/plain', value: 'Content missing.' }] : [])
-                        ]
+                        subject: subject || 'SNS Agent24 認証とご案内',
+                        content: emailContentArray
                     })
                 });
 
