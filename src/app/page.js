@@ -586,7 +586,7 @@ export default function Home() {
                                                 <span className={`relative w-2 h-2 rounded-full ${loadingPhase >= 0 ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]' : 'bg-gray-600'}`}></span>
                                             </div>
                                             <div className="flex-1">
-                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 0 ? 'text-white' : 'text-gray-500'}`}>1. 市場・競合スキャン中</p>
+                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 0 ? 'text-white' : 'text-gray-500'}`}>1. 市場・競合リサーチ中</p>
                                                 <p className="text-[11px] text-gray-400 leading-tight">指定プラットフォームの最新トレンドデータと検索ボリュームを抽出</p>
                                             </div>
                                         </div>
