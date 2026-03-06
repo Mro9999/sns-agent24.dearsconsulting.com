@@ -231,13 +231,21 @@ export default function Home() {
 
                         // 文字の自動折り返し（ワードラップ）処理（単語単位で自然に）
                         const maxWidth = canvas.width - 160; // 左右に80pxずつの広めの余白
-                        const segmentLines = text.split('\\n');
+                        // AIが文字列として返した '\n' や '\\n' を実際の改行コードに置換してから分割
+                        const actualText = text.replace(/\\n/g, '\n').replace(/\\\\n/g, '\n');
+                        const segmentLines = actualText.split('\n');
                         const lines = [];
 
                         // 日本語対応の単語セグメンター（形態素や単語の区切りを判定）
                         const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
 
                         segmentLines.forEach(segment => {
+                            // 空行の場合はパディングとして空文字を入れるが、無駄な記号は描画しないように前処理
+                            if (!segment.trim()) {
+                                lines.push('');
+                                return;
+                            }
+
                             let currentLine = '';
                             const words = Array.from(segmenter.segment(segment)).map(s => s.segment);
 
@@ -248,14 +256,14 @@ export default function Home() {
 
                                 // 単語を追加して幅を超えたら、一つ前の状態(currentLine)を確定させて改行
                                 if (testWidth > maxWidth && currentLine !== '') {
-                                    lines.push(currentLine);
+                                    lines.push(currentLine.trim());
                                     currentLine = word; // 新しい行は今の単語から始める
                                 } else {
                                     currentLine = testLine;
                                 }
                             });
-                            if (currentLine) {
-                                lines.push(currentLine);
+                            if (currentLine.trim()) {
+                                lines.push(currentLine.trim());
                             }
                         });
 
@@ -270,10 +278,16 @@ export default function Home() {
                         ctx.shadowOffsetY = 4;
 
                         // 行ごとに中央やや下寄りに描画
-                        const lineHeight = fontSize * 1.4;
-                        const startY = canvas.height * 0.65 - ((lines.length - 1) * lineHeight) / 2;
+                        const lineHeight = fontSize * 1.5; // 行間を少し広げて読みやすく
+                        // 全体の高さを計算
+                        const totalTextHeight = (lines.length - 1) * lineHeight;
+                        // Y座標の開始位置（画像全体の高さを基準に中央に配置する）
+                        const startY = (canvas.height / 2) - (totalTextHeight / 2);
+
                         lines.forEach((line, index) => {
-                            ctx.fillText(line.trim(), canvas.width / 2, startY + (index * lineHeight));
+                            if (line) { // 空文字以外の場合のみ描画
+                                ctx.fillText(line, canvas.width / 2, startY + (index * lineHeight));
+                            }
                         });
 
                         // 影のエフェクトを完全にリセット（これがないと後のロゴにも影が落ちて二重に見えてしまう）
