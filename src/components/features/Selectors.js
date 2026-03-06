@@ -373,7 +373,7 @@ export function ProductInput({ value = {}, onChange }) {
                                 };
                                 reader.readAsDataURL(file);
                             }}
-                            className="flex-1 bg-black/50 border border-gray-700 rounded-lg p-2 text-white text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500 transition-colors"
+                            className="w-full max-w-full flex-1 bg-black/50 border border-gray-700 rounded-lg p-2 text-white text-[11px] sm:text-sm file:mr-2 file:sm:mr-4 file:py-1.5 file:sm:py-2 file:px-3 file:sm:px-4 file:rounded-full file:border-0 file:text-[10px] file:sm:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500 transition-colors"
                         />
                         {value.logoUrl && (
                             <div className="h-12 w-12 shrink-0 rounded-full overflow-hidden border-2 border-white/20 relative group bg-black/40">
