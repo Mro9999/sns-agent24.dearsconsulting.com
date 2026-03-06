@@ -400,19 +400,43 @@ export default function Home() {
                 {step === 0 && (
                     <>
                         {/* Logo & Hero */}
-                        <div className="flex flex-col items-center mb-12">
-                            {/* Circle Logo */}
-                            <div className="w-24 h-24 bg-black rounded-full flex flex-col items-center justify-center mb-6 shadow-xl border border-white/10">
+                        <div className="flex flex-col items-center mb-16 mt-4 w-full max-w-4xl text-center">
+                            {/* Circle Logo - Animated Pulse */}
+                            <div className="w-24 h-24 bg-black rounded-full flex flex-col items-center justify-center mb-8 shadow-[0_0_30px_rgba(255,255,255,0.05)] border border-white/10 relative group">
+                                <div className="absolute inset-0 rounded-full border border-purple-500/30 group-hover:border-purple-500/80 transition-all duration-700 animate-[spin_10s_linear_infinite]"></div>
                                 <span className="text-white text-[15px] tracking-[0.2em] font-light leading-tight">DEARS</span>
                                 <span className="text-white text-[9px] tracking-[0.1em] font-light opacity-80 mt-1">CONSULTING</span>
                             </div>
 
-                            <h1 className="text-5xl md:text-6xl font-extrabold mb-4 tracking-tight drop-shadow-md">
-                                SNS Agent24
-                            </h1>
-                            <p className="text-gray-400 text-sm md:text-[15px] max-w-xl text-center leading-relaxed">
-                                最新のトレンドリサーチから投稿作成まで全自動。見込み客の心を掴む発信を、これひとつで。
-                            </p>
+                            {/* Main Title & Hero Copy */}
+                            <div className="animate-in fade-in slide-in-from-bottom-6 duration-1000 fill-mode-both">
+                                <h1 className="text-5xl md:text-7xl font-extrabold mb-4 tracking-tight drop-shadow-2xl">
+                                    SNS Agent<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">24</span>
+                                </h1>
+                                <h2 className="text-2xl md:text-3xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-500 tracking-wide">
+                                    AIが、あなたの専属SNSマーケターに。
+                                </h2>
+                                <p className="text-gray-400 text-sm md:text-base max-w-2xl mx-auto leading-relaxed mb-10">
+                                    高精度なトレンドリサーチから、ターゲットの深層心理を突くキャプション構築、
+                                    そしてプロ品質のビジュアル合成まで。すべてを全自動で完結。
+                                </p>
+                            </div>
+
+                            {/* Feature Badges */}
+                            <div className="flex flex-wrap justify-center gap-3 w-full mb-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 fill-mode-both">
+                                <div className="flex items-center gap-2 bg-gradient-to-r from-cyan-950/40 to-cyan-900/10 border border-cyan-500/20 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                                    <span className="text-cyan-400">🔍</span>
+                                    <span className="text-gray-300 text-xs md:text-sm font-semibold tracking-wide">最新トレンドリアルタイム解析</span>
+                                </div>
+                                <div className="flex items-center gap-2 bg-gradient-to-r from-purple-950/40 to-purple-900/10 border border-purple-500/20 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+                                    <span className="text-purple-400">🧠</span>
+                                    <span className="text-gray-300 text-xs md:text-sm font-semibold tracking-wide">ターゲット深層心理プロファイリング</span>
+                                </div>
+                                <div className="flex items-center gap-2 bg-gradient-to-r from-pink-950/40 to-pink-900/10 border border-pink-500/20 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.1)]">
+                                    <span className="text-pink-400">🎨</span>
+                                    <span className="text-gray-300 text-xs md:text-sm font-semibold tracking-wide">プロ品質バナー完全自動合成</span>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Platforms selection */}
