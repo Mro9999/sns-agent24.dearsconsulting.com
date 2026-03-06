@@ -27,7 +27,7 @@ const extractJSON = (text, fallbackData = {}) => {
 };
 
 // モデル名
-const TEXT_MODEL = 'gemini-1.5-pro'; // 高機能・最新の文章・推論用モデル
+const TEXT_MODEL = 'gemini-2.5-pro'; // 高機能・最新の文章・推論用モデル
 const IMAGE_MODEL = 'imagen-3.0-generate-001'; // 最新の画像生成モデル
 
 /**
