@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit } from 'lucide-react';
+import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap } from 'lucide-react';
 import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, ProductInput } from '@/components/features/Selectors';
@@ -425,15 +425,15 @@ export default function Home() {
                             {/* Feature Badges */}
                             <div className="flex flex-wrap justify-center gap-3 w-full mb-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 fill-mode-both">
                                 <div className="flex items-center gap-2 bg-gradient-to-r from-cyan-950/40 to-cyan-900/10 border border-cyan-500/20 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-                                    <span className="text-cyan-400">🔍</span>
+                                    <Search size={16} className="text-cyan-400" />
                                     <span className="text-gray-300 text-xs md:text-sm font-semibold tracking-wide">最新トレンドリアルタイム解析</span>
                                 </div>
                                 <div className="flex items-center gap-2 bg-gradient-to-r from-purple-950/40 to-purple-900/10 border border-purple-500/20 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-                                    <span className="text-purple-400">🧠</span>
+                                    <Brain size={16} className="text-purple-400" />
                                     <span className="text-gray-300 text-xs md:text-sm font-semibold tracking-wide">ターゲット深層心理プロファイリング</span>
                                 </div>
                                 <div className="flex items-center gap-2 bg-gradient-to-r from-pink-950/40 to-pink-900/10 border border-pink-500/20 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.1)]">
-                                    <span className="text-pink-400">🎨</span>
+                                    <Palette size={16} className="text-pink-400" />
                                     <span className="text-gray-300 text-xs md:text-sm font-semibold tracking-wide">プロ品質バナー完全自動合成</span>
                                 </div>
                             </div>
@@ -449,7 +449,10 @@ export default function Home() {
                             ) : !isSignedIn ? (
                                 <div className="bg-[#1a1a24] border border-purple-500/30 rounded-2xl p-6 mb-10 w-full max-w-lg text-center shadow-2xl relative overflow-hidden">
                                     <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500"></div>
-                                    <h3 className="text-xl font-bold text-white mb-2">🎉 まずは無料でスタート！</h3>
+                                    <h3 className="text-xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+                                        <Zap size={20} className="text-yellow-400" />
+                                        まずは無料でスタート
+                                    </h3>
                                     <p className="text-gray-400 text-[13px] md:text-sm mb-6 leading-relaxed">
                                         最初から最後まで全自動でキャプションや画像を生成できる<br className="hidden md:block" />
                                         プロ向けAIエージェントを、1日1回無料で体験できます。
@@ -458,9 +461,10 @@ export default function Home() {
                                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full px-4">
                                         <button
                                             onClick={() => openSignUp()}
-                                            className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3.5 px-8 rounded-full transition-all shadow-[0_0_20px_rgba(219,39,119,0.4)] hover:shadow-[0_0_30px_rgba(219,39,119,0.6)] transform hover:-translate-y-0.5"
+                                            className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3.5 px-8 rounded-full transition-all shadow-[0_0_20px_rgba(219,39,119,0.4)] hover:shadow-[0_0_30px_rgba(219,39,119,0.6)] transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
                                         >
-                                            🚀 新規アカウント登録 (無料)
+                                            <Rocket size={18} />
+                                            新規アカウント登録 (無料)
                                         </button>
 
                                         <button
