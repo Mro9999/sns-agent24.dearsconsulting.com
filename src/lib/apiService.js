@@ -27,7 +27,7 @@ const extractJSON = (text, fallbackData = {}) => {
 };
 
 // モデル名
-const TEXT_MODEL = 'gemini-2.5-pro'; // Gemini 2.5 Pro (テキスト用最新)
+const TEXT_MODEL = 'gemini-3.1-pro'; // Gemini 3.1 Pro (テキスト用最新)
 const IMAGE_MODEL = 'imagen-3.0-generate-001'; // 最新の画像生成モデル
 
 /**
