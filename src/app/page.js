@@ -254,7 +254,7 @@ export default function Home() {
 
                         // 動的フォントサイズ初期設定 (文字量が多い場合は少し小さくする)
                         let fontSize = text.length > 30 ? 60 : 80;
-                        ctx.font = `bold ${fontSize}px sans-serif`;
+                        ctx.font = `bold ${fontSize}px "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif`;
 
                         // 文字の自動折り返し（ワードラップ）処理（単語単位で自然に）
                         const maxWidth = canvas.width - 160; // 左右に80pxずつの広めの余白
@@ -843,11 +843,11 @@ export default function Home() {
                                     </h3>
                                     <p className="text-xs text-gray-500 mb-4">{result.post.image_idea}</p>
 
-                                    {/* 複数枚画像スライダー */}
-                                    <div className="w-full flex gap-4 overflow-x-auto pb-4 snap-x">
+                                    {/* 複数枚画像コンテナ (スマホでは縦積み100%幅、PC等ではFlex横並び) */}
+                                    <div className="w-full flex flex-col md:flex-row md:flex-wrap justify-center gap-6 pb-4">
                                         {result.imageUrls && result.imageUrls.length > 0 ? (
                                             result.imageUrls.map((url, idx) => (
-                                                <div key={idx} className="min-w-[85%] md:min-w-[45%] aspect-square bg-[#1a1a1a] rounded-xl overflow-hidden relative shrink-0 snap-center shadow-lg border border-white/10">
+                                                <div key={idx} className="w-full md:w-[45%] lg:w-[30%] aspect-square bg-[#1a1a1a] rounded-xl overflow-hidden relative shadow-[0_4px_20px_rgba(0,0,0,0.5)] border border-white/10 mx-auto">
                                                     <img src={url} alt={`Generated ${idx + 1}`} className="w-full h-full object-cover" />
                                                     {/* CSSロゴ合成 (未合成時) */}
                                                     {productContext?.logoUrl && !productContext.baseImage && (
