@@ -219,8 +219,8 @@ export default function Home() {
                 await new Promise(resolve => setTimeout(resolve, 300)); // UI更新の待機
             }
 
-            // 4. 文字合成を汎用的に行うヘルパー関数 (背景画像を引数で受ける)
-            const drawCanvasImage = async (textToOverlay, bgUrl) => {
+            // 4. 文字合成を汎用的に行うヘルパー関数 (背景画像を引数で受ける, indexでエフェクト分岐)
+            const drawCanvasImage = async (textToOverlay, bgUrl, index = 0) => {
                 return new Promise((resolve) => {
                     const canvas = document.createElement('canvas');
                     canvas.width = 1080;
@@ -233,13 +233,41 @@ export default function Home() {
                     }
 
                     bgImg.onload = async () => {
+                        // エフェクト用の定数定義 (デフォルトは等倍、フィルターなし)
+                        let zoomScale = 1.0;
+                        let filter = 'none';
+
+                        // カルーセルのページ(index)に応じた視覚的バリエーション（エフェクト）の適用
+                        if (index === 1) {
+                            // 2枚目: 1.3倍ズームアップ（迫力を出す）
+                            zoomScale = 1.3;
+                        } else if (index === 2) {
+                            // 3枚目: 1.2倍ズーム ＋ グレースケール調（文字を際立たせる）
+                            zoomScale = 1.2;
+                            filter = 'grayscale(100%) brightness(0.7)';
+                        } else if (index === 3) {
+                            // 4枚目: 1.4倍ズーム ＋ セピア＆高コントラスト（シネマティック）
+                            zoomScale = 1.4;
+                            filter = 'sepia(0.6) contrast(1.2) brightness(0.8)';
+                        } else if (index === 4) {
+                            // 5枚目(結論/CTA等): 1.5倍ズーム ＋ ブラー（背景を抽象化してメッセージに集中させる）
+                            zoomScale = 1.5;
+                            filter = 'blur(4px) brightness(0.8)';
+                        }
+
                         // アスペクト比を維持しつつカバー全面に描画(中央切り抜き)
-                        const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
-                        const drawWidth = bgImg.width * scale;
-                        const drawHeight = bgImg.height * scale;
+                        // 通常のscaleにzoomScaleを掛け合わせて拡大描画する
+                        const baseScale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
+                        const finalScale = baseScale * zoomScale;
+                        const drawWidth = bgImg.width * finalScale;
+                        const drawHeight = bgImg.height * finalScale;
                         const dx = (canvas.width - drawWidth) / 2;
                         const dy = (canvas.height - drawHeight) / 2;
+
+                        ctx.save();
+                        ctx.filter = filter;
                         ctx.drawImage(bgImg, dx, dy, drawWidth, drawHeight);
+                        ctx.restore();
 
                         // テキストを読みやすくするためのダークグラデーションフィルターを追加
                         const grad = ctx.createLinearGradient(0, canvas.height * 0.3, 0, canvas.height);
@@ -381,14 +409,15 @@ export default function Home() {
             // 5. 決定したベース画像に対して、必要な枚数分(カルーセルなら5枚)の文言を合成していく
             if (baseImageUrl) {
                 if (selectedFormat === 'carousel' && post.carousel_slides && Array.isArray(post.carousel_slides)) {
-                    // カルーセルの場合は文字違いで複数枚(5枚)の画像を生成
-                    for (const slide of post.carousel_slides) {
-                        const imgData = await drawCanvasImage(slide.overlay_copy, baseImageUrl);
+                    // カルーセルの場合は文字違いで複数枚(5枚)の画像を生成 (indexを渡してエフェクトを変化させる)
+                    for (let i = 0; i < post.carousel_slides.length; i++) {
+                        const slide = post.carousel_slides[i];
+                        const imgData = await drawCanvasImage(slide.overlay_copy, baseImageUrl, i);
                         if (imgData) imageUrls.push(imgData);
                     }
                 } else if (selectedFormat !== 'video_script') {
                     // 通常の1枚画像生成（カルーセル以外）
-                    const imgData = await drawCanvasImage(post.overlay_copy, baseImageUrl);
+                    const imgData = await drawCanvasImage(post.overlay_copy, baseImageUrl, 0);
                     if (imgData) imageUrls.push(imgData);
                 }
             }
