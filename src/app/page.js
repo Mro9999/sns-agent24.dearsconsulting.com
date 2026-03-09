@@ -858,154 +858,160 @@ export default function Home() {
                             )}
 
                             {result.imageUrls && result.imageUrls.length > 0 && selectedFormat !== 'video_script' && !result.imageUrls[0].startsWith('http') && (
-                                <button
-                                    onClick={async (e) => {
-                                        // 全画像をZIPか複数回ダウンロードさせる実装も可能だが、現状は代表して1枚目をロゴ画像合成付きでDL
-                                        // カルーセル複数枚の場合は別途機能追加余地あり。今回は1枚目のダウンロード機能として維持
-                                        const targetIndex = 0;
-                                        if (productContext?.logoUrl && !productContext.baseImage) {
-                                            const btn = e.currentTarget;
-                                            const prevText = btn.innerHTML;
-                                            btn.innerHTML = '<span class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4 mr-2"></span>合成中...';
-                                            try {
-                                                const canvas = document.createElement('canvas');
-                                                const ctx = canvas.getContext('2d');
-                                                const mainImg = new Image();
-                                                mainImg.crossOrigin = 'anonymous';
-                                                await new Promise((res, rej) => { mainImg.onload = res; mainImg.onerror = rej; mainImg.src = result.imageUrls[targetIndex]; });
+                                <>
+                                    <button
+                                        onClick={async (e) => {
+                                            // 全画像をZIPか複数回ダウンロードさせる実装も可能だが、現状は代表して1枚目をロゴ画像合成付きでDL
+                                            // カルーセル複数枚の場合は別途機能追加余地あり。今回は1枚目のダウンロード機能として維持
+                                            const targetIndex = 0;
+                                            if (productContext?.logoUrl && !productContext.baseImage) {
+                                                const btn = e.currentTarget;
+                                                const prevText = btn.innerHTML;
+                                                btn.innerHTML = '<span class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4 mr-2"></span>合成中...';
+                                                try {
+                                                    const canvas = document.createElement('canvas');
+                                                    const ctx = canvas.getContext('2d');
+                                                    const mainImg = new Image();
+                                                    mainImg.crossOrigin = 'anonymous';
+                                                    await new Promise((res, rej) => { mainImg.onload = res; mainImg.onerror = rej; mainImg.src = result.imageUrls[targetIndex]; });
 
-                                                canvas.width = mainImg.width;
-                                                canvas.height = mainImg.height;
-                                                ctx.drawImage(mainImg, 0, 0);
+                                                    canvas.width = mainImg.width;
+                                                    canvas.height = mainImg.height;
+                                                    ctx.drawImage(mainImg, 0, 0);
 
-                                                const logoImg = new Image();
-                                                await new Promise((res, rej) => { logoImg.onload = res; logoImg.onerror = rej; logoImg.src = productContext.logoUrl; });
+                                                    const logoImg = new Image();
+                                                    await new Promise((res, rej) => { logoImg.onload = res; logoImg.onerror = rej; logoImg.src = productContext.logoUrl; });
 
-                                                const maxLogoW = canvas.width * 0.25;
-                                                const maxLogoH = canvas.height * 0.25;
-                                                const size = Math.min(maxLogoW, maxLogoH, logoImg.width, logoImg.height);
-                                                const padding = canvas.width * 0.04;
+                                                    const maxLogoW = canvas.width * 0.25;
+                                                    const maxLogoH = canvas.height * 0.25;
+                                                    const size = Math.min(maxLogoW, maxLogoH, logoImg.width, logoImg.height);
+                                                    const padding = canvas.width * 0.04;
 
-                                                const cw = canvas.width;
-                                                const ch = canvas.height;
-                                                const r = size / 2;
-                                                const cx = cw - padding - r;
-                                                const cy = ch - padding - r;
+                                                    const cw = canvas.width;
+                                                    const ch = canvas.height;
+                                                    const r = size / 2;
+                                                    const cx = cw - padding - r;
+                                                    const cy = ch - padding - r;
 
-                                                ctx.save();
-                                                ctx.globalAlpha = 0.95;
-                                                ctx.shadowColor = 'rgba(0,0,0,0.5)';
-                                                ctx.shadowBlur = 15;
-                                                ctx.shadowOffsetX = 2;
-                                                ctx.shadowOffsetY = 2;
+                                                    ctx.save();
+                                                    ctx.globalAlpha = 0.95;
+                                                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                                                    ctx.shadowBlur = 15;
+                                                    ctx.shadowOffsetX = 2;
+                                                    ctx.shadowOffsetY = 2;
 
-                                                ctx.beginPath();
-                                                ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
-                                                ctx.fillStyle = 'rgba(20,20,20,0.5)';
-                                                ctx.fill();
-                                                ctx.restore();
+                                                    ctx.beginPath();
+                                                    ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
+                                                    ctx.fillStyle = 'rgba(20,20,20,0.5)';
+                                                    ctx.fill();
+                                                    ctx.restore();
 
-                                                ctx.save();
-                                                ctx.beginPath();
-                                                ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
-                                                ctx.clip();
-                                                ctx.drawImage(logoImg, cx - r, cy - r, size, size);
-                                                ctx.restore();
+                                                    ctx.save();
+                                                    ctx.beginPath();
+                                                    ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
+                                                    ctx.clip();
+                                                    ctx.drawImage(logoImg, cx - r, cy - r, size, size);
+                                                    ctx.restore();
 
-                                                ctx.save();
-                                                ctx.beginPath();
-                                                ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
-                                                ctx.lineWidth = 2;
-                                                ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-                                                ctx.stroke();
-                                                ctx.restore();
+                                                    ctx.save();
+                                                    ctx.beginPath();
+                                                    ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
+                                                    ctx.lineWidth = 2;
+                                                    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+                                                    ctx.stroke();
+                                                    ctx.restore();
 
-                                                const a = document.createElement('a');
-                                                a.href = canvas.toDataURL('image/jpeg', 0.95);
-                                                a.download = `sns-image-with-logo-${Date.now()}.jpg`;
-                                                a.click();
-                                            } catch (err) {
-                                                console.error(err);
-                                                alert("ロゴ画像の合成に失敗しました");
-                                            } finally {
-                                                btn.innerHTML = prevText;
-                                            }
-                                        } else {
-                                            // 複数枚ある場合はスマホのネイティブ共有機能(カメラロールへ保存可)か個別ダウンロードを行う
-                                            const btn = e.currentTarget;
-                                            const prevText = btn.innerHTML;
-                                            btn.innerHTML = '<span class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4 mr-2"></span>画像を準備中...';
-                                            btn.disabled = true;
+                                                    const a = document.createElement('a');
+                                                    a.href = canvas.toDataURL('image/jpeg', 0.95);
+                                                    a.download = `sns-image-with-logo-${Date.now()}.jpg`;
+                                                    a.click();
+                                                } catch (err) {
+                                                    console.error(err);
+                                                    alert("ロゴ画像の合成に失敗しました");
+                                                } finally {
+                                                    btn.innerHTML = prevText;
+                                                }
+                                            } else {
+                                                // 複数枚ある場合はスマホのネイティブ共有機能(カメラロールへ保存可)か個別ダウンロードを行う
+                                                const btn = e.currentTarget;
+                                                const prevText = btn.innerHTML;
+                                                btn.innerHTML = '<span class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4 mr-2"></span>画像を準備中...';
+                                                btn.disabled = true;
 
-                                            try {
-                                                console.log("Starting multi-image processing...", result.imageUrls.length, "images");
-                                                const files = [];
+                                                try {
+                                                    console.log("Starting multi-image processing...", result.imageUrls.length, "images");
+                                                    const files = [];
 
-                                                // 1. 各画像のBlobを取得し、Fileオブジェクトに変換する
-                                                for (let i = 0; i < result.imageUrls.length; i++) {
-                                                    const url = result.imageUrls[i];
-                                                    console.log(`Fetching image ${i + 1}...`);
+                                                    // 1. 各画像のBlobを取得し、Fileオブジェクトに変換する
+                                                    for (let i = 0; i < result.imageUrls.length; i++) {
+                                                        const url = result.imageUrls[i];
+                                                        console.log(`Fetching image ${i + 1}...`);
 
-                                                    let blob;
-                                                    if (url.startsWith('data:image')) {
-                                                        const res = await fetch(url);
-                                                        blob = await res.blob();
+                                                        let blob;
+                                                        if (url.startsWith('data:image')) {
+                                                            const res = await fetch(url);
+                                                            blob = await res.blob();
+                                                        } else {
+                                                            // CORSエラーを防ぐためプロキシAPIを経由
+                                                            const proxyUrl = `/api/download?url=${encodeURIComponent(url)}`;
+                                                            const res = await fetch(proxyUrl);
+                                                            if (!res.ok) {
+                                                                throw new Error(`Proxy HTTP error! status: ${res.status}`);
+                                                            }
+                                                            blob = await res.blob();
+                                                        }
+
+                                                        const file = new File([blob], `sns-image-${i + 1}.jpg`, { type: blob.type || 'image/jpeg' });
+                                                        files.push(file);
+                                                    }
+
+                                                    // スマホ(iOS/Android等)かPCかを簡易判定する
+                                                    console.log("Checking Device & Web Share API compatibility...");
+                                                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                                                    if (!isMobile) {
+                                                        alert("画像のダウンロード機能はスマートフォン環境（iOS/Android）のみ対応しています。\nPCをご利用の場合は、恐れ入りますがスマートフォンからアクセスし直して保存をお願いいたします。");
+                                                        return;
+                                                    }
+
+                                                    // 2. スマホかつWeb Share APIが利用可能な場合のみ「〜枚の画像を保存」を呼び出す
+                                                    if (navigator.canShare && navigator.canShare({ files: files })) {
+                                                        try {
+                                                            await navigator.share({
+                                                                files: files,
+                                                                title: 'SNS Agent24 カルーセル画像'
+                                                            });
+                                                            console.log("Shared successfully via Web Share API.");
+                                                        } catch (shareErr) {
+                                                            console.error("Web Share API error or cancelled:", shareErr);
+                                                            // ユーザーのキャンセル(AbortError)以外で失敗した場合のアラート
+                                                            if (shareErr.name !== 'AbortError') {
+                                                                alert("お使いの端末・ブラウザでは一括保存機能がサポートされていないか、エラーが発生しました。");
+                                                            }
+                                                        }
                                                     } else {
-                                                        // CORSエラーを防ぐためプロキシAPIを経由
-                                                        const proxyUrl = `/api/download?url=${encodeURIComponent(url)}`;
-                                                        const res = await fetch(proxyUrl);
-                                                        if (!res.ok) {
-                                                            throw new Error(`Proxy HTTP error! status: ${res.status}`);
-                                                        }
-                                                        blob = await res.blob();
+                                                        // スマホだがWeb Share API非対応の場合のアラート
+                                                        alert("お使いのブラウザは画像の一括保存（シェア機能）に対応していません。\nSafariやChromeなどの標準ブラウザをご利用ください。");
                                                     }
-
-                                                    const file = new File([blob], `sns-image-${i + 1}.jpg`, { type: blob.type || 'image/jpeg' });
-                                                    files.push(file);
+                                                } catch (err) {
+                                                    console.error("Multi-image generation/download error:", err);
+                                                    alert("画像の一括準備・ダウンロード中にエラーが発生しました。コンソールをご確認ください。");
+                                                } finally {
+                                                    btn.innerHTML = prevText;
+                                                    btn.disabled = false;
+                                                    console.log("Download process finished.");
                                                 }
-
-                                                // スマホ(iOS/Android等)かPCかを簡易判定する
-                                                console.log("Checking Device & Web Share API compatibility...");
-                                                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-                                                if (!isMobile) {
-                                                    alert("画像のダウンロード機能はスマートフォン環境（iOS/Android）のみ対応しています。\nPCをご利用の場合は、恐れ入りますがスマートフォンからアクセスし直して保存をお願いいたします。");
-                                                    return;
-                                                }
-
-                                                // 2. スマホかつWeb Share APIが利用可能な場合のみ「〜枚の画像を保存」を呼び出す
-                                                if (navigator.canShare && navigator.canShare({ files: files })) {
-                                                    try {
-                                                        await navigator.share({
-                                                            files: files,
-                                                            title: 'SNS Agent24 カルーセル画像'
-                                                        });
-                                                        console.log("Shared successfully via Web Share API.");
-                                                    } catch (shareErr) {
-                                                        console.error("Web Share API error or cancelled:", shareErr);
-                                                        // ユーザーのキャンセル(AbortError)以外で失敗した場合のアラート
-                                                        if (shareErr.name !== 'AbortError') {
-                                                            alert("お使いの端末・ブラウザでは一括保存機能がサポートされていないか、エラーが発生しました。");
-                                                        }
-                                                    }
-                                                } else {
-                                                    // スマホだがWeb Share API非対応の場合のアラート
-                                                    alert("お使いのブラウザは画像の一括保存（シェア機能）に対応していません。\nSafariやChromeなどの標準ブラウザをご利用ください。");
-                                                }
-                                            } catch (err) {
-                                                console.error("Multi-image generation/download error:", err);
-                                                alert("画像の一括準備・ダウンロード中にエラーが発生しました。コンソールをご確認ください。");
-                                            } finally {
-                                                btn.innerHTML = prevText;
-                                                btn.disabled = false;
-                                                console.log("Download process finished.");
                                             }
-                                        }
-                                    }}
-                                    className="w-full py-3 mt-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 rounded-lg text-sm font-bold flex flex-row items-center justify-center gap-2 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Download size={16} /> {selectedFormat === 'carousel' ? 'すべての画像をダウンロード' : '画像をダウンロード'}
-                                </button>
+                                        }}
+                                        className="w-full py-3 mt-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 rounded-lg text-sm font-bold flex flex-row items-center justify-center gap-2 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <Download size={16} /> {selectedFormat === 'carousel' ? 'すべての画像をダウンロード' : '画像をダウンロード'}
+                                    </button>
+                                    <p className="text-[11px] text-gray-400 mt-2 text-center leading-relaxed">
+                                        ※画像保存（シェア機能）は<strong className="text-gray-300">スマートフォン専用</strong>です。<br />
+                                        PC等をご利用の方は、お手数ですがスマホから再度ご確認ください。
+                                    </p>
+                                </>
                             )}
                         </div>
                     </div>
