@@ -26,6 +26,24 @@ export default function Home() {
     const [selectedFormat, setSelectedFormat] = useState('carousel'); // デフォルトはカルーセル(5枚)
     const [productContext, setProductContext] = useState({});
 
+    // UIリッチ化用のステート
+    const [loadingProgress, setLoadingProgress] = useState(0); // 0〜99の疑似進捗
+    const [terminalLogs, setTerminalLogs] = useState([]); // サイバー風の解析ダミーログ
+    const DUMMY_LOGS = [
+        "Initializing neural network...",
+        "Connecting to data nodes...",
+        "Fetching global trend metrics...",
+        "Mapping user persona vectors...",
+        "Analyzing sentiment patterns...",
+        "Extracting high-engagement hashtags...",
+        "Synthesizing core value proposition...",
+        "Generating linguistic variations...",
+        "Optimizing CTA for conversions...",
+        "Applying visual aesthetic filters...",
+        "Rendering canvas nodes...",
+        "Finalizing prompt structures..."
+    ];
+
     const [isStateLoaded, setIsStateLoaded] = useState(false);
 
     useEffect(() => {
@@ -93,6 +111,47 @@ export default function Home() {
         localStorage.setItem('snsAgent24_usage', JSON.stringify(usageData));
         return true;
     };
+
+    // --- ロード画面用のSF風演出エフェクト ---
+    useEffect(() => {
+        let progressInterval;
+        let logInterval;
+
+        if (loading) {
+            // プログレスバー（HUD）カウントアップ（0から徐々に98までランダムに増加）
+            setLoadingProgress(0);
+            progressInterval = setInterval(() => {
+                setLoadingProgress(prev => {
+                    const next = prev + Math.floor(Math.random() * 5) + 1;
+                    return next > 98 ? 98 : next; // 最大98で止める（完了時に100にする）
+                });
+            }, 800);
+
+            // ターミナル風に次々とダミーログを追加していく
+            setTerminalLogs(["> System boot sequence initiated."]);
+            logInterval = setInterval(() => {
+                setTerminalLogs(prev => {
+                    const randomLog = DUMMY_LOGS[Math.floor(Math.random() * DUMMY_LOGS.length)];
+                    const newLog = `> ${randomLog} [${new Date().toISOString().split('T')[1].slice(0, -1)}]`;
+                    const updated = [...prev, newLog];
+                    // 最新の8件程度だけ保持して表示領域におさめる
+                    if (updated.length > 8) updated.shift();
+                    return updated;
+                });
+            }, 1200);
+        } else {
+            // ロード完了時は100%にして終了
+            setLoadingProgress(100);
+            if (progressInterval) clearInterval(progressInterval);
+            if (logInterval) clearInterval(logInterval);
+        }
+
+        return () => {
+            if (progressInterval) clearInterval(progressInterval);
+            if (logInterval) clearInterval(logInterval);
+        };
+    }, [loading]);
+    // ----------------------------------------
 
     const handleCheckout = async (interval = 'month') => {
         try {
@@ -650,42 +709,64 @@ export default function Home() {
                         </div>
 
                         {loading ? (
-                            <div className="w-full flex flex-col items-center justify-center py-10 animate-in fade-in zoom-in duration-500">
-                                <div className="relative w-48 h-48 mb-8 flex items-center justify-center">
+                            <div className="w-full flex flex-col items-center justify-center py-6 animate-in fade-in zoom-in duration-700">
+                                {/* インジケーター＆スピナー部分 */}
+                                <div className="relative w-48 h-48 mb-6 flex items-center justify-center">
                                     {/* 外側の高速回転データリング */}
-                                    <div className="absolute inset-0 rounded-full border border-t-[3px] border-r-transparent border-b-transparent border-l-transparent border-cyan-400 animate-spin-fast"></div>
-                                    <div className="absolute inset-2 rounded-full border border-b-[3px] border-t-transparent border-r-transparent border-l-transparent border-pink-500 animate-spin-slow-reverse"></div>
-                                    <div className="absolute inset-6 rounded-full border border-dashed border-purple-500/50 animate-spin-very-slow"></div>
-                                    <div className="absolute inset-8 rounded-full border-[0.5px] border-white/20"></div>
+                                    <div className="absolute inset-0 rounded-full border border-t-[3px] border-r-transparent border-b-transparent border-l-transparent border-cyan-400 animate-spin-fast shadow-[0_0_15px_rgba(6,182,212,0.5)]"></div>
+                                    <div className="absolute inset-1 rounded-full border border-b-[3px] border-t-transparent border-r-transparent border-l-transparent border-pink-500 animate-[spin_2s_linear_infinite_reverse] shadow-[0_0_15px_rgba(236,72,153,0.5)]"></div>
+                                    <div className="absolute inset-5 rounded-full border border-dashed border-purple-500/50 animate-[spin_6s_linear_infinite]"></div>
+                                    <div className="absolute inset-8 rounded-full border-[0.5px] border-white/10"></div>
+
+                                    {/* パルス（波紋）エフェクト */}
+                                    <div className="absolute inset-4 rounded-full border border-cyan-400/30 animate-ping"></div>
 
                                     {/* 中央の「AI・データ解析」コア部分 */}
-                                    <div className="absolute w-24 h-24 bg-gradient-to-tr from-purple-900 via-indigo-900 to-black rounded-full shadow-[0_0_50px_rgba(6,182,212,0.6)] flex items-center justify-center overflow-hidden">
+                                    <div className="absolute w-28 h-28 bg-gradient-to-tr from-purple-900 via-indigo-900 to-black rounded-full shadow-[0_0_50px_rgba(6,182,212,0.8)] flex flex-col items-center justify-center overflow-hidden border border-cyan-500/30">
                                         {/* スキャンラインエフェクト */}
-                                        <div className="absolute w-full h-[2px] bg-cyan-400 opacity-80 blur-[1px] shadow-[0_0_10px_#06b6d4] animate-pulse-scan top-0 bottom-0 m-auto"></div>
+                                        <div className="absolute w-full h-[2px] bg-cyan-400 opacity-90 blur-[1px] shadow-[0_0_15px_#06b6d4] animate-pulse-scan top-0 bottom-0 m-auto"></div>
 
-                                        {/* 3D回転するテキスト (BrainCircuitの代替) */}
-                                        <div className="relative z-10 animate-spin-3d-y font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-br from-cyan-300 to-purple-400 text-sm">
-                                            Agent 24
+                                        {/* HUDプログレス表示 (0〜100%) */}
+                                        <div className="relative z-10 flex flex-col items-center justify-center">
+                                            <span className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-cyan-200 drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] tabular-nums tracking-tighter">
+                                                {loadingProgress}
+                                                <span className="text-sm text-cyan-400 opacity-80">%</span>
+                                            </span>
+                                            <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-cyan-400 mt-1 opacity-80">
+                                                Processing
+                                            </span>
                                         </div>
                                     </div>
 
                                     {/* 周囲のデータパーティクル（疑似） */}
-                                    <div className="absolute top-0 right-8 w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_8px_#06b6d4] animate-ping"></div>
-                                    <div className="absolute bottom-4 left-4 w-1.5 h-1.5 bg-pink-500 rounded-full shadow-[0_0_8px_#ec4899] animate-ping animation-delay-500"></div>
+                                    <div className="absolute top-0 right-8 w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_10px_#06b6d4] animate-ping"></div>
+                                    <div className="absolute bottom-4 left-4 w-1.5 h-1.5 bg-pink-500 rounded-full shadow-[0_0_10px_#ec4899] animate-ping animation-delay-500"></div>
+                                    <div className="absolute top-1/2 -right-4 w-1 h-1 bg-purple-400 rounded-full shadow-[0_0_8px_#a855f7] animate-pulse"></div>
                                 </div>
 
-                                <h3 className="text-2xl font-black tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 mb-8 animate-pulse text-center drop-shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-                                    AI ANALYSIS & GENERATION
+                                <h3 className="text-xl font-black tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 mb-8 animate-pulse text-center drop-shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                                    AI SYNC IN PROGRESS
                                 </h3>
 
-                                <div className="w-full max-w-sm bg-black/50 border border-white/10 rounded-xl p-6 shadow-2xl backdrop-blur-sm relative overflow-hidden">
-                                    {/* background progress */}
-                                    <div
-                                        className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-cyan-900/20 to-purple-900/20 transition-all duration-[9000ms] ease-linear"
-                                        style={{ width: `${(loadingPhase + 1) * 20}%` }}
-                                    ></div>
+                                <div className="w-full flex border h-4 mt-8 rounded-full border-white/20">
+                                    <div className="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-full transition-all duration-300 ease-out shadow-[0_0_15px_rgba(168,85,247,0.8)]" style={{ width: `${loadingProgress}%` }}></div>
+                                </div>
 
-                                    <div className="flex flex-col space-y-5 font-medium text-sm text-gray-300 relative z-10">
+                                {/* ランダムな解析ダミーログ表示コンソール */}
+                                <div className="w-full mt-6 bg-black/80 border border-green-500/30 rounded-lg p-3 h-28 overflow-hidden relative shadow-[inset_0_0_20px_rgba(0,0,0,1)]">
+                                    <div className="absolute top-0 left-0 w-full h-[1px] bg-green-500/20"></div>
+                                    <div className="flex flex-col justify-end h-full">
+                                        {terminalLogs.map((log, i) => (
+                                            <div key={i} className={`font-mono text-[10px] md:text-xs text-green-400/90 leading-relaxed ${i === terminalLogs.length - 1 ? 'animate-pulse text-green-300 font-bold' : 'opacity-70'}`}>
+                                                {log}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="absolute bottom-0 left-0 w-full h-[1px] bg-green-500/20"></div>
+                                </div>
+
+                                <div className="w-full max-w-sm mt-8">
+                                    <div className="flex flex-col space-y-4 font-medium text-sm text-gray-300 relative z-10 w-full">
                                         {/* Phase 1 */}
                                         <div className={`flex items-start gap-4 transition-all duration-700 ${loadingPhase >= 0 ? 'opacity-100' : 'opacity-30 blur-[1px]'}`}>
                                             <div className="mt-1 relative flex items-center justify-center w-3 h-3">
