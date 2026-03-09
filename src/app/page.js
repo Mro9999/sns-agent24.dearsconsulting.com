@@ -118,14 +118,26 @@ export default function Home() {
         let logInterval;
 
         if (loading) {
-            // プログレスバー（HUD）カウントアップ（0から徐々に98までランダムに増加）
-            setLoadingProgress(0);
+            // プログレスバー（HUD）カウントアップ（フェーズに応じた進行目安）
+            // 全体を100%とし、各フェーズ(0〜4)ごとに約20%ずつを割り当てる
             progressInterval = setInterval(() => {
                 setLoadingProgress(prev => {
-                    const next = prev + Math.floor(Math.random() * 5) + 1;
-                    return next > 98 ? 98 : next; // 最大98で止める（完了時に100にする）
+                    // 現在のloadingPhase (0〜4... 5は完了相当とする)
+                    // 仮に現在フェーズの上限(20, 40, 60, 80, 95)を設定
+                    const phaseMax = Math.min((loadingPhase + 1) * 20, 98);
+
+                    if (prev < phaseMax) {
+                        // 上限に達していなければランダムに1〜3%アップ
+                        return prev + Math.floor(Math.random() * 3) + 1;
+                    } else if (prev > phaseMax) {
+                        // 極端なフェーズ後退時は一旦調整
+                        return phaseMax;
+                    } else {
+                        // フェーズの上限で一時停止させたまま待たせる
+                        return prev;
+                    }
                 });
-            }, 800);
+            }, 600);
 
             // ターミナル風に次々とダミーログを追加していく
             setTerminalLogs(["> System boot sequence initiated."]);
@@ -150,7 +162,7 @@ export default function Home() {
             if (progressInterval) clearInterval(progressInterval);
             if (logInterval) clearInterval(logInterval);
         };
-    }, [loading]);
+    }, [loading, loadingPhase]); // loadingPhaseを依存配列に追加してフェーズ変化時に即反映させる
     // ----------------------------------------
 
     const handleCheckout = async (interval = 'month') => {
