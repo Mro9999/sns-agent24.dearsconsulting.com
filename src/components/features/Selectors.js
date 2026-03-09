@@ -29,6 +29,36 @@ export function CategorySelector({ selected, onSelect }) {
     );
 }
 
+export function FormatSelector({ selected, onSelect, isPro }) {
+    const formats = [
+        { id: 'single', label: '1枚画像', desc: '通常のシングル投稿' },
+        { id: 'carousel', label: 'カルーセル', desc: '解説型・複数枚' },
+        { id: 'video_script', label: 'ショート動画', desc: '台本と画面指示', isProOnly: true },
+    ];
+    return (
+        <div className="w-full max-w-2xl mb-8">
+            <h3 className="text-xl font-bold mb-4 text-center">投稿フォーマット</h3>
+            <div className="grid grid-cols-2 md:flex md:flex-wrap justify-center gap-3 w-full">
+                {formats.map(f => {
+                    const isDisabled = f.isProOnly && !isPro;
+                    return (
+                        <button
+                            key={f.id}
+                            disabled={isDisabled}
+                            onClick={() => onSelect(f.id)}
+                            className={`p-3 md:px-5 md:py-3 rounded-xl md:rounded-full text-sm font-semibold transition-all border flex flex-col items-center justify-center gap-1 ${selected === f.id ? 'bg-indigo-600/30 border-indigo-500 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white'
+                                } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''} ${f.id === 'video_script' ? 'col-span-2 md:col-span-1' : ''}`}
+                        >
+                            <span>{f.label}</span>
+                            <span className="text-[10px] font-normal opacity-80">{f.desc}</span>
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 export function TargetSelector({ selected, onSelect, isPro }) {
     const targets = [
         { id: 'teens', label: '10代 (中高生)' },

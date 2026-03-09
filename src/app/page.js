@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap } from 'lucide-react';
 import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
-import { CategorySelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, ProductInput } from '@/components/features/Selectors';
+import { CategorySelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
 
 export default function Home() {
@@ -23,6 +23,7 @@ export default function Home() {
     const [selectedBusinessStyle, setSelectedBusinessStyle] = useState(null);
     const [selectedTone, setSelectedTone] = useState(null);
     const [selectedLanguage, setSelectedLanguage] = useState('ja'); // デフォルトは日本語
+    const [selectedFormat, setSelectedFormat] = useState('carousel'); // デフォルトはカルーセル(5枚)
     const [productContext, setProductContext] = useState({});
 
     const [isStateLoaded, setIsStateLoaded] = useState(false);
@@ -39,6 +40,7 @@ export default function Home() {
                 if (parsed.selectedBusinessStyle) setSelectedBusinessStyle(parsed.selectedBusinessStyle);
                 if (parsed.selectedTone) setSelectedTone(parsed.selectedTone);
                 if (parsed.selectedLanguage) setSelectedLanguage(parsed.selectedLanguage);
+                if (parsed.selectedFormat) setSelectedFormat(parsed.selectedFormat);
                 if (parsed.productContext) setProductContext(parsed.productContext);
             } catch (e) {
                 console.error("Failed to parse form state", e);
@@ -57,10 +59,11 @@ export default function Home() {
                 selectedBusinessStyle,
                 selectedTone,
                 selectedLanguage,
+                selectedFormat,
                 productContext
             }));
         }
-    }, [selectedPlatform, selectedCategory, selectedTarget, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, productContext, isStateLoaded]);
+    }, [selectedPlatform, selectedCategory, selectedTarget, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, selectedFormat, productContext, isStateLoaded]);
 
     const [loading, setLoading] = useState(false);
     const [loadingPhase, setLoadingPhase] = useState(0);
@@ -151,7 +154,7 @@ export default function Home() {
     };
 
     const handleGenerate = async () => {
-        if (!selectedCategory || !selectedTarget || !selectedGender || !selectedBusinessStyle || !selectedTone) {
+        if (!selectedCategory || !selectedTarget || !selectedGender || !selectedBusinessStyle || !selectedTone || !selectedFormat) {
             alert("すべての項目を選択してください");
             return;
         }
@@ -164,6 +167,7 @@ export default function Home() {
         }
 
         setLoading(true);
+        setLoadingPhase(0); // 0: "世界中のトレンドを分析しています..."
 
         // ユーザーが生成中画面(ローディング)に気づけるようにDOM更新後に一番上へスクロールする
         setTimeout(() => {
@@ -185,23 +189,46 @@ export default function Home() {
 
             // 1. リサーチ
             const research = await researchTrends(selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedPlatform, cleanProductContext?.location, siteContent);
+            setLoadingPhase(1); // 1: "ターゲットの深層心理に基づいてキャプションを構築中..."
+            await new Promise(resolve => setTimeout(resolve, 300)); // ReactのUI再レンダリングを確実に行わせるための待機（ローディングアニメの真実味を出す）
 
-            // 2. キャプション生成 (言語指定を追加)
-            const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, cleanProductContext, siteContent);
+            // 2. キャプション生成 (言語指定・フォーマット指定を追加)
+            const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, cleanProductContext, siteContent, selectedFormat);
+            setLoadingPhase(2); // 2: "デザインを作成中..."
+            await new Promise(resolve => setTimeout(resolve, 300)); // ReactのUI再レンダリングを確実に行わせるための待機
 
-            // 3. 画像合成または生成
+            // 3. ベースとなる背景画像の取得・生成
             let imageUrls = [];
+            let baseImageUrl = productContext.baseImage;
 
-            if (productContext.baseImage) {
-                // 【新機能】ユーザー提供の生写真＋AIテキスト自動合成 (Image-to-Image代替の自動デザイン機能)
-                imageUrls = await new Promise((resolve) => {
+            if (!baseImageUrl) {
+                // ユーザーアップロード画像がない場合、AI(Gemini)で背景用画像を1枚生成する
+                setLoadingPhase(3); // 3: "画像を生成・合成中..."
+                await new Promise(resolve => setTimeout(resolve, 300)); // UI更新の待機
+
+                const imgContext = post.image_idea || research.insight_summary;
+                const generated = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, 1);
+
+                if (generated && generated.length > 0) {
+                    baseImageUrl = generated[0];
+                } else {
+                    throw new Error("AI画像生成に失敗しました（結果が空です）。");
+                }
+            } else {
+                setLoadingPhase(3); // 3: "画像を生成・合成中..."
+                await new Promise(resolve => setTimeout(resolve, 300)); // UI更新の待機
+            }
+
+            // 4. 文字合成を汎用的に行うヘルパー関数 (背景画像を引数で受ける)
+            const drawCanvasImage = async (textToOverlay, bgUrl) => {
+                return new Promise((resolve) => {
                     const canvas = document.createElement('canvas');
                     canvas.width = 1080;
                     canvas.height = 1080;
                     const ctx = canvas.getContext('2d');
 
                     const bgImg = new Image();
-                    if (productContext.baseImage.startsWith('http')) {
+                    if (bgUrl && bgUrl.startsWith('http')) {
                         bgImg.crossOrigin = 'anonymous';
                     }
 
@@ -222,8 +249,8 @@ export default function Home() {
                         ctx.fillStyle = grad;
                         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                        // AIが考えたキャッチコピー（overlay_copy）の描画
-                        const text = post.overlay_copy || `${cleanProductContext.companyName ? cleanProductContext.companyName + '\\n' : ''}最新のトレンド情報をチェック！`;
+                        // 描画するテキスト
+                        const text = textToOverlay || `${cleanProductContext.companyName ? cleanProductContext.companyName + '\\n' : ''}最新のトレンド情報をチェック！`;
 
                         // 動的フォントサイズ初期設定 (文字量が多い場合は少し小さくする)
                         let fontSize = text.length > 30 ? 60 : 80;
@@ -339,24 +366,34 @@ export default function Home() {
                         }
 
                         // 完成した画像をBase64として出力
-                        resolve([canvas.toDataURL('image/jpeg', 0.95)]);
+                        resolve(canvas.toDataURL('image/jpeg', 0.95));
                     };
 
                     bgImg.onerror = () => {
                         console.error('Base Image load error');
-                        resolve([]); // エラー時は空配列を返す
+                        resolve(null); // エラー時はnullを返す
                     };
 
-                    bgImg.src = productContext.baseImage;
+                    bgImg.src = bgUrl;
                 });
+            };
 
-            } else {
-                // 従来のAIフル画像生成 (Gemini Imagen API)
-                const imgContext = post.image_idea || research.insight_summary;
-                imageUrls = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, 1);
+            // 5. 決定したベース画像に対して、必要な枚数分(カルーセルなら5枚)の文言を合成していく
+            if (baseImageUrl) {
+                if (selectedFormat === 'carousel' && post.carousel_slides && Array.isArray(post.carousel_slides)) {
+                    // カルーセルの場合は文字違いで複数枚(5枚)の画像を生成
+                    for (const slide of post.carousel_slides) {
+                        const imgData = await drawCanvasImage(slide.overlay_copy, baseImageUrl);
+                        if (imgData) imageUrls.push(imgData);
+                    }
+                } else if (selectedFormat !== 'video_script') {
+                    // 通常の1枚画像生成（カルーセル以外）
+                    const imgData = await drawCanvasImage(post.overlay_copy, baseImageUrl);
+                    if (imgData) imageUrls.push(imgData);
+                }
             }
 
-            setResult({ research, post, imageUrls, isSynthesized: !!productContext.baseImage });
+            setResult({ research, post, imageUrls, isSynthesized: true });
             setStep(2);
             setTimeout(() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -659,50 +696,27 @@ export default function Home() {
                                 <p className="text-xs text-gray-500 mt-4">※高精度な解析と画像生成を行うため、通常50〜60秒ほどかかります。そのままお待ちください。</p>
                             </div>
                         ) : (
-                            <>
+                            <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-500 gap-2">
                                 <CategorySelector selected={{ id: selectedCategory }} onSelect={(c) => setSelectedCategory(c.id)} />
+                                <TargetSelector selected={selectedTarget} onSelect={setSelectedTarget} isPro={isPro} />
+                                <GenderSelector selected={selectedGender} onSelect={setSelectedGender} />
+                                <BusinessStyleSelector selected={selectedBusinessStyle} onSelect={setSelectedBusinessStyle} />
+                                <ToneSelector selected={selectedTone} onSelect={setSelectedTone} />
+                                <FormatSelector selected={selectedFormat} onSelect={setSelectedFormat} isPro={isPro} />
+                                <LanguageSelector selected={selectedLanguage} onSelect={setSelectedLanguage} isPro={isPro} />
+                                <ProductInput value={productContext} onChange={setProductContext} />
 
-                                {selectedCategory && (
-                                    <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-500">
-                                        <TargetSelector selected={selectedTarget} onSelect={setSelectedTarget} isPro={isPro} />
-
-                                        {selectedTarget && (
-                                            <>
-                                                <GenderSelector selected={selectedGender} onSelect={setSelectedGender} />
-
-                                                {selectedGender && (
-                                                    <>
-                                                        <BusinessStyleSelector selected={selectedBusinessStyle} onSelect={setSelectedBusinessStyle} />
-
-                                                        {selectedBusinessStyle && (
-                                                            <>
-                                                                <ToneSelector selected={selectedTone} onSelect={setSelectedTone} />
-
-                                                                {selectedTone && (
-                                                                    <>
-                                                                        <LanguageSelector selected={selectedLanguage} onSelect={setSelectedLanguage} isPro={isPro} />
-
-                                                                        <ProductInput value={productContext} onChange={setProductContext} />
-
-                                                                        <button
-                                                                            onClick={handleGenerate}
-                                                                            className="w-[280px] h-14 mt-4 rounded overflow-hidden shadow-[0_0_30px_rgba(200,50,50,0.4)] hover:scale-105 transition-all text-white font-bold text-lg flex items-center justify-center gap-2"
-                                                                            style={{ background: 'linear-gradient(90deg, #A85500, #9A2833)' }}
-                                                                        >
-                                                                            <Sparkles size={20} />
-                                                                            生成する
-                                                                        </button>
-                                                                    </>
-                                                                )}
-                                                            </>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-                            </>
+                                <div className="mt-8 mb-16">
+                                    <button
+                                        onClick={handleGenerate}
+                                        className="w-[280px] h-14 rounded overflow-hidden shadow-[0_0_30px_rgba(200,50,50,0.4)] hover:scale-105 transition-all text-white font-bold text-lg flex items-center justify-center gap-2"
+                                        style={{ background: 'linear-gradient(90deg, #A85500, #9A2833)' }}
+                                    >
+                                        <Sparkles size={20} />
+                                        生成する
+                                    </button>
+                                </div>
+                            </div>
                         )}
                     </div>
                 )}
@@ -757,7 +771,7 @@ export default function Home() {
 
                         <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 mb-6">
                             <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-green-400">
-                                <PenTool size={20} /> 生成されたキャプション
+                                <PenTool size={20} /> 生成されたキャプション {selectedFormat === 'video_script' && '（投稿文用）'}
                             </h3>
                             <div className="bg-white/5 border border-white/5 p-4 rounded-xl mb-4 text-sm leading-relaxed whitespace-pre-wrap">
                                 {result.post.caption}
@@ -778,31 +792,77 @@ export default function Home() {
                         </div>
 
                         <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 mb-8">
-                            <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-orange-400">
-                                <ImageIcon size={20} /> AI生成画像 (Gemini 4 Imagen)
-                            </h3>
-                            <p className="text-xs text-gray-500 mb-4">{result.post.image_idea}</p>
+                            {selectedFormat === 'video_script' ? (
+                                <>
+                                    <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-orange-400">
+                                        <ImageIcon size={20} /> ショート動画台本 (TikTok / Reels / Shorts)
+                                    </h3>
+                                    <p className="text-xs text-gray-500 mb-4">{result.post.image_idea}</p>
 
-                            <div className="w-full aspect-square bg-[#1a1a1a] rounded-xl overflow-hidden mb-4 relative">
-                                {result.imageUrls && result.imageUrls[0] ? (
-                                    <>
-                                        <img src={result.imageUrls[0]} alt="Generated" className="w-full h-full object-cover" />
-                                        {/* CSSでロゴを重ねる処理（既にベース画像から合成済みの場合は実行しない） */}
-                                        {productContext?.logoUrl && !productContext.baseImage && (
-                                            <div className="absolute bottom-4 right-4 max-w-[25%] max-h-[25%] opacity-90 drop-shadow-lg pointer-events-none rounded-full overflow-hidden border-2 border-white/20 bg-black/40">
-                                                <img src={productContext.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                                    <div className="space-y-4">
+                                        {(result.post.video_script || []).map((script, idx) => (
+                                            <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-2">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="bg-orange-500/20 text-orange-400 px-2 py-1 rounded text-xs font-bold">{script.time}</span>
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <h5 className="text-[10px] font-bold text-gray-400 mb-1">【映像・音声】</h5>
+                                                        <p className="text-sm font-medium text-white mb-2 max-w-full">
+                                                            <span className="text-blue-300">🎵 </span>{script.audio}
+                                                        </p>
+                                                        <p className="text-xs text-gray-400">
+                                                            <span className="text-gray-500">🎥 </span>{script.visual}
+                                                        </p>
+                                                    </div>
+                                                    <div className="bg-black/30 p-3 rounded-lg border border-white/5">
+                                                        <h5 className="text-[10px] font-bold text-gray-400 mb-1">【画面テロップ】</h5>
+                                                        <p className="text-sm font-bold text-center text-yellow-300 drop-shadow-md py-4">{script.text_overlay}</p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm">画像生成に失敗しました（または制限）</div>
-                                )}
-                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-orange-400">
+                                        <ImageIcon size={20} /> {selectedFormat === 'carousel' ? 'カルーセル用 画像一覧' : 'AI生成画像'}
+                                    </h3>
+                                    <p className="text-xs text-gray-500 mb-4">{result.post.image_idea}</p>
 
-                            {result.imageUrls && result.imageUrls[0] && !result.imageUrls[0].startsWith('http') && (
+                                    {/* 複数枚画像スライダー */}
+                                    <div className="w-full flex gap-4 overflow-x-auto pb-4 snap-x">
+                                        {result.imageUrls && result.imageUrls.length > 0 ? (
+                                            result.imageUrls.map((url, idx) => (
+                                                <div key={idx} className="min-w-[85%] md:min-w-[45%] aspect-square bg-[#1a1a1a] rounded-xl overflow-hidden relative shrink-0 snap-center shadow-lg border border-white/10">
+                                                    <img src={url} alt={`Generated ${idx + 1}`} className="w-full h-full object-cover" />
+                                                    {/* CSSロゴ合成 (未合成時) */}
+                                                    {productContext?.logoUrl && !productContext.baseImage && (
+                                                        <div className="absolute bottom-4 right-4 max-w-[25%] max-h-[25%] opacity-90 drop-shadow-lg pointer-events-none rounded-full overflow-hidden border-2 border-white/20 bg-black/40">
+                                                            <img src={productContext.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                                                        </div>
+                                                    )}
+                                                    {selectedFormat === 'carousel' && (
+                                                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md font-bold border border-white/20">
+                                                            {idx + 1}枚目
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="w-full aspect-square flex items-center justify-center text-gray-500 text-sm bg-black/20 rounded-xl">画像生成に失敗しました（または制限）</div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+
+                            {result.imageUrls && result.imageUrls.length > 0 && selectedFormat !== 'video_script' && !result.imageUrls[0].startsWith('http') && (
                                 <button
                                     onClick={async (e) => {
-                                        // ダウンロード時の合成分岐（既にベース画像から合成済みの場合はそのままダウンロード）
+                                        // 全画像をZIPか複数回ダウンロードさせる実装も可能だが、現状は代表して1枚目をロゴ画像合成付きでDL
+                                        // カルーセル複数枚の場合は別途機能追加余地あり。今回は1枚目のダウンロード機能として維持
+                                        const targetIndex = 0;
                                         if (productContext?.logoUrl && !productContext.baseImage) {
                                             const btn = e.currentTarget;
                                             const prevText = btn.innerHTML;
@@ -812,7 +872,7 @@ export default function Home() {
                                                 const ctx = canvas.getContext('2d');
                                                 const mainImg = new Image();
                                                 mainImg.crossOrigin = 'anonymous';
-                                                await new Promise((res, rej) => { mainImg.onload = res; mainImg.onerror = rej; mainImg.src = result.imageUrls[0]; });
+                                                await new Promise((res, rej) => { mainImg.onload = res; mainImg.onerror = rej; mainImg.src = result.imageUrls[targetIndex]; });
 
                                                 canvas.width = mainImg.width;
                                                 canvas.height = mainImg.height;
@@ -823,18 +883,15 @@ export default function Home() {
 
                                                 const maxLogoW = canvas.width * 0.25;
                                                 const maxLogoH = canvas.height * 0.25;
-                                                // ロゴは正方形（丸型）を前提とするため最小値をとる
                                                 const size = Math.min(maxLogoW, maxLogoH, logoImg.width, logoImg.height);
                                                 const padding = canvas.width * 0.04;
 
-                                                // 描画位置の中心点と半径を計算
                                                 const cw = canvas.width;
                                                 const ch = canvas.height;
                                                 const r = size / 2;
                                                 const cx = cw - padding - r;
                                                 const cy = ch - padding - r;
 
-                                                // 影の設定（影はパスではなく元のコンテキストの状態でかける）
                                                 ctx.save();
                                                 ctx.globalAlpha = 0.95;
                                                 ctx.shadowColor = 'rgba(0,0,0,0.5)';
@@ -842,24 +899,19 @@ export default function Home() {
                                                 ctx.shadowOffsetX = 2;
                                                 ctx.shadowOffsetY = 2;
 
-                                                // 丸いパス（背景）を描画して影をつける
                                                 ctx.beginPath();
                                                 ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
-                                                ctx.fillStyle = 'rgba(20,20,20,0.5)'; // 透過用の半黒背景
+                                                ctx.fillStyle = 'rgba(20,20,20,0.5)';
                                                 ctx.fill();
                                                 ctx.restore();
 
-                                                // 丸にクリッピングして画像を描画する
                                                 ctx.save();
                                                 ctx.beginPath();
                                                 ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
                                                 ctx.clip();
-
-                                                // 画像を描画
                                                 ctx.drawImage(logoImg, cx - r, cy - r, size, size);
                                                 ctx.restore();
 
-                                                // 白い枠線を描画（よりクオリティを上げるため）
                                                 ctx.save();
                                                 ctx.beginPath();
                                                 ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
@@ -879,15 +931,80 @@ export default function Home() {
                                                 btn.innerHTML = prevText;
                                             }
                                         } else {
-                                            const a = document.createElement('a');
-                                            a.href = result.imageUrls[0];
-                                            a.download = `sns-image-${Date.now()}.jpg`;
-                                            a.click();
+                                            // 複数枚ある場合はスマホのネイティブ共有機能(カメラロールへ保存可)か個別ダウンロードを行う
+                                            const btn = e.currentTarget;
+                                            const prevText = btn.innerHTML;
+                                            btn.innerHTML = '<span class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4 mr-2"></span>画像を準備中...';
+                                            btn.disabled = true;
+
+                                            try {
+                                                console.log("Starting multi-image processing...", result.imageUrls.length, "images");
+                                                const files = [];
+
+                                                // 1. 各画像のBlobを取得し、Fileオブジェクトに変換する
+                                                for (let i = 0; i < result.imageUrls.length; i++) {
+                                                    const url = result.imageUrls[i];
+                                                    console.log(`Fetching image ${i + 1}...`);
+
+                                                    let blob;
+                                                    if (url.startsWith('data:image')) {
+                                                        const res = await fetch(url);
+                                                        blob = await res.blob();
+                                                    } else {
+                                                        // CORSエラーを防ぐためプロキシAPIを経由
+                                                        const proxyUrl = `/api/download?url=${encodeURIComponent(url)}`;
+                                                        const res = await fetch(proxyUrl);
+                                                        if (!res.ok) {
+                                                            throw new Error(`Proxy HTTP error! status: ${res.status}`);
+                                                        }
+                                                        blob = await res.blob();
+                                                    }
+
+                                                    const file = new File([blob], `sns-image-${i + 1}.jpg`, { type: blob.type || 'image/jpeg' });
+                                                    files.push(file);
+                                                }
+
+                                                // スマホ(iOS/Android等)かPCかを簡易判定する
+                                                console.log("Checking Device & Web Share API compatibility...");
+                                                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                                                if (!isMobile) {
+                                                    alert("画像のダウンロード機能はスマートフォン環境（iOS/Android）のみ対応しています。\nPCをご利用の場合は、恐れ入りますがスマートフォンからアクセスし直して保存をお願いいたします。");
+                                                    return;
+                                                }
+
+                                                // 2. スマホかつWeb Share APIが利用可能な場合のみ「〜枚の画像を保存」を呼び出す
+                                                if (navigator.canShare && navigator.canShare({ files: files })) {
+                                                    try {
+                                                        await navigator.share({
+                                                            files: files,
+                                                            title: 'SNS Agent24 カルーセル画像'
+                                                        });
+                                                        console.log("Shared successfully via Web Share API.");
+                                                    } catch (shareErr) {
+                                                        console.error("Web Share API error or cancelled:", shareErr);
+                                                        // ユーザーのキャンセル(AbortError)以外で失敗した場合のアラート
+                                                        if (shareErr.name !== 'AbortError') {
+                                                            alert("お使いの端末・ブラウザでは一括保存機能がサポートされていないか、エラーが発生しました。");
+                                                        }
+                                                    }
+                                                } else {
+                                                    // スマホだがWeb Share API非対応の場合のアラート
+                                                    alert("お使いのブラウザは画像の一括保存（シェア機能）に対応していません。\nSafariやChromeなどの標準ブラウザをご利用ください。");
+                                                }
+                                            } catch (err) {
+                                                console.error("Multi-image generation/download error:", err);
+                                                alert("画像の一括準備・ダウンロード中にエラーが発生しました。コンソールをご確認ください。");
+                                            } finally {
+                                                btn.innerHTML = prevText;
+                                                btn.disabled = false;
+                                                console.log("Download process finished.");
+                                            }
                                         }
                                     }}
-                                    className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 rounded-lg text-sm font-bold flex flex-row items-center justify-center gap-2 transition-all shadow-lg"
+                                    className="w-full py-3 mt-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 rounded-lg text-sm font-bold flex flex-row items-center justify-center gap-2 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <Download size={16} /> 画像をダウンロード
+                                    <Download size={16} /> {selectedFormat === 'carousel' ? 'すべての画像をダウンロード' : '画像をダウンロード'}
                                 </button>
                             )}
                         </div>
@@ -925,7 +1042,7 @@ export default function Home() {
                 >
                     https://dearsconsulting.com/
                 </a>
-            </footer>
-        </div>
+            </footer >
+        </div >
     );
 }

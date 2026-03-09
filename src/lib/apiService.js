@@ -36,7 +36,10 @@ const IMAGE_MODEL = 'imagen-3.0-generate-001'; // 最新の画像生成モデル
 export async function researchTrends(category, targetLabel, gender, businessStyle, platformId, location, siteContent) {
     try {
         const prompt = `
-あなたはプロのSNSマーケターです。以下の条件に基づく最新のプラットフォームトレンドと見込み客の心理を分析してください。
+あなたは世界トップクラスのマーケター兼トレンドアナリストです。
+
+ランダムシード: ${new Date().toISOString()}_${Math.random()}
+※最重要指令: あなたはこれまで何度も似たような分析を出力しがちです。今回は【絶対に過去のパターンを踏襲せず】、これまでとは全く異なる斬新で独自の切り口、隠れたインサイト、あるいは逆張りの視点を持って以下の分析を行ってください。
 
 # 条件
 - プラットフォーム: ${platformId}
@@ -58,7 +61,7 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
     "insight_macro": "①世の中の大きなトレンド (100文字程度)",
     "insight_industry": "②業界内でのトレンド (100文字程度)",
     "insight_target": "③ターゲット層のトレンド (100文字程度)",
-    "insight_summary": "これら3方向のトレンドを掛け合わせた、今回の投稿内容や画像生成に活かすべき見込み客の深い心理と具体的なアプローチ方針（200文字程度）",
+    "insight_summary": "これら3方向のトレンドを掛け合わせた、今回の投稿内容や画像生成に活かすべき見込み客の深い心理と全く新しいアプローチ方針（200文字程度）",
     "logic": {
         "query": "リサーチで使用した想定検索キーワード",
         "model": "使用モデル名"
@@ -70,7 +73,7 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
             model: TEXT_MODEL,
             contents: prompt,
             config: {
-                temperature: 0.7,
+                temperature: 0.95, // 多様性を最大化
                 tools: [{ googleSearch: {} }] // ← ここでGoogle Search Grounding（最新情報検索機能）を有効化
             }
         });
@@ -85,7 +88,7 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
 /**
  * 投稿内容生成
  */
-export async function generatePost(research, platformId, category, targetLabel, gender, businessStyle, tone, language, textContext, siteContent) {
+export async function generatePost(research, platformId, category, targetLabel, gender, businessStyle, tone, language = 'ja', textContext, siteContent, format = 'single') {
     try {
         let languageInstruction = "キャプション文章およびハッシュタグは【日本語】で作成してください。";
         if (language === 'ja_en') {
@@ -98,9 +101,66 @@ export async function generatePost(research, platformId, category, targetLabel, 
             languageInstruction = "【インバウンド最強対応】キャプション文章は【日本語】【英語】【中国語(繁体字)】【韓国語】の4ヶ国語すべてを各段落に分けて併記してください。ハッシュタグも4言語のハイブリッドで幅広く生成してください。";
         }
 
+        let formatInstruction = "";
+        if (format === 'carousel') {
+            formatInstruction = `
+# 出力形式 (JSONのみ)
+{
+    "caption": "一切の絵文字や顔文字を使用せず、ターゲットに深く響く知的で洗練されたプロフェッショナルな投稿文（最後にCTAやURLを含む）",
+    "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
+    "carousel_slides": [
+        { "overlay_copy": "1枚目(表紙)の強烈なキャッチコピー。視覚的に美しく適宜 '\\n' で改行", "text": "表紙の補足となる短い文章" },
+        { "overlay_copy": "2枚目の見出し", "text": "2枚目での詳細な解説文" },
+        { "overlay_copy": "3枚目の見出し", "text": "3枚目での詳細な解説文" },
+        { "overlay_copy": "4枚目の見出し", "text": "4枚目での詳細な解説文" },
+        { "overlay_copy": "最後の行動喚起(CTA)コピー", "text": "保存やフォロー、リンククリックを促す文章" }
+    ],
+    "image_idea": "この投稿全体の世界観を表す、${IMAGE_MODEL}で背景画像を生成するための詳細な画像プロンプト案（英語、50単語程度）",
+    "variants": [
+        { "style": "標準", "caption": "...", "hashtags": ["..."] },
+        { "style": "エモーショナル", "caption": "...", "hashtags": ["..."] }
+    ]
+}`;
+        } else if (format === 'video_script') {
+            formatInstruction = `
+# 出力形式 (JSONのみ)
+{
+    "caption": "（※投稿文用）一切の絵文字や顔文字を使用せず、ターゲットに深く響く知的で洗練されたプロフェッショナルな投稿文",
+    "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
+    "video_script": [
+        { "time": "0-3秒 (フック)", "visual": "画面に映すべき映像や行動の指示", "audio": "音声読み上げ用・セリフ", "text_overlay": "画面にデカデカと出すテロップ" },
+        { "time": "3-15秒 (展開)", "visual": "画面指示...", "audio": "セリフ...", "text_overlay": "テロップ..." },
+        { "time": "15-25秒 (解決・価値提供)", "visual": "画面指示...", "audio": "セリフ...", "text_overlay": "テロップ..." },
+        { "time": "25-30秒 (CTA)", "visual": "画面指示...", "audio": "セリフ...", "text_overlay": "テロップ..." }
+    ],
+    "image_idea": "動画のサムネイルとして使える、${IMAGE_MODEL}向けの画像プロンプト案（英語、50単語程度）",
+    "variants": [
+        { "style": "標準", "caption": "...", "hashtags": ["..."] }
+    ]
+}`;
+        } else {
+            // format === 'single' (デフォルト)
+            formatInstruction = `
+# 出力形式 (JSONのみ)
+{
+    "caption": "一切の絵文字や顔文字を使用せず、ターゲットに深く響く知的で洗練されたプロフェッショナルな投稿文（最後にCTAやURLを含む）",
+    "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
+    "image_idea": "この投稿文に合う、${IMAGE_MODEL}で生成するための詳細な画像プロンプト案（英語、50単語程度）",
+    "overlay_copy": "写真上にデカデカと表示する短く強烈なキャッチコピー（10文字〜最大25文字程度。視覚的に美しくするために途中に改行記号 '\\n' を入れることを推奨）",
+    "variants": [
+        { "style": "標準", "caption": "...", "hashtags": ["..."] },
+        { "style": "エモーショナル", "caption": "...", "hashtags": ["..."] },
+        { "style": "問いかけ", "caption": "...", "hashtags": ["..."] }
+    ]
+}`;
+        }
+
         const prompt = `
-あなたはプロのSNS運用代行者です。以下の「3方向のトレンドリサーチ結果」とコンテキストに基づいて、読者の心を動かす極めて質の高い投稿キャプションと画像の一貫したアイデアを生成してください。
-「AIが診断しました」「AIとしての提案です」などの言葉は絶対に使わず、ビジネスオーナーが直接顧客に語りかける自然な投稿文を作成してください。
+あなたはプロのSNS運用代行者です。以下の「3方向のトレンドリサーチ結果」とコンテキストに基づいて、読者の心を動かす極めて質の高いコンテンツ(${format}フォーマット)を生成してください。
+「AIが診断しました」「AIとしての提案です」などの言葉は絶対に使わず、ビジネスオーナーが直接顧客に語りかける自然なテキストを作成してください。
+
+ランダムシード: ${Date.now()}_${Math.random()}
+※最重要指令: 生成するたびに前回の出力パターンを完全に捨て去り、【毎回全く異なる切り口、異なる語り口、異なるストーリー展開、異なるオファーの出し方】をして、ユーザーを飽きさせないクリエイティブなテキストを書き下ろしてください。テンプレ化は厳禁です。
 
 # 前提
 - プラットフォーム: ${platformId}
@@ -117,28 +177,17 @@ export async function generatePost(research, platformId, category, targetLabel, 
 - 自社・ブランド名: ${textContext?.companyName || '特になし'}
 - 訴求ポイント: ${textContext?.sellingPoint || '特になし'}
 ${siteContent ? `- サイト情報: ${siteContent.substring(0, 1000)}` : ''}
-${textContext?.companyName ? `\n※重要事項1: キャプション文中に、不自然にならないように「${textContext.companyName}」という名前を適度に織り込んでください。` : ''}
-${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 投稿の最後付近で、「詳しくはこちら」「プロフィールのリンクから」「${textContext.snsUrl || textContext.websiteUrl}」など、読者に行動を促す動線（CTA）を自然な形で必ず配置してください。` : ''}
+${textContext?.companyName ? `\n※重要事項1: 内容の中立性を保ちつつ、不自然にならないように「${textContext.companyName}」という名前を適度に織り込んでください。` : ''}
+${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後のCTAで、「${textContext.snsUrl || textContext.websiteUrl}」など、読者に行動を促す動線（プロフィールリンクやURLへの誘導）を自然な形で必ず配置してください。` : ''}
 
-# 出力形式 (JSONのみ)
-{
-    "caption": "一切の絵文字や顔文字を使用せず、ターゲットに深く響く知的で洗練されたプロフェッショナルな投稿文（最後にCTAやURLを含む）",
-    "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
-    "image_idea": "この投稿文に合う、${IMAGE_MODEL}で生成するための詳細な画像プロンプト案（英語、50単語程度）",
-    "overlay_copy": "写真上にデカデカと表示する短く強烈なキャッチコピー（10文字〜最大25文字程度。視覚的に美しくするために途中に改行記号 '\\n' を入れることを推奨）",
-    "variants": [
-        { "style": "標準", "caption": "...", "hashtags": ["..."] },
-        { "style": "エモーショナル", "caption": "...", "hashtags": ["..."] },
-        { "style": "問いかけ", "caption": "...", "hashtags": ["..."] }
-    ]
-}
+${formatInstruction}
 `;
         const ai = getAI();
         const response = await ai.models.generateContent({
             model: TEXT_MODEL,
             contents: prompt,
             config: {
-                temperature: 0.8,
+                temperature: 0.95, // 多様性を最大化
                 tools: [{ googleSearch: {} }] // ← 投稿内容生成時にもネットの最新情報を統合
             }
         });
