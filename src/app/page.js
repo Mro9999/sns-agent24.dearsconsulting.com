@@ -233,39 +233,54 @@ export default function Home() {
                     }
 
                     bgImg.onload = async () => {
-                        // エフェクト用の定数定義 (デフォルトは等倍、フィルターなし)
+                        // エフェクト用の定数定義 (デフォルトは等倍、中央配置、フィルターなし)
                         let zoomScale = 1.0;
                         let filter = 'none';
+                        let panX = 0.5; // 0.0 (左端) 〜 1.0 (右端)
+                        let panY = 0.5; // 0.0 (上端) 〜 1.0 (下端)
 
-                        // カルーセルのページ(index)に応じた視覚的バリエーション（エフェクト）の適用
+                        // カルーセルのページ(index)に応じた大胆な視覚的バリエーション（パン＆ズーム効果）の適用
                         if (index === 1) {
-                            // 2枚目: 1.3倍ズームアップ（迫力を出す）
-                            zoomScale = 1.3;
-                        } else if (index === 2) {
-                            // 3枚目: 1.2倍ズーム ＋ グレースケール調（文字を際立たせる）
-                            zoomScale = 1.2;
-                            filter = 'grayscale(100%) brightness(0.7)';
-                        } else if (index === 3) {
-                            // 4枚目: 1.4倍ズーム ＋ セピア＆高コントラスト（シネマティック）
+                            // 2枚目: 1.4倍にズームし、画像の「左上」寄りにパン（視点を動かす）
                             zoomScale = 1.4;
-                            filter = 'sepia(0.6) contrast(1.2) brightness(0.8)';
-                        } else if (index === 4) {
-                            // 5枚目(結論/CTA等): 1.5倍ズーム ＋ ブラー（背景を抽象化してメッセージに集中させる）
+                            panX = 0.2;
+                            panY = 0.2;
+                        } else if (index === 2) {
+                            // 3枚目: 1.5倍にズームし、「右下」寄りにパン ＋ 強いモノクロ調（過去や課題感を演出）
                             zoomScale = 1.5;
-                            filter = 'blur(4px) brightness(0.8)';
+                            panX = 0.8;
+                            panY = 0.8;
+                            filter = 'grayscale(100%) brightness(0.6) contrast(1.2)';
+                        } else if (index === 3) {
+                            // 4枚目: 1.3倍ズームし、「右上」寄りにパン ＋ セピア調でエモーショナルに
+                            zoomScale = 1.3;
+                            panX = 0.8;
+                            panY = 0.2;
+                            filter = 'sepia(0.8) contrast(1.3) brightness(0.7)';
+                        } else if (index === 4) {
+                            // 5枚目(結論/CTA等): 1.6倍の超ズームで「左下」寄りにパン ＋ ブラー（背景を完全にボカして文字に全集中）
+                            zoomScale = 1.6;
+                            panX = 0.2;
+                            panY = 0.8;
+                            filter = 'blur(8px) brightness(0.6)';
                         }
 
-                        // アスペクト比を維持しつつカバー全面に描画(中央切り抜き)
-                        // 通常のscaleにzoomScaleを掛け合わせて拡大描画する
+                        // アスペクト比を維持しつつカバー全面に描画(中央切り抜きベース)
                         const baseScale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
                         const finalScale = baseScale * zoomScale;
                         const drawWidth = bgImg.width * finalScale;
                         const drawHeight = bgImg.height * finalScale;
-                        const dx = (canvas.width - drawWidth) / 2;
-                        const dy = (canvas.height - drawHeight) / 2;
+
+                        // panX, panY に基づいて描画開始位置(dx, dy)を決定する
+                        // pan = 0.5 のときは従来通り中央揃えになる
+                        const dx = (canvas.width - drawWidth) * panX;
+                        const dy = (canvas.height - drawHeight) * panY;
 
                         ctx.save();
                         ctx.filter = filter;
+                        // スムージングを有効にして粗さを軽減
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
                         ctx.drawImage(bgImg, dx, dy, drawWidth, drawHeight);
                         ctx.restore();
 
