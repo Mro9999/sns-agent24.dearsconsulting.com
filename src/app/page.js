@@ -567,6 +567,18 @@ export default function Home() {
                                 </button>
                             </div>
 
+                            {/* モバイル専用機能についての事前警告（PCアクセス時の不満を防ぐ） */}
+                            <div className={`w-full max-w-lg mb-8 p-4 bg-orange-900/30 border border-orange-500/40 rounded-xl text-center shadow-lg transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+                                <h4 className="text-orange-400 font-bold text-sm mb-1 flex items-center justify-center gap-2">
+                                    <span className="text-lg">📱</span> スマートフォンからのご利用を推奨
+                                </h4>
+                                <p className="text-gray-300 text-xs leading-relaxed">
+                                    生成した画像の一括保存（カメラロールへのシェア機能等）は、<br className="hidden sm:block" />
+                                    <strong className="text-orange-300">スマートフォン環境（iOS / Android）専用</strong>の機能です。<br />
+                                    PC等で生成された場合、ダウンロード機能に制限がありますのでご注意ください。
+                                </p>
+                            </div>
+
                             {/* START Button */}
                             <button
                                 onClick={handleStart}
