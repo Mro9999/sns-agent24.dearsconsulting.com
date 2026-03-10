@@ -614,7 +614,7 @@ export default function Home() {
                                 </div>
                                 <div className="flex items-center gap-2 bg-gradient-to-r from-pink-950/40 to-pink-900/10 border border-pink-500/20 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.1)]">
                                     <Palette size={16} className="text-pink-400" />
-                                    <span className="text-gray-300 text-xs md:text-sm font-semibold tracking-wide">プロ品質バナー完全自動合成</span>
+                                    <span className="text-gray-300 text-xs md:text-sm font-semibold tracking-wide">オリジナルSNSバナー完全自動合成</span>
                                 </div>
                             </div>
                         </div>
