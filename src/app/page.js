@@ -1,6 +1,7 @@
 import React from 'react';
-import { Bot, Sparkles, PenTool, ImageIcon, Search, Zap, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Bot, Sparkles, PenTool, ImageIcon, Search, Zap, CheckCircle2, ArrowRight, Instagram, ChevronRight, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
+import PricingSection from '@/components/layout/PricingSection';
 
 export default function LandingPage() {
     return (
@@ -113,6 +114,71 @@ export default function LandingPage() {
                     </div>
                 </div>
             </section>
+
+            {/* Demonstration & Output Sample */}
+            <section className="w-full max-w-6xl mx-auto px-6 py-24 relative">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4">プロフェッショナルな出力結果</h2>
+                    <p className="text-gray-400">わずか数項目の入力で、デザイン済みの画像と計算された文章が完成します。</p>
+                </div>
+
+                <div className="flex flex-col lg:flex-row items-center gap-12 bg-white/5 border border-white/10 rounded-3xl p-6 md:p-12">
+
+                    {/* Image Mockup (Carousel style) */}
+                    <div className="flex-1 w-full max-w-md relative flex justify-center">
+                        <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-2xl border border-white/20 bg-black">
+                            {/* Dummy Image Background */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-black opacity-80 mix-blend-overlay"></div>
+                            {/* Dummy Image Subject / Overlay */}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-[url('https://images.unsplash.com/photo-1556761175-4b46a572b786?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center">
+                                <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"></div>
+                                <div className="relative z-10 w-full h-full border-2 border-white/80 p-6 flex flex-col justify-between items-center text-white">
+                                    <div className="text-sm font-bold tracking-widest bg-white/20 px-4 py-1 rounded-full backdrop-blur-md">MARKETING TIPS</div>
+                                    <h3 className="text-3xl font-extrabold leading-snug drop-shadow-lg">なぜ、あなたの<br />SNS投稿は<br /><span className="text-pink-400">読まれない</span>のか？</h3>
+                                    <div className="text-sm border-t-2 border-pink-500 pt-2 w-1/2">Swipe to learn more →</div>
+                                </div>
+                            </div>
+
+                            {/* UI Controls */}
+                            <div className="absolute top-1/2 left-2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 flex items-center justify-center text-white/50"><ChevronLeft size={16} /></div>
+                            <div className="absolute top-1/2 right-2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 flex items-center justify-center text-white/90 shadow-lg"><ChevronRight size={16} /></div>
+                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+                                <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-white/30"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-white/30"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-white/30"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-white/30"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Text / Caption Mockup */}
+                    <div className="flex-1 w-full flex flex-col gap-4">
+                        <div className="flex items-center gap-2 text-pink-400 mb-2">
+                            <Instagram size={20} />
+                            <span className="font-bold">自動生成キャプション</span>
+                        </div>
+                        <div className="bg-black/50 border border-white/5 p-6 rounded-2xl text-sm md:text-base text-gray-300 leading-relaxed font-mono shadow-inner h-[400px] overflow-y-auto">
+                            <p className="mb-4 text-white font-bold">【保存必須】SNSマーケティングの罠を回避する方法</p>
+                            <p className="mb-4">一生懸命デザインした画像。でも、インサイトを見たら保存数は「0」…。そんな経験はありませんか？</p>
+                            <p className="mb-4">実は、ターゲット層の深層心理で「今すぐ解決したい痛み」にアプローチできていないのが原因かもしれません。</p>
+                            <p className="mb-4 text-pink-400">💡 本日のインサイト：</p>
+                            <ul className="mb-4 pl-4 border-l-2 border-pink-500/50 space-y-2">
+                                <li>・ユーザーの70%は最初の1枚で離脱する</li>
+                                <li>・「有益な情報」ではなく「共感」を求めている</li>
+                                <li>・保存を促す明確なCTAが欠けている</li>
+                            </ul>
+                            <p className="mb-4">これらを自動で分析し、最適な文脈で投稿を作成するのが『SNS Agent24』。もう悩む必要はありません。</p>
+                            <p className="mb-4 text-gray-500">...<br />#SNS運用 #マーケティング #集客ノウハウ</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Pricing Section (Re-used Component) */}
+            <div className="w-full mt-12 bg-black/30 border-y border-white/5 pt-16">
+                <PricingSection />
+            </div>
 
             {/* Footer CTA */}
             <section className="w-full bg-[#111112] py-32 flex flex-col items-center justify-center text-center px-6">
