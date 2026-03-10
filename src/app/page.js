@@ -766,6 +766,11 @@ export default function Home() {
 
                                 {/* ランダムな解析ダミーログ表示コンソール */}
                                 <div className="w-full mt-6 bg-black/80 border border-green-500/30 rounded-lg p-3 h-28 overflow-hidden relative shadow-[inset_0_0_20px_rgba(0,0,0,1)]">
+                                    {/* background progress */}
+                                    <div
+                                        className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-cyan-900/20 to-purple-900/20 transition-all duration-300 ease-out"
+                                        style={{ width: `${loadingProgress}%` }}
+                                    ></div>
                                     <div className="absolute top-0 left-0 w-full h-[1px] bg-green-500/20"></div>
                                     <div className="flex flex-col justify-end h-full">
                                         {terminalLogs.map((log, i) => (
