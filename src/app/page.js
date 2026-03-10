@@ -31,7 +31,7 @@ export default function LandingPage() {
             </header>
 
             {/* Hero Section */}
-            <section className="w-full max-w-6xl mx-auto px-6 pt-24 pb-32 flex flex-col items-center text-center relative">
+            <section className="w-full max-w-6xl mx-auto px-6 pt-24 pb-32 flex flex-col items-center justify-center text-center relative overflow-hidden flex-1 w-full">
                 {/* Background Glow */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-600/20 blur-[120px] rounded-full pointer-events-none"></div>
 
@@ -72,8 +72,8 @@ export default function LandingPage() {
             </section>
 
             {/* Value Proposition (3 Magic Features) */}
-            <section className="w-full bg-black/40 border-y border-white/5 py-24 relative overflow-hidden">
-                <div className="max-w-6xl mx-auto px-6 relative z-10">
+            <section className="w-full bg-black/40 border-y border-white/5 py-24 relative overflow-hidden flex flex-col items-center justify-center">
+                <div className="w-full max-w-6xl mx-auto px-6 relative z-10 flex flex-col items-center justify-center">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl md:text-4xl font-bold mb-4">圧倒的な品質を生み出す<br />3つの魔法</h2>
                         <p className="text-gray-400">SNS運用に必要なすべてのクリエイティブをシームレスに統合</p>
@@ -115,18 +115,20 @@ export default function LandingPage() {
             </section>
 
             {/* Footer CTA */}
-            <section className="w-full max-w-4xl mx-auto px-6 py-32 text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto flex items-center justify-center mb-8 shadow-[0_0_40px_rgba(219,39,119,0.4)]">
-                    <Zap size={36} className="text-white drop-shadow-md" />
+            <section className="w-full bg-[#111112] py-32 flex flex-col items-center justify-center text-center px-6">
+                <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center">
+                    <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto flex items-center justify-center mb-8 shadow-[0_0_40px_rgba(219,39,119,0.4)]">
+                        <Zap size={36} className="text-white drop-shadow-md" />
+                    </div>
+                    <h2 className="text-4xl md:text-5xl font-bold mb-6">SNS運用を、次の次元へ。</h2>
+                    <p className="text-xl text-gray-400 mb-10 w-full max-w-lg text-center">今すぐ無料アカウントを作成し、AIの手による革新的なクリエイティブを体験してください。</p>
+                    <Link
+                        href="/app"
+                        className="inline-flex px-10 py-5 rounded-full text-lg font-bold bg-white text-black hover:bg-gray-200 transition-all hover:scale-105"
+                    >
+                        無料でログインして開始する
+                    </Link>
                 </div>
-                <h2 className="text-4xl md:text-5xl font-bold mb-6">SNS運用を、次の次元へ。</h2>
-                <p className="text-xl text-gray-400 mb-10">今すぐ無料アカウントを作成し、AIの手による革新的なクリエイティブを体験してください。</p>
-                <Link
-                    href="/app"
-                    className="inline-flex px-10 py-5 rounded-full text-lg font-bold bg-white text-black hover:bg-gray-200 transition-all hover:scale-105"
-                >
-                    無料でログインして開始する
-                </Link>
             </section>
 
             {/* Simple Footer */}
