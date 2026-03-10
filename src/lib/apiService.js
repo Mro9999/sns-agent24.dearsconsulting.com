@@ -41,6 +41,10 @@ export async function researchTrends(category, targetLabel, gender, businessStyl
 ランダムシード: ${new Date().toISOString()}_${Math.random()}
 ※最重要指令: あなたはこれまで何度も似たような分析を出力しがちです。今回は【絶対に過去のパターンを踏襲せず】、これまでとは全く異なる斬新で独自の切り口、隠れたインサイト、あるいは逆張りの視点を持って以下の分析を行ってください。
 
+# 言語制約（超重要）
+すべての出力（JSONの各値など）は、**必ず完全で自然な「日本語」のみ**を使用してください。
+英単語などの一般的な固有名詞等を除き、**ロシア語（例: готовые）、アラビア語、フランス語など、指定以外の言語が1文字でも混入することは固く禁じます。**
+
 # 条件
 - プラットフォーム: ${platformId}
 - 業種/カテゴリ: ${category?.label || category}
@@ -90,7 +94,8 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
  */
 export async function generatePost(research, platformId, category, targetLabel, gender, businessStyle, tone, language = 'ja', textContext, siteContent, format = 'single') {
     try {
-        let languageInstruction = "キャプション文章およびハッシュタグは【日本語】で作成してください。";
+        let languageInstruction = `【超重要・言語制約】すべての出力テキスト（キャプション、ハッシュタグ、コピーなど）は、**必ず完全で自然な「日本語」のみ**で作成してください。英語などの一般的な固有名詞を除き、**ロシア語（例: готовые）やその他の指定外の言語が1文字でも混入することはシステムエラーとなるため固く禁じます**。`;
+
         if (language === 'ja_en') {
             languageInstruction = "【インバウンド対応】キャプション文章は【日本語】とネイティブな【英語】の両方を併記してください。ハッシュタグも日本語と英語を混ぜて生成してください。";
         } else if (language === 'ja_zh') {
