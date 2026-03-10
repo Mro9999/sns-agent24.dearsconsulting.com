@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Sparkles, PenTool, ImageIcon, Search, Zap, CheckCircle2, ArrowRight, Instagram, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Bot, Sparkles, PenTool, ImageIcon, Search, Zap, CheckCircle2, ArrowRight, Instagram, ChevronRight, ChevronLeft, Globe } from 'lucide-react';
 import Link from 'next/link';
 import PricingSection from '@/components/layout/PricingSection';
 
@@ -197,9 +197,18 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Simple Footer */}
-            <footer className="w-full border-t border-white/5 py-8 text-center text-sm text-gray-600">
-                <p>© {new Date().getFullYear()} DEARS CONSULTING ALL RIGHTS RESERVED.</p>
+            {/* Footer */}
+            <footer className="w-full border-t border-white/5 py-12 px-6 flex flex-col items-center justify-center text-center text-sm text-gray-500">
+                <Link href="https://dearsconsulting.com" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 mb-4 hover:text-white transition-colors group">
+                    <Globe size={16} className="text-gray-600 group-hover:text-purple-400 transition-colors" />
+                    <span className="font-bold tracking-widest text-gray-400 group-hover:text-white transition-colors">DEARS CONSULTING</span>
+                </Link>
+                <div className="flex gap-4 mb-6">
+                    <Link href="https://dearsconsulting.com/sns-agent24/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-400 transition-colors">About SNS Agent24</Link>
+                    <span>|</span>
+                    <Link href="https://dearsconsulting.com/contact/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-400 transition-colors">Contact</Link>
+                </div>
+                <p>&copy; {new Date().getFullYear()} DEARS CONSULTING ALL RIGHTS RESERVED.</p>
             </footer>
 
         </div>
