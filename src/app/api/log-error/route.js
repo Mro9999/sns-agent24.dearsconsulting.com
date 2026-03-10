@@ -73,3 +73,30 @@ ${errorStack}
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+
+// === 管理者テスト用（ブラウザで /api/log-error にアクセスしてテスト送信） ===
+export async function GET(request) {
+    try {
+        const adminEmail = process.env.ADMIN_EMAIL || process.env.SENDGRID_FROM_EMAIL;
+        const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'noreply@dearsconsulting.com';
+
+        if (!process.env.SENDGRID_API_KEY) {
+            return new NextResponse("SENDGRID_API_KEY is missing", { status: 500 });
+        }
+        if (!adminEmail) {
+            return new NextResponse("ADMIN_EMAIL is missing", { status: 500 });
+        }
+
+        const msg = {
+            to: adminEmail,
+            from: fromEmail,
+            subject: "[TEST] InstagramAuto エラー通知システムの疎通確認",
+            text: "これはVercelに設定されたSendGridのAPI連携テストです。このメールが届いていれば設定は完ぺきです！",
+        };
+
+        await sgMail.send(msg);
+        return new NextResponse(`テストメールを ${adminEmail} 宛に送信しました！メールボックスをご確認ください。`, { status: 200 });
+    } catch (e) {
+        return new NextResponse(`テストメール送信失敗: ${e.message}`, { status: 500 });
+    }
+}
