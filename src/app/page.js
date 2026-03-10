@@ -112,6 +112,26 @@ export default function Home() {
         return true;
     };
 
+    // エラーログを管理者へ通知する共通関数
+    const reportErrorToAdmin = async (error, context) => {
+        try {
+            await fetch('/api/log-error', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    errorName: error?.name || 'Error',
+                    errorMessage: error?.message || String(error),
+                    errorStack: error?.stack || '',
+                    errorContext: context,
+                    user: user ? (user.primaryEmailAddress?.emailAddress || user.id) : '未ログイン',
+                    timestamp: new Date().toISOString()
+                })
+            });
+        } catch (e) {
+            console.error("Failed to report error to admin API:", e);
+        }
+    };
+
     // --- ロード画面用のSF風演出エフェクト ---
     useEffect(() => {
         let progressInterval;
@@ -202,6 +222,9 @@ export default function Home() {
         } catch (e) {
             console.error(e);
             setCheckoutError(e.message);
+            if (e.message !== "ログインが必要です。") {
+                reportErrorToAdmin(e, "handleCheckout - Stripeチェックアウト遷移時");
+            }
         } finally {
             setIsCheckoutLoading(false);
         }
@@ -214,6 +237,9 @@ export default function Home() {
             if (data.url) window.location.href = data.url;
         } catch (e) {
             alert("管理画面への移動に失敗しました");
+            if (e.message !== "ログインが必要です。") {
+                reportErrorToAdmin(e, "handlePortal - カスタマーポータル遷移時");
+            }
         }
     };
 
@@ -532,6 +558,7 @@ export default function Home() {
         } catch (e) {
             console.error(e);
             alert("エラーが発生しました: " + e.message);
+            reportErrorToAdmin(e, "handleGenerate - 投稿自動生成プロセス全体");
         } finally {
             setLoading(false);
         }
