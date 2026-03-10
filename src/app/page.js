@@ -117,14 +117,20 @@ export default function Home() {
         let progressInterval;
         let logInterval;
 
+        const phaseRef = { current: loadingPhase };
+        phaseRef.current = loadingPhase;
+
         if (loading) {
+            // ローディング開始時にプログレスを確実にゼロセット
+            setLoadingProgress(0);
+
             // プログレスバー（HUD）カウントアップ（フェーズに応じた進行目安）
             // 全体を100%とし、各フェーズ(0〜4)ごとに約20%ずつを割り当てる
             progressInterval = setInterval(() => {
                 setLoadingProgress(prev => {
                     // 現在のloadingPhase (0〜4... 5は完了相当とする)
                     // 仮に現在フェーズの上限(20, 40, 60, 80, 95)を設定
-                    const phaseMax = Math.min((loadingPhase + 1) * 20, 98);
+                    const phaseMax = Math.min((phaseRef.current + 1) * 20, 98);
 
                     if (prev < phaseMax) {
                         // 上限に達していなければランダムに1〜3%アップ
@@ -162,7 +168,7 @@ export default function Home() {
             if (progressInterval) clearInterval(progressInterval);
             if (logInterval) clearInterval(logInterval);
         };
-    }, [loading, loadingPhase]); // loadingPhaseを依存配列に追加してフェーズ変化時に即反映させる
+    }, [loading]); // loadingPhaseはRef経由で参照するため除外し、勝手にリセット・再起動されるのを防ぐ
     // ----------------------------------------
 
     const handleCheckout = async (interval = 'month') => {
@@ -238,6 +244,7 @@ export default function Home() {
         }
 
         setLoading(true);
+        setLoadingProgress(0); // 確実に0からプログレスアニメーションをスタートさせる
         setLoadingPhase(0); // 0: "世界中のトレンドを分析しています..."
 
         // ユーザーが生成中画面(ローディング)に気づけるようにDOM更新後に一番上へスクロールする
@@ -377,8 +384,8 @@ export default function Home() {
 
                         // 文字の自動折り返し（ワードラップ）処理（単語単位で自然に）
                         const maxWidth = canvas.width - 160; // 左右に80pxずつの広めの余白
-                        // AIが文字列として返した '\n' や '\\n' を実際の改行コードに置換してから分割
-                        const actualText = text.replace(/\\n/g, '\n').replace(/\\\\n/g, '\n');
+                        // AIが文字列として返した '\n' や '\\n' を実際の改行コードに置換し、さらに描画時の「。」を削除する
+                        const actualText = text.replace(/\\n/g, '\n').replace(/\\\\n/g, '\n').replace(/。/g, '');
                         const segmentLines = actualText.split('\n');
                         const lines = [];
 
