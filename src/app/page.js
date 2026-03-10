@@ -129,17 +129,19 @@ export default function Home() {
             progressInterval = setInterval(() => {
                 setLoadingProgress(prev => {
                     // 現在のloadingPhase (0〜4... 5は完了相当とする)
-                    // 仮に現在フェーズの上限(20, 40, 60, 80, 95)を設定
+                    if (prev >= 99) return 99; // 99%で完全待機（100%になるのは完了時のみ）
+
+                    // 現在のloadingPhaseに基づく「目標進行度」
                     const phaseMax = Math.min((phaseRef.current + 1) * 20, 98);
 
                     if (prev < phaseMax) {
-                        // 上限に達していなければランダムに1〜3%アップ
+                        // 目標に達していなければ通常ペース（1〜3%アップ）で進める
                         return prev + Math.floor(Math.random() * 3) + 1;
-                    } else if (prev > phaseMax) {
-                        // 極端なフェーズ後退時は一旦調整
-                        return phaseMax;
                     } else {
-                        // フェーズの上限で一時停止させたまま待たせる
+                        // 目標に達してもピタリと止めず、10%の低確率で1%ずつじわじわ上昇させ続ける
+                        if (Math.random() < 0.1) {
+                            return prev + 1;
+                        }
                         return prev;
                     }
                 });
