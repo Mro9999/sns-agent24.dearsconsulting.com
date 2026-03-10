@@ -204,41 +204,74 @@ export function ProductInput({ value = {}, onChange }) {
         onChange({ ...value, [e.target.name]: e.target.value });
     };
 
-    const handleBaseImageUpload = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    const handleBaseImageUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
 
-        if (file.size > 15 * 1024 * 1024) {
-            alert("【サイズオーバー】\\n画像が15MBを超えています。もう少し軽い画像を選んでください。");
+        // 最大5枚までの制限（例）
+        const currentCount = (value.baseImages || []).length;
+        if (currentCount + files.length > 5) {
+            alert("画像は最大5枚までアップロード可能です。");
             e.target.value = '';
             return;
         }
 
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 1200;
-                let width = img.width;
-                let height = img.height;
+        const validFiles = files.filter(file => {
+            if (file.size > 15 * 1024 * 1024) {
+                alert(`【サイズオーバー】\\n画像「${file.name}」が15MBを超えています。スキップされました。`);
+                return false;
+            }
+            return true;
+        });
 
-                if (width > MAX_WIDTH) {
-                    height = Math.round((height * MAX_WIDTH) / width);
-                    width = MAX_WIDTH;
-                }
+        if (validFiles.length === 0) {
+            e.target.value = '';
+            return;
+        }
 
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
+        const processFile = (file) => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 1200;
+                        let width = img.width;
+                        let height = img.height;
 
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                onChange({ ...value, baseImage: dataUrl });
-            };
-            img.src = reader.result;
+                        if (width > MAX_WIDTH) {
+                            height = Math.round((height * MAX_WIDTH) / width);
+                            width = MAX_WIDTH;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                        resolve(dataUrl);
+                    };
+                    img.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            });
         };
-        reader.readAsDataURL(file);
+
+        const newImages = await Promise.all(validFiles.map(processFile));
+
+        // 既存の baseImages 配列に新たに追加する
+        const updatedImages = [...(value.baseImages || []), ...newImages];
+        onChange({ ...value, baseImages: updatedImages });
+
+        // パスをクリアして同じ画像も再アップ可能にする
+        e.target.value = '';
+    };
+
+    const removeBaseImage = (indexToRemove) => {
+        const updated = (value.baseImages || []).filter((_, i) => i !== indexToRemove);
+        onChange({ ...value, baseImages: updated });
     };
 
     return (
@@ -310,34 +343,47 @@ export function ProductInput({ value = {}, onChange }) {
                 </div>
 
                 <div className="bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl mt-4">
-                    <label className="block text-sm font-bold text-blue-300 mb-2 flex items-center gap-2">
-                        ベース写真・商品画像 <span className="text-gray-300 font-normal text-xs">(推奨) AIがこれをもとにSNSバナーを作ります</span>
+                    <label className="block text-sm font-bold text-blue-300 mb-2 flex flex-col sm:flex-row sm:items-center gap-2">
+                        <span>ベース写真・商品画像 <span className="text-gray-300 font-normal text-xs">(推奨)</span></span>
+                        <span className="text-gray-400 font-normal text-xs bg-black/40 px-2 py-0.5 rounded border border-gray-700">複数枚（最大5枚）選択可能</span>
                     </label>
+                    <p className="text-xs text-blue-400/80 mb-3">※複数アップロードすると、AIがそれぞれの画像を使ってバリエーション豊かなカルーセルを生成します。</p>
                     <div className="flex items-center gap-4">
                         <input
                             id="baseImageInput"
                             type="file"
                             accept="image/*"
+                            multiple
                             onChange={handleBaseImageUpload}
                             className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500/20 file:text-blue-300 hover:file:bg-blue-500/30 transition-all cursor-pointer"
                         />
                     </div>
-                    {value.baseImage && (
-                        <div className="mt-4 p-3 bg-black/50 rounded-lg inline-flex items-start gap-4 border border-blue-500/20 shadow-lg">
-                            <div>
-                                <p className="text-xs text-gray-400 mb-2">アップロード済みプレビュー</p>
-                                <img src={value.baseImage} alt="Base Preview" className="h-32 object-contain rounded border border-gray-700" />
+                    {value.baseImages && value.baseImages.length > 0 && (
+                        <div className="mt-4 p-3 bg-black/50 rounded-lg border border-blue-500/20 shadow-lg">
+                            <p className="text-xs text-gray-400 mb-3 flex items-center justify-between">
+                                アップロード済みプレビュー ({value.baseImages.length}/5)
+                                <button
+                                    onClick={() => onChange({ ...value, baseImages: [] })}
+                                    className="text-red-400 hover:text-red-300 underline"
+                                >
+                                    すべて削除
+                                </button>
+                            </p>
+                            <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                                {value.baseImages.map((imgBase64, idx) => (
+                                    <div key={idx} className="relative group shrink-0">
+                                        <img src={imgBase64} alt={`Preview ${idx + 1}`} className="h-24 w-24 object-cover rounded border border-gray-600 shadow-md" />
+                                        <button
+                                            onClick={() => removeBaseImage(idx)}
+                                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-80 hover:opacity-100 hover:scale-110 transition-all shadow-lg"
+                                            title="この画像を削除"
+                                        >
+                                            ✕
+                                        </button>
+                                        <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[10px] px-1.5 rounded">{idx + 1}</span>
+                                    </div>
+                                ))}
                             </div>
-                            <button
-                                onClick={() => {
-                                    onChange({ ...value, baseImage: null });
-                                    const input = document.getElementById('baseImageInput');
-                                    if (input) input.value = '';
-                                }}
-                                className="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded-lg hover:bg-red-500/40 transition-colors border border-red-500/30"
-                            >
-                                ✕ 削除
-                            </button>
                         </div>
                     )}
                 </div>

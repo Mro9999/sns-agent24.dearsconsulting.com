@@ -249,7 +249,8 @@ export default function Home() {
             // APIに巨大な画像データ(Base64)が含まれたまま送るとVercelの制限(Server Action)でエラーになる原因を防ぐため、裏側へ送信するデータからは画像を除外する
             const cleanProductContext = { ...productContext };
             delete cleanProductContext.logoUrl;
-            delete cleanProductContext.baseImage; // APIに渡さないように除外
+            delete cleanProductContext.baseImage; // 後方互換性のため
+            delete cleanProductContext.baseImages; // 複数画像配列を除外
 
             let siteContent = null;
             if (cleanProductContext?.websiteUrl) {
@@ -270,9 +271,13 @@ export default function Home() {
 
             // 3. ベースとなる背景画像の取得・生成
             let imageUrls = [];
-            let baseImageUrl = productContext.baseImage;
+            // 単一画像互換性を持たせつつ、基本は配列として扱う
+            let baseImagesArray = productContext.baseImages || [];
+            if (baseImagesArray.length === 0 && productContext.baseImage) {
+                baseImagesArray = [productContext.baseImage];
+            }
 
-            if (!baseImageUrl) {
+            if (baseImagesArray.length === 0) {
                 // ユーザーアップロード画像がない場合、AI(Gemini)で背景用画像を1枚生成する
                 setLoadingPhase(3); // 3: "画像を生成・合成中..."
                 await new Promise(resolve => setTimeout(resolve, 300)); // UI更新の待機
@@ -281,7 +286,7 @@ export default function Home() {
                 const generated = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, 1);
 
                 if (generated && generated.length > 0) {
-                    baseImageUrl = generated[0];
+                    baseImagesArray = [generated[0]]; // AIが生成した画像を配列の1要素目とする
                 } else {
                     throw new Error("AI画像生成に失敗しました（結果が空です）。");
                 }
@@ -493,17 +498,19 @@ export default function Home() {
             };
 
             // 5. 決定したベース画像に対して、必要な枚数分(カルーセルなら5枚)の文言を合成していく
-            if (baseImageUrl) {
+            if (baseImagesArray.length > 0) {
                 if (selectedFormat === 'carousel' && post.carousel_slides && Array.isArray(post.carousel_slides)) {
-                    // カルーセルの場合は文字違いで複数枚(5枚)の画像を生成 (indexを渡してエフェクトを変化させる)
+                    // カルーセルの場合は複数枚(5枚)の画像を生成し、アップロードされた画像をローテーション（順番）で割り当てる
                     for (let i = 0; i < post.carousel_slides.length; i++) {
                         const slide = post.carousel_slides[i];
-                        const imgData = await drawCanvasImage(slide.overlay_copy, baseImageUrl, i);
+                        const currentBgUrl = baseImagesArray[i % baseImagesArray.length];
+                        const imgData = await drawCanvasImage(slide.overlay_copy, currentBgUrl, i);
                         if (imgData) imageUrls.push(imgData);
                     }
                 } else if (selectedFormat !== 'video_script') {
-                    // 通常の1枚画像生成（カルーセル以外）
-                    const imgData = await drawCanvasImage(post.overlay_copy, baseImageUrl, 0);
+                    // 通常の1枚画像生成（カルーセル以外）は配列の1枚目を使用
+                    const currentBgUrl = baseImagesArray[0];
+                    const imgData = await drawCanvasImage(post.overlay_copy, currentBgUrl, 0);
                     if (imgData) imageUrls.push(imgData);
                 }
             }
