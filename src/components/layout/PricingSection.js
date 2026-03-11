@@ -47,7 +47,7 @@ export default function PricingSection({ onUpgrade, isPro }) {
         <section className={styles.pricingSection}>
             <div className={styles.container}>
                 <div className={styles.header}>
-                    <h2 className={styles.title}>プラン</h2>
+                    <h2 className={styles.title}>Plan</h2>
                     <p className={styles.subtitle}>
                         ビジネスの規模に合わせて選べる2つのプラン。<br />
                         いつでもキャンセル可能です。

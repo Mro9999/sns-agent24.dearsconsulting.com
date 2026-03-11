@@ -134,8 +134,8 @@ export default function LandingPage() {
                                 <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"></div>
                                 <div className="relative z-10 w-full h-full border-2 border-white/80 p-6 flex flex-col justify-between items-center text-white">
                                     <div className="text-sm font-bold tracking-widest bg-white/20 px-4 py-1 rounded-full backdrop-blur-md">MARKETING TIPS</div>
-                                    <h3 className="text-3xl font-extrabold leading-snug drop-shadow-lg">なぜ、あなたの<br />SNS投稿は<br /><span className="text-pink-400">読まれない</span>のか？</h3>
-                                    <div className="text-sm border-t-2 border-pink-500 pt-2 w-1/2">Swipe to learn more →</div>
+                                    <h3 className="text-2xl sm:text-3xl font-extrabold leading-snug drop-shadow-lg break-keep px-2">なぜ、あなたの<br />SNS投稿は<br /><span className="text-pink-400">読まれない</span><br className="sm:hidden" />のか？</h3>
+                                    <div className="text-xs sm:text-sm border-t-2 border-pink-500 pt-2 w-1/2">Swipe to learn more →</div>
                                 </div>
                             </div>
 
@@ -206,7 +206,7 @@ export default function LandingPage() {
                 <div className="flex gap-4 mb-6">
                     <Link href="https://dearsconsulting.com/sns-agent24/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-400 transition-colors">About SNS Agent24</Link>
                     <span>|</span>
-                    <Link href="https://dearsconsulting.com/contact/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-400 transition-colors">Contact</Link>
+                    <Link href="https://dearsconsulting.com/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-400 transition-colors">Contact</Link>
                 </div>
                 <p>&copy; {new Date().getFullYear()} DEARS CONSULTING ALL RIGHTS RESERVED.</p>
             </footer>
