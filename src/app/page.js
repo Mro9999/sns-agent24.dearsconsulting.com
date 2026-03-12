@@ -120,8 +120,8 @@ export default function LandingPage() {
             {/* Demonstration & Output Sample */}
             <section className="w-full max-w-6xl mx-auto px-6 py-24 relative">
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4">プロフェッショナルな出力結果</h2>
-                    <p className="text-gray-400">わずか数項目の入力で、デザイン済みの画像と計算された文章が完成します。</p>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4">生成される投稿のサンプル</h2>
+                    <p className="text-gray-400">「例えばこんな感じで出力されます」<br />わずか数項目の入力で、このようなデザイン済みの画像と計算された文章が完成します。</p>
                 </div>
 
                 <div className="flex flex-col lg:flex-row items-center gap-12 bg-white/5 border border-white/10 rounded-3xl p-6 md:p-12">
