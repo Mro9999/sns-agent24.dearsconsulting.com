@@ -50,7 +50,7 @@ export default function PricingSection({ onUpgrade, isPro }) {
                     <h2 className={styles.title}>Plan</h2>
                     <p className={styles.subtitle}>
                         ビジネスの規模に合わせて選べる2つのプラン。<br />
-                        いつでもキャンセル可能です。
+                        いつでも解約可能です。
                     </p>
 
                     {/* Billing Cycle Toggle */}

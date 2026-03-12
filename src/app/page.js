@@ -42,11 +42,13 @@ export default function LandingPage() {
                 </div>
 
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight drop-shadow-2xl">
-                    AIが、あなたの<br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400">
-                        専属SNSマーケター
+                    <span className="inline-block">AIが、あなたの</span><br />
+                    <span className="inline-block">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400">
+                            専属SNSマーケター
+                        </span>
+                        に。
                     </span>
-                    に。
                 </h1>
 
                 <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">
@@ -134,7 +136,7 @@ export default function LandingPage() {
                                 <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"></div>
                                 <div className="relative z-10 w-full h-full border-2 border-white/80 p-6 flex flex-col justify-between items-center text-white">
                                     <div className="text-sm font-bold tracking-widest bg-white/20 px-4 py-1 rounded-full backdrop-blur-md">MARKETING TIPS</div>
-                                    <h3 className="text-2xl sm:text-3xl font-extrabold leading-snug drop-shadow-lg break-keep px-2">なぜ、あなたの<br />SNS投稿は<br /><span className="text-pink-400">読まれない</span><br className="sm:hidden" />のか？</h3>
+                                    <h3 className="text-2xl sm:text-3xl font-extrabold leading-snug drop-shadow-lg px-2">なぜ、あなたの<br />SNS投稿は<br /><span className="inline-block"><span className="text-pink-400">読まれない</span>のか？</span></h3>
                                     <div className="text-xs sm:text-sm border-t-2 border-pink-500 pt-2 w-1/2">Swipe to learn more →</div>
                                 </div>
                             </div>
@@ -186,7 +188,7 @@ export default function LandingPage() {
                     <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto flex items-center justify-center mb-8 shadow-[0_0_40px_rgba(219,39,119,0.4)]">
                         <Zap size={36} className="text-white drop-shadow-md" />
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-bold mb-6">SNS運用を、次の次元へ。</h2>
+                    <h2 className="text-4xl md:text-5xl font-bold mb-6"><span className="inline-block">SNS運用を、</span><span className="inline-block">次の次元へ。</span></h2>
                     <p className="text-xl text-gray-400 mb-10 w-full max-w-lg text-center">今すぐ無料アカウントを作成し、AIの手による革新的なクリエイティブを体験してください。</p>
                     <Link
                         href="/app"
@@ -206,7 +208,7 @@ export default function LandingPage() {
                 <div className="flex gap-4 mb-6">
                     <Link href="https://dearsconsulting.com/sns-agent24/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-400 transition-colors">About SNS Agent24</Link>
                     <span>|</span>
-                    <Link href="https://dearsconsulting.com/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-400 transition-colors">Contact</Link>
+                    <Link href="https://dearsconsulting.com/otoiawase/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-400 transition-colors">Contact</Link>
                 </div>
                 <p>&copy; {new Date().getFullYear()} DEARS CONSULTING ALL RIGHTS RESERVED.</p>
             </footer>
