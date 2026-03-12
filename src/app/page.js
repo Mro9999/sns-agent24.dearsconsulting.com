@@ -74,6 +74,22 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* Developer Story (Who made it) */}
+            <section className="w-full max-w-5xl mx-auto px-6 pb-16 pt-8 text-center">
+                <div className="inline-block p-[1px] rounded-3xl bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-indigo-500/30 w-full relative overflow-hidden">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-xl"></div>
+                    <div className="relative z-10 px-6 py-10 md:py-12 rounded-3xl">
+                        <p className="text-lg md:text-2xl font-bold mb-4">
+                            30年間の事業・コンサルティング実績から生まれた、<span className="text-pink-400">現場のための結論</span>。
+                        </p>
+                        <p className="text-sm md:text-base text-gray-400 leading-relaxed max-w-3xl mx-auto">
+                            私たち「DEARS CONSULTING」は、数多くの中小企業のマーケティングを支援する中で、SNS運用の「外注費の無駄」と「現場の疲弊」というリアルな痛みに直面してきました。<br className="hidden md:block" />
+                            このツールは、自分たちのクライアントを本気で勝たせるために自社開発した「完全自動の専属エージェント」です。
+                        </p>
+                    </div>
+                </div>
+            </section>
+
             {/* Value Proposition (3 Magic Features) */}
             <section className="w-full bg-black/40 border-y border-white/5 py-24 relative overflow-hidden flex flex-col items-center justify-center">
                 <div className="w-full max-w-6xl mx-auto px-6 relative z-10 flex flex-col items-center justify-center">
@@ -88,7 +104,7 @@ export default function LandingPage() {
                             <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30 group-hover:scale-110 transition-transform">
                                 <Search className="text-purple-400" size={26} />
                             </div>
-                            <h3 className="text-xl font-bold mb-3">リアルタイム検索＆<br />インサイト抽出</h3>
+                            <h3 className="text-xl font-bold mb-3">競合が気づいていない<br />「顧客の本音」を発見</h3>
                             <p className="text-gray-400 leading-relaxed text-sm">
                                 ターゲット市場の最新トレンドをGoogle検索でリアルタイム取得。表面的なAIポエムではなく、実データに基づいた刺さる切り口を提案します。
                             </p>
@@ -98,7 +114,7 @@ export default function LandingPage() {
                             <div className="w-14 h-14 bg-pink-500/20 rounded-2xl flex items-center justify-center mb-6 border border-pink-500/30 group-hover:scale-110 transition-transform">
                                 <PenTool className="text-pink-400" size={26} />
                             </div>
-                            <h3 className="text-xl font-bold mb-3">プロ品質のコピー＆<br />台本生成</h3>
+                            <h3 className="text-xl font-bold mb-3">悩む時間をゼロにする、<br />プロ水準の提案</h3>
                             <p className="text-gray-400 leading-relaxed text-sm">
                                 1枚構成、スワイプ必須の5枚カルーセル、TikTokやReels等のショート動画台本まで、用途に合わせて最適な文章フォーマットで出力します。
                             </p>
@@ -108,7 +124,7 @@ export default function LandingPage() {
                             <div className="w-14 h-14 bg-indigo-500/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30 group-hover:scale-110 transition-transform">
                                 <ImageIcon className="text-indigo-400" size={26} />
                             </div>
-                            <h3 className="text-xl font-bold mb-3">オリジナル画像の<br />完全自動デザイン合成</h3>
+                            <h3 className="text-xl font-bold mb-3">素人感を完全に排除した、<br />目を惹くクリエイティブ</h3>
                             <p className="text-gray-400 leading-relaxed text-sm">
                                 スマホにある写真をアップロードするだけで、AIが考案したコピーとブランドロゴを最適なバランスで自動配置。面倒なCanva等の操作は不要です。
                             </p>
@@ -164,7 +180,7 @@ export default function LandingPage() {
                             <p className="mb-4 text-white font-bold">【保存必須】SNSマーケティングの罠を回避する方法</p>
                             <p className="mb-4">一生懸命デザインした画像。でも、インサイトを見たら保存数は「0」…。そんな経験はありませんか？</p>
                             <p className="mb-4">実は、ターゲット層の深層心理で「今すぐ解決したい痛み」にアプローチできていないのが原因かもしれません。</p>
-                            <p className="mb-4 text-pink-400">💡 本日のインサイト：</p>
+                            <p className="mb-4 text-pink-400 font-bold">【本日のインサイト】</p>
                             <ul className="mb-4 pl-4 border-l-2 border-pink-500/50 space-y-2">
                                 <li>・ユーザーの70%は最初の1枚で離脱する</li>
                                 <li>・「有益な情報」ではなく「共感」を求めている</li>

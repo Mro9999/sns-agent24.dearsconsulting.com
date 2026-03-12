@@ -53,6 +53,14 @@ export default function PricingSection({ onUpgrade, isPro }) {
                         いつでも解約可能です。
                     </p>
 
+                    <div className="mt-8 mb-4 inline-block bg-purple-900/40 border border-purple-500/30 rounded-2xl px-6 py-4 text-center text-sm md:text-base text-purple-100 font-bold max-w-2xl mx-auto shadow-lg relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 pointer-events-none"></div>
+                        <span className="relative z-10">
+                            通常の運用代行：月20〜50万円 <span className="mx-2 text-pink-400">→</span> SNS Agent24 Pro：月2,980円<br />
+                            <span className="text-pink-300">品質は妥協せず、コストだけを99%削減。</span>
+                        </span>
+                    </div>
+
                     {/* Billing Cycle Toggle */}
                     <div className={styles.toggleContainer}>
                         <span className={`${styles.toggleLabel} ${billingCycle === 'month' ? styles.active : ''}`}>月払い</span>
