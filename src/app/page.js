@@ -52,8 +52,8 @@ export default function LandingPage() {
                 </h1>
 
                 <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">
-                    最新のトレンドリサーチから、ターゲットの深層心理を突くキャプション構築、
-                    そしてオリジナル画像との完全自動合成まで。1分待つだけでプロの仕事が完了します。
+                    <span className="inline-block">最新のトレンドリサーチから、</span><span className="inline-block">ターゲットの深層心理を突く</span><span className="inline-block">キャプション構築、</span><br className="hidden md:block" />
+                    <span className="inline-block">そしてオリジナル画像との</span><span className="inline-block">完全自動合成まで。</span><span className="inline-block">1分待つだけで</span><span className="inline-block">プロの仕事が完了します。</span>
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -83,8 +83,8 @@ export default function LandingPage() {
                             30年間の事業・コンサルティング実績から生まれた、<span className="text-pink-400">現場のための結論</span>。
                         </p>
                         <p className="text-sm md:text-base text-gray-400 leading-relaxed max-w-3xl mx-auto">
-                            私たち「DEARS CONSULTING」は、数多くの中小企業のマーケティングを支援する中で、SNS運用の「外注費の無駄」と「現場の疲弊」というリアルな痛みに直面してきました。<br className="hidden md:block" />
-                            このツールは、自分たちのクライアントを本気で勝たせるために自社開発した「完全自動の専属エージェント」です。
+                            <span className="inline-block">私たち「DEARS CONSULTING」は、</span><span className="inline-block">数多くの中小企業の</span><span className="inline-block">マーケティングを支援する中で、</span><span className="inline-block">SNS運用の「外注費の無駄」と</span><span className="inline-block">「現場の疲弊」というリアルな痛みに直面してきました。</span><br className="hidden md:block" />
+                            <span className="inline-block">このツールは、</span><span className="inline-block">自分たちのクライアントを</span><span className="inline-block">本気で勝たせるために自社開発した</span><span className="inline-block">「完全自動の専属エージェント」です。</span>
                         </p>
                     </div>
                 </div>
