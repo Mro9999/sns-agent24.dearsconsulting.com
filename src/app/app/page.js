@@ -89,10 +89,22 @@ export default function Home() {
     const [checkoutError, setCheckoutError] = useState(null);
     const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
+    // アカウント作成から7日以内か判定し、無料生成枠の上限を返す
+    const getDailyFreeLimit = () => {
+        if (!user || !user.createdAt) return 1;
+        const createdDate = new Date(user.createdAt);
+        const now = new Date();
+        const diffTime = Math.abs(now - createdDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        // 最初の7日間は1日3回、それ以降は1日1回
+        return diffDays <= 7 ? 3 : 1; 
+    };
+
     // 回数制限のチェック関数 (localStorageベース)
     const checkLimitAndRecord = () => {
         if (isPro) return true; // Proプランは無制限
 
+        const maxLimit = getDailyFreeLimit();
         const today = new Date().toLocaleDateString('ja-JP');
         const usageDataStr = localStorage.getItem('snsAgent24_usage');
         let usageData = usageDataStr ? JSON.parse(usageDataStr) : { date: today, count: 0 };
@@ -102,7 +114,7 @@ export default function Home() {
             usageData = { date: today, count: 0 };
         }
 
-        if (usageData.count >= 1) {
+        if (usageData.count >= maxLimit) {
             return false; // 制限オーバー
         }
 
@@ -265,8 +277,9 @@ export default function Home() {
         }
 
         // 無料プランの回数制限チェック
+        const maxLimit = getDailyFreeLimit();
         if (!checkLimitAndRecord()) {
-            alert("本日の無料生成枠（1回）を使い切りました。\\n引き続き無制限でご利用いただくには、Proプランへのアップグレードをご検討ください！");
+            alert(`本日の無料生成枠（${maxLimit}回）を使い切りました。\n引き続き無制限でご利用いただくには、Proプランへのアップグレードをご検討ください！`);
             document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
             return;
         }
@@ -664,7 +677,7 @@ export default function Home() {
                                     </h3>
                                     <p className="text-gray-400 text-[13px] md:text-sm mb-6 leading-relaxed">
                                         最初から最後まで全自動でキャプションや画像を生成できる<br className="hidden md:block" />
-                                        プロ向けAIエージェントを、1日1回無料で体験できます。
+                                        プロ向けAIエージェントを、登録から7日間は「1日3回」まで無料で体験できます。
                                     </p>
 
                                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full px-4">
