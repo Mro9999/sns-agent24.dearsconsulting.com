@@ -1224,6 +1224,86 @@ export default function Home() {
                                 </>
                             )}
                         </div>
+
+                        {/* フォローアップ導線（Next Action） */}
+                        <div className="w-full bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 rounded-2xl p-6 mb-8 shadow-[0_0_30px_rgba(99,102,241,0.15)] relative overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-700 delay-500 fill-mode-both">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl -ml-8 -mb-8 pointer-events-none"></div>
+                            
+                            <div className="relative z-10">
+                                <h3 className="text-xl font-bold mb-2 flex items-center justify-center gap-2 text-white">
+                                    <Rocket size={24} className="text-pink-400" /> 次にやること（Next Action）
+                                </h3>
+                                <p className="text-center text-indigo-200 text-sm mb-6">
+                                    AIが生成した最高のコンテンツを、今すぐ世界に届けましょう！
+                                </p>
+
+                                <div className="space-y-3 mb-6 max-w-lg mx-auto">
+                                    <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-3 rounded-xl">
+                                        <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm">1</div>
+                                        <div className="flex-1 text-sm text-gray-200">画像をダウンロードする</div>
+                                        <Download size={16} className="text-gray-500" />
+                                    </div>
+                                    <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-3 rounded-xl">
+                                        <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm">2</div>
+                                        <div className="flex-1 text-sm text-gray-200">キャプションとハッシュタグをコピーする</div>
+                                        <Copy size={16} className="text-gray-500" />
+                                    </div>
+                                    <div className="flex items-center gap-3 bg-indigo-500/20 border border-indigo-500/30 p-3 rounded-xl shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+                                        <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shadow-lg border border-indigo-400">3</div>
+                                        <div className="flex-1 text-sm font-bold text-white">アプリを開いて貼り付け、投稿を完了する！</div>
+                                        <Zap size={16} className="text-yellow-400 animate-pulse" />
+                                    </div>
+                                </div>
+
+                                <div className="max-w-lg mx-auto">
+                                    <button
+                                        onClick={() => {
+                                            // アプリ用のカスタムURLスキーム
+                                            const urls = {
+                                                instagram: 'instagram://camera',
+                                                twitter: 'twitter://post',
+                                                facebook: 'fb://composer'
+                                            };
+                                            // Webブラウザ用のフォールバックURL
+                                            const webUrls = {
+                                                instagram: 'https://www.instagram.com/',
+                                                twitter: 'https://twitter.com/compose/tweet',
+                                                facebook: 'https://www.facebook.com/'
+                                            };
+                                            
+                                            const platform = selectedPlatform || 'instagram';
+                                            
+                                            // ユーザーエージェントからモバイルを判定
+                                            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                                            
+                                            if (isMobile) {
+                                                // スマホの場合はまずアプリ起動を試みる
+                                                window.location.href = urls[platform];
+                                                // 起動しなかった場合のための保険（数秒後にWeb版を開く）
+                                                setTimeout(() => {
+                                                    window.open(webUrls[platform], '_blank');
+                                                }, 2000);
+                                            } else {
+                                                // PCの場合は最初からWeb版を開く
+                                                window.open(webUrls[platform], '_blank');
+                                            }
+                                        }}
+                                        className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-md font-bold text-white flex flex-row items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(147,51,234,0.4)] hover:shadow-[0_0_30px_rgba(147,51,234,0.6)] transform hover:-translate-y-1"
+                                    >
+                                        {selectedPlatform === 'instagram' && <Instagram size={20} />}
+                                        {selectedPlatform === 'twitter' && <Twitter size={20} />}
+                                        {selectedPlatform === 'facebook' && <Facebook size={20} />}
+                                        {selectedPlatform === 'instagram' ? 'Instagramを開いて投稿する' :
+                                         selectedPlatform === 'twitter' ? 'X (Twitter)を開いて投稿する' :
+                                         selectedPlatform === 'facebook' ? 'Facebookを開いて投稿する' : 'SNSアプリを開いて投稿する'}
+                                    </button>
+                                    <p className="text-[11px] text-center text-indigo-300/60 mt-3">
+                                        ※スマホでアプリがインストールされている場合は直接起動します
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
             </main>
