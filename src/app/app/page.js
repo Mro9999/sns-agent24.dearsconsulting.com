@@ -5,6 +5,7 @@ import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
+import ProfileSetupModal from '@/components/features/ProfileSetupModal';
 
 export default function Home() {
     const { user, isLoaded, isSignedIn } = useUser();
@@ -45,6 +46,17 @@ export default function Home() {
     ];
 
     const [isStateLoaded, setIsStateLoaded] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+    // プロフィール設定モーダルの表示判定
+    useEffect(() => {
+        if (isLoaded && isSignedIn && user) {
+            const hasProfile = user.publicMetadata?.profileSetupCompleted;
+            if (!hasProfile) {
+                setIsProfileModalOpen(true);
+            }
+        }
+    }, [isLoaded, isSignedIn, user]);
 
     useEffect(() => {
         const saved = localStorage.getItem('snsAgent24_formState');
@@ -307,13 +319,16 @@ export default function Home() {
 
             const targetLabel = selectedTarget === 'teens' ? '10代' : selectedTarget === 'young_adults' ? '20-30代' : selectedTarget === 'parents' ? 'パパママ' : selectedTarget === 'high_end' ? '富裕層・ハイエンド' : 'ビジネス層';
 
+            // ユーザー独自のプロフィール情報を取得 (存在しない場合は空オブジェクト)
+            const userProfile = user?.publicMetadata || {};
+
             // 1. リサーチ
-            const research = await researchTrends(selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedPlatform, cleanProductContext?.location, siteContent);
+            const research = await researchTrends(selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedPlatform, cleanProductContext?.location, siteContent, userProfile);
             setLoadingPhase(1); // 1: "ターゲットの深層心理に基づいてキャプションを構築中..."
             await new Promise(resolve => setTimeout(resolve, 300)); // ReactのUI再レンダリングを確実に行わせるための待機（ローディングアニメの真実味を出す）
 
-            // 2. キャプション生成 (言語指定・フォーマット指定を追加)
-            const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, cleanProductContext, siteContent, selectedFormat);
+            // 2. キャプション生成 (言語指定・フォーマット指定・ユーザープロフィールを追加)
+            const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, cleanProductContext, siteContent, selectedFormat, userProfile);
             setLoadingPhase(2); // 2: "デザインを作成中..."
             await new Promise(resolve => setTimeout(resolve, 300)); // ReactのUI再レンダリングを確実に行わせるための待機
 
@@ -1362,6 +1377,13 @@ export default function Home() {
                     https://dearsconsulting.com/
                 </a>
             </footer >
+
+            {/* Profile Setup Modal */}
+            <ProfileSetupModal 
+                isOpen={isProfileModalOpen} 
+                onClose={() => setIsProfileModalOpen(false)} 
+                user={user} 
+            />
         </div >
     );
 }

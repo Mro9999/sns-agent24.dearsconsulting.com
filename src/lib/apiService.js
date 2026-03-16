@@ -33,7 +33,7 @@ const IMAGE_MODEL = 'imagen-3.0-generate-001'; // 最新の画像生成モデル
 /**
  * トレンドリサーチ
  */
-export async function researchTrends(category, targetLabel, gender, businessStyle, platformId, location, siteContent) {
+export async function researchTrends(category, targetLabel, gender, businessStyle, platformId, location, siteContent, userProfile = {}) {
     try {
         const prompt = `
 あなたは世界トップクラスのマーケター兼トレンドアナリストです。
@@ -45,7 +45,7 @@ export async function researchTrends(category, targetLabel, gender, businessStyl
 すべての出力（JSONの各値など）は、**必ず完全で自然な「日本語」のみ**を使用してください。
 英単語などの一般的な固有名詞等を除き、**ロシア語（例: готовые）、アラビア語、フランス語など、指定以外の言語が1文字でも混入することは固く禁じます。**
 
-# 条件
+# 条件（一般）
 - プラットフォーム: ${platformId}
 - 業種/カテゴリ: ${category?.label || category}
 - ターゲット層: ${targetLabel}
@@ -53,6 +53,12 @@ export async function researchTrends(category, targetLabel, gender, businessStyl
 - ビジネス形態: ${businessStyle === 'physical' ? '実店舗・サロン' : businessStyle === 'online' ? 'オンライン・EC' : 'サービス・レッスン'}
 ${location ? `- 地域: ${location}` : ''}
 ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` : ''}
+
+# ユーザー固有コンテキスト（超重要）
+この分析は以下の「特定のビジネス」のために行われます。一般的な分析ではなく、このビジネスに深く刺さる独自のインサイトを導き出してください。
+- 実際の業種・ビジネス内容: ${userProfile.industry || '未設定'}
+- メインの顧客層（具体的なターゲット）: ${userProfile.targetAudience || '未設定'}
+- 自社の強み / 競合との差別化ポイント: ${userProfile.usp || '未設定'}
 
 # 分析要件
 以下の3方向から最新情報をリサーチし、キャプション案と生成画像に活かせる具体的な「統合インサイト」を導き出してください。
@@ -92,7 +98,7 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
 /**
  * 投稿内容生成
  */
-export async function generatePost(research, platformId, category, targetLabel, gender, businessStyle, tone, language = 'ja', textContext, siteContent, format = 'single') {
+export async function generatePost(research, platformId, category, targetLabel, gender, businessStyle, tone, language = 'ja', textContext, siteContent, format = 'single', userProfile = {}) {
     try {
         let languageInstruction = "【基本言語】すべての出力テキスト（キャプション、ハッシュタグ、コピーなど）は、**必ず完全で自然な「日本語」のみ**で作成してください。";
 
@@ -176,6 +182,12 @@ export async function generatePost(research, platformId, category, targetLabel, 
 - ターゲット: ${targetLabel} (${gender})
 - トーン&マナー: ${tone?.label || tone}
 - 言語仕様: ${languageInstruction}
+
+# ユーザー固有コンテキスト（超重要）
+この投稿は以下の「特定のビジネス」からのメッセージとして作成してください。
+- 実際の業種・ビジネス内容: ${userProfile.industry || '未設定'}
+- メインの顧客層（具体的なターゲット）: ${userProfile.targetAudience || '未設定'}
+- 自社の強み / 競合との差別化ポイント: ${userProfile.usp || '未設定'}
 
 # リサーチ結果・商材情報
 - ① 世の中のトレンド: ${research.insight_macro}
