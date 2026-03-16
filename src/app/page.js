@@ -108,7 +108,7 @@ export default function LandingPage() {
                             </div>
                             <h3 className="text-xl font-bold mb-3">競合が気づいていない<br />「顧客の本音」を発見</h3>
                             <p className="text-gray-400 leading-relaxed text-sm">
-                                ターゲット市場の最新トレンドをGoogle検索でリアルタイム取得。表面的なAIポエムではなく、実データに基づいた刺さる切り口を提案します。
+                                ターゲット市場の最新トレンドをGoogle検索でリアルタイム取得。表面的なAIポエムではなく、実データに基づいた刺さる切り口となるインサイト（隠れた欲求や不満）を提案します。
                             </p>
                         </div>
                         {/* Feature 2 */}
@@ -118,7 +118,7 @@ export default function LandingPage() {
                             </div>
                             <h3 className="text-xl font-bold mb-3">悩む時間をゼロにする、<br />プロ水準の提案</h3>
                             <p className="text-gray-400 leading-relaxed text-sm">
-                                1枚構成、スワイプ必須の5枚カルーセル、TikTokやReels等のショート動画台本まで、用途に合わせて最適な文章フォーマットで出力します。
+                                1枚構成、スワイプ必須の5枚カルーセル、ショート動画台本まで、用途に合わせた文章フォーマットで出力。保存や来店（コンバージョン）を促すCTA（行動喚起）まで計算されています。
                             </p>
                         </div>
                         {/* Feature 3 */}
@@ -182,11 +182,11 @@ export default function LandingPage() {
                             <p className="mb-4 text-white font-bold">【保存必須】SNSマーケティングの罠を回避する方法</p>
                             <p className="mb-4">一生懸命デザインした画像。でも、インサイトを見たら保存数は「0」…。そんな経験はありませんか？</p>
                             <p className="mb-4">実は、ターゲット層の深層心理で「今すぐ解決したい痛み」にアプローチできていないのが原因かもしれません。</p>
-                            <p className="mb-4 text-pink-400 font-bold">【本日のインサイト】</p>
+                            <p className="mb-4 text-pink-400 font-bold">【本日のインサイト（気付き）】</p>
                             <ul className="mb-4 pl-4 border-l-2 border-pink-500/50 space-y-2">
                                 <li>・ユーザーの70%は最初の1枚で離脱する</li>
                                 <li>・「有益な情報」ではなく「共感」を求めている</li>
-                                <li>・保存を促す明確なCTAが欠けている</li>
+                                <li>・保存を促す明確なCTA（行動喚起）が欠けている</li>
                             </ul>
                             <p className="mb-4">これらを自動で分析し、最適な文脈で投稿を作成するのが『SNS Agent24』。もう悩む必要はありません。</p>
                             <p className="mb-4 text-gray-500">...<br />#SNS運用 #マーケティング #集客ノウハウ</p>
