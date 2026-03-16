@@ -33,13 +33,7 @@ export default function LandingPage() {
 
             {/* Hero Section */}
             <section className="w-full max-w-6xl mx-auto px-6 pt-24 pb-32 flex flex-col items-center justify-center text-center relative overflow-hidden flex-1 w-full">
-                {/* Background Glow */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-600/20 blur-[120px] rounded-full pointer-events-none"></div>
-
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-sm">
-                    <Sparkles size={14} className="text-pink-400" />
-                    <span className="text-xs font-medium text-gray-300 tracking-wide">最新Geminiモデル搭載の完全自動化エージェント</span>
-                </div>
 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-tight drop-shadow-2xl">
                     <span className="inline-block">センスも、時間も、<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400">担当者も、</span></span><br />
@@ -55,7 +49,8 @@ export default function LandingPage() {
 
                 <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">
                     <span className="inline-block">最新のトレンドリサーチから、</span><span className="inline-block">ターゲットの深層心理を突く</span><span className="inline-block">キャプション構築、</span><br className="hidden md:block" />
-                    <span className="inline-block">そしてオリジナル画像との</span><span className="inline-block">完全自動合成まで。</span><span className="inline-block">1分待つだけで</span><span className="inline-block">プロの仕事が完了します。</span>
+                    <span className="inline-block">そしてオリジナル画像との</span><span className="inline-block">完全自動合成まで。</span><span className="inline-block">1分待つだけで</span><span className="inline-block">プロの仕事が完了します。</span><br className="hidden md:block" />
+                    <span className="inline-block">圧倒的なROI（費用対効果）を実現する</span><span className="inline-block">次世代SNS運用エージェント。</span>
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
