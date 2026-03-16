@@ -124,7 +124,7 @@ export default function PricingSection({ onUpgrade, isPro }) {
                                     </div>
                                     <div className="flex justify-between items-center bg-black/20 px-3 py-2.5 rounded-xl border border-purple-500/30">
                                         <span className="text-purple-200">作業時間</span>
-                                        <span className="text-cyan-300 font-extrabold text-base">月間 0時間</span>
+                                        <span className="text-cyan-300 font-extrabold text-base whitespace-nowrap">月間 約1〜2時間</span>
                                     </div>
                                     <div className="flex justify-between items-center bg-black/20 px-3 py-2.5 rounded-xl border border-purple-500/30">
                                         <span className="text-purple-200">クオリティ</span>
