@@ -126,9 +126,9 @@ export default function LandingPage() {
                             <div className="w-14 h-14 bg-indigo-500/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30 group-hover:scale-110 transition-transform">
                                 <ImageIcon className="text-indigo-400" size={26} />
                             </div>
-                            <h3 className="text-xl font-bold mb-3">素人感を完全に排除した、<br />目を惹くクリエイティブ</h3>
+                            <h3 className="text-xl font-bold mb-3">画像不要。完全手ぶらで<br />プロ級のクリエイティブ</h3>
                             <p className="text-gray-400 leading-relaxed text-sm">
-                                スマホにある写真をアップロードするだけで、AIが考案したコピーとブランドロゴを最適なバランスで自動配置。面倒なCanva等の操作は不要です。
+                                写真を用意する必要さえありません。AIが文脈に合った最適な背景画像を自動生成し、さらにプロのデザイナーのように視認性の高い文字配置を自動合成します。
                             </p>
                         </div>
                     </div>
