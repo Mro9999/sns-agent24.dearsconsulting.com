@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Check, Star, Zap } from 'lucide-react';
+import { Check, Star, Zap, User, Building } from 'lucide-react';
 import styles from './PricingSection.module.css';
 
 export default function PricingSection({ onUpgrade, isPro }) {
@@ -61,11 +61,11 @@ export default function PricingSection({ onUpgrade, isPro }) {
                             {/* 自作（DIY） */}
                             <div className="bg-[#1a1a24]/80 border border-white/10 rounded-2xl p-5 relative flex flex-col items-center">
                                 <h4 className="text-gray-400 font-bold mb-4 flex items-center justify-center gap-2">
-                                    <span className="text-xl">👨‍💻</span> 自分で運用する場合
+                                    <User size={20} /> 自社で運用する場合
                                 </h4>
                                 <div className="space-y-3 w-full text-sm">
                                     <div className="flex justify-between items-center bg-black/40 px-3 py-2.5 rounded-xl border border-white/5">
-                                        <span className="text-gray-400">外注コスト</span>
+                                        <span className="text-gray-400">月額費用</span>
                                         <span className="text-yellow-400 font-bold">¥0</span>
                                     </div>
                                     <div className="flex justify-between items-center bg-black/40 px-3 py-2.5 rounded-xl border border-white/5">
@@ -85,11 +85,11 @@ export default function PricingSection({ onUpgrade, isPro }) {
                             {/* 運用代行 */}
                             <div className="bg-[#1a1a24]/80 border border-white/10 rounded-2xl p-5 relative flex flex-col items-center">
                                 <h4 className="text-gray-400 font-bold mb-4 flex items-center justify-center gap-2">
-                                    <span className="text-xl">🏢</span> 一般的な運用代行
+                                    <Building size={20} /> 一般的な運用代行
                                 </h4>
                                 <div className="space-y-3 w-full text-sm">
                                     <div className="flex justify-between items-center bg-black/40 px-3 py-2.5 rounded-xl border border-white/5">
-                                        <span className="text-gray-400">外注コスト</span>
+                                        <span className="text-gray-400">月額費用</span>
                                         <span className="text-red-400 font-bold">月20〜50万円</span>
                                     </div>
                                     <div className="flex justify-between items-center bg-black/40 px-3 py-2.5 rounded-xl border border-white/5">
@@ -119,7 +119,7 @@ export default function PricingSection({ onUpgrade, isPro }) {
                                 </h4>
                                 <div className="space-y-3 w-full text-sm">
                                     <div className="flex justify-between items-center bg-black/20 px-3 py-2.5 rounded-xl border border-purple-500/30">
-                                        <span className="text-purple-200">外注コスト</span>
+                                        <span className="text-purple-200">月額費用</span>
                                         <span className="text-yellow-400 font-extrabold text-base">月2,980円</span>
                                     </div>
                                     <div className="flex justify-between items-center bg-black/20 px-3 py-2.5 rounded-xl border border-purple-500/30">
