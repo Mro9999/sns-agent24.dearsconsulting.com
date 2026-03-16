@@ -26,7 +26,7 @@ export default function LandingPage() {
                         href="/app"
                         className="px-5 py-2 rounded-full text-sm font-bold bg-white text-black hover:bg-gray-200 transition-colors hidden sm:block"
                     >
-                        今すぐ無料で試す
+                        AIに投稿を作らせてみる
                     </Link>
                 </div>
             </header>
@@ -41,13 +41,15 @@ export default function LandingPage() {
                     <span className="text-xs font-medium text-gray-300 tracking-wide">最新Geminiモデル搭載の完全自動化エージェント</span>
                 </div>
 
-                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight drop-shadow-2xl">
-                    <span className="inline-block">AIが、あなたの</span><br />
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-tight drop-shadow-2xl">
+                    <span className="inline-block">センスも、時間も、<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400">担当者も、</span></span><br />
                     <span className="inline-block">
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400">
-                            専属SNSマーケター
+                            もう要りません。
                         </span>
-                        に。
+                    </span><br className="hidden md:block" />
+                    <span className="inline-block text-3xl md:text-4xl lg:text-5xl mt-4 text-gray-200 font-bold">
+                        投稿の『正解』はデータが知っています。
                     </span>
                 </h1>
 
@@ -59,18 +61,18 @@ export default function LandingPage() {
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                     <Link
                         href="/app"
-                        className="px-8 py-4 rounded-full text-base font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 transition-all shadow-[0_0_30px_rgba(147,51,234,0.3)] hover:shadow-[0_0_40px_rgba(147,51,234,0.5)] flex items-center justify-center gap-2"
+                        className="px-6 py-4 md:px-8 md:py-5 rounded-full text-sm md:text-base font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 transition-all shadow-[0_0_30px_rgba(147,51,234,0.3)] hover:shadow-[0_0_40px_rgba(147,51,234,0.5)] flex items-center justify-center gap-2"
                     >
-                        無料で生成を始める
+                        今すぐあなたのビジネスの投稿を1本、AIに作らせてみる
                         <ArrowRight size={18} />
                     </Link>
                 </div>
 
                 {/* Micro Features */}
-                <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mt-16 text-sm text-gray-500 font-medium">
-                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-purple-500/80" /> クレジットカード不要</div>
-                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-purple-500/80" /> 即日利用可能</div>
-                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-purple-500/80" /> スマホ完結デザイン</div>
+                <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mt-12 text-sm text-gray-400 font-medium">
+                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-pink-400" /> クレジットカード登録不要</div>
+                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-pink-400" /> 所要時間わずか60秒</div>
+                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-pink-400" /> スマホ完結デザイン</div>
                 </div>
             </section>
 
