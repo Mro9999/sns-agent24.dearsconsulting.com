@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap } from 'lucide-react';
+import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History } from 'lucide-react';
 import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
@@ -563,6 +563,20 @@ export default function Home() {
                 }
             }
 
+            // 履歴の自動保存 (非同期で裏側で実行し、UIをブロックしない)
+            fetch('/api/generations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    platform: selectedPlatform,
+                    // ビデオスクリプトの場合はスクリプト本文、それ以外は通常キャプションを保存
+                    caption: selectedFormat === 'video_script' 
+                        ? (post.video_script || []).map(s => `[${s.time}] ${s.audio}\n${s.text_overlay}`).join('\n\n')
+                        : (post.caption || post.overlay_copy || ''),
+                    imageUrls: imageUrls
+                })
+            }).catch(err => console.error("Error saving history:", err));
+
             setResult({ research, post, imageUrls, isSynthesized: true });
             setStep(2);
             setTimeout(() => {
@@ -597,13 +611,22 @@ export default function Home() {
                             Proにアップグレード
                         </button>
                     ) : mounted && isPro ? (
-                        <button
-                            onClick={handlePortal}
-                            className="bg-white/10 hover:bg-white/20 border border-white/20 text-white py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
-                        >
-                            <Gem size={16} className="text-cyan-300" />
-                            Proプラン管理
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <a
+                                href="/dashboard"
+                                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
+                            >
+                                <History size={16} className="text-pink-300" />
+                                過去の履歴
+                            </a>
+                            <button
+                                onClick={handlePortal}
+                                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
+                            >
+                                <Gem size={16} className="text-cyan-300" />
+                                Proプラン管理
+                            </button>
+                        </div>
                     ) : (
                         <div className="w-32 h-8 rounded-full bg-gray-800 animate-pulse"></div> // マウント前のプレースホルダー
                     )}
