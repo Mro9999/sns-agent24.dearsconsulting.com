@@ -53,12 +53,89 @@ export default function PricingSection({ onUpgrade, isPro }) {
                         いつでも解約可能です。
                     </p>
 
-                    <div className="mt-8 mb-4 inline-block bg-purple-900/40 border border-purple-500/30 rounded-2xl px-6 py-4 text-center text-sm md:text-base text-purple-100 font-bold max-w-2xl mx-auto shadow-lg relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 pointer-events-none"></div>
-                        <span className="relative z-10">
-                            通常の運用代行：月20〜50万円 <span className="mx-2 text-pink-400">→</span> SNS Agent24 Pro：月2,980円<br />
-                            <span className="text-pink-300">品質は妥協せず、コストだけを99%削減。</span>
-                        </span>
+                    <div className="mt-8 mb-6 w-full max-w-4xl mx-auto px-2">
+                        <h3 className="text-center text-lg md:text-xl font-bold mb-6 text-gray-200 tracking-wide">
+                            なぜ <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 font-extrabold">SNS Agent24</span> が選ばれるのか？
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                            {/* 自作（DIY） */}
+                            <div className="bg-[#1a1a24]/80 border border-white/10 rounded-2xl p-5 relative flex flex-col items-center">
+                                <h4 className="text-gray-400 font-bold mb-4 flex items-center justify-center gap-2">
+                                    <span className="text-xl">👨‍💻</span> 自分で運用する場合
+                                </h4>
+                                <div className="space-y-3 w-full text-sm">
+                                    <div className="flex justify-between items-center bg-black/40 px-3 py-2.5 rounded-xl border border-white/5">
+                                        <span className="text-gray-400">外注コスト</span>
+                                        <span className="text-yellow-400 font-bold">¥0</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-black/40 px-3 py-2.5 rounded-xl border border-white/5">
+                                        <span className="text-gray-400">作業時間</span>
+                                        <span className="text-red-400 font-bold">月間30時間〜</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-black/40 px-3 py-2.5 rounded-xl border border-white/5">
+                                        <span className="text-gray-400">クオリティ</span>
+                                        <span className="text-gray-300 font-bold">属人的で不安定</span>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-5 h-8 flex items-center justify-center text-center leading-relaxed">
+                                    日々の通常業務を圧迫し<br />継続が困難になりがち
+                                </p>
+                            </div>
+
+                            {/* 運用代行 */}
+                            <div className="bg-[#1a1a24]/80 border border-white/10 rounded-2xl p-5 relative flex flex-col items-center">
+                                <h4 className="text-gray-400 font-bold mb-4 flex items-center justify-center gap-2">
+                                    <span className="text-xl">🏢</span> 一般的な運用代行
+                                </h4>
+                                <div className="space-y-3 w-full text-sm">
+                                    <div className="flex justify-between items-center bg-black/40 px-3 py-2.5 rounded-xl border border-white/5">
+                                        <span className="text-gray-400">外注コスト</span>
+                                        <span className="text-red-400 font-bold">月20〜50万円</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-black/40 px-3 py-2.5 rounded-xl border border-white/5">
+                                        <span className="text-gray-400">作業時間</span>
+                                        <span className="text-yellow-400 font-bold">月間 数時間</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-black/40 px-3 py-2.5 rounded-xl border border-white/5">
+                                        <span className="text-gray-400">クオリティ</span>
+                                        <span className="text-blue-300 font-bold">プロ水準</span>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-5 h-8 flex items-center justify-center text-center leading-relaxed">
+                                    丸投げできるが、高額な<br />固定費が利益を圧迫する
+                                </p>
+                            </div>
+
+                            {/* SNS Agent24 */}
+                            <div className="bg-gradient-to-b from-purple-900/60 to-indigo-900/40 border-2 border-purple-500/50 rounded-2xl p-5 relative flex flex-col items-center shadow-[0_0_25px_rgba(147,51,234,0.2)] transform md:-translate-y-2 transition-transform">
+                                <div className="absolute top-0 right-0 p-2">
+                                    <span className="flex h-3 w-3 relative">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-pink-500"></span>
+                                    </span>
+                                </div>
+                                <h4 className="text-purple-200 font-extrabold mb-4 flex items-center justify-center gap-2 text-lg">
+                                    <Zap size={20} className="text-yellow-400" fill="currentColor" /> SNS Agent24
+                                </h4>
+                                <div className="space-y-3 w-full text-sm">
+                                    <div className="flex justify-between items-center bg-black/20 px-3 py-2.5 rounded-xl border border-purple-500/30">
+                                        <span className="text-purple-200">外注コスト</span>
+                                        <span className="text-yellow-400 font-extrabold text-base">月2,980円</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-black/20 px-3 py-2.5 rounded-xl border border-purple-500/30">
+                                        <span className="text-purple-200">作業時間</span>
+                                        <span className="text-cyan-300 font-extrabold text-base">月間 0時間</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-black/20 px-3 py-2.5 rounded-xl border border-purple-500/30">
+                                        <span className="text-purple-200">クオリティ</span>
+                                        <span className="text-pink-400 font-extrabold text-base">最新AIによる最高水準</span>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-purple-200 mt-5 h-8 flex items-center justify-center text-center leading-relaxed font-bold">
+                                    プロ同等の品質を維持しながら<br/>時間と資金をコア業務へ集中
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Billing Cycle Toggle */}
