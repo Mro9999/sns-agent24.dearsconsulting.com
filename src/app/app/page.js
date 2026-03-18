@@ -332,7 +332,19 @@ export default function Home() {
             const targetLabel = selectedTarget === 'teens' ? '10代' : selectedTarget === 'young_adults' ? '20-30代' : selectedTarget === 'parents' ? 'パパママ' : selectedTarget === 'high_end' ? '富裕層・ハイエンド' : 'ビジネス層';
 
             // ユーザー独自のプロフィール情報を取得 (存在しない場合は空オブジェクト)
-            const userProfile = user?.publicMetadata || {};
+            let userProfile = user?.publicMetadata || {};
+            
+            // 【重要バグ修正】
+            // 過去に保存したプロフィール（例：DEARS CONSULTINGの設定）が新しく入力したURL（例：エステサロン）より優先されてしまうのを防ぐため、
+            // 今回の入力フォームに「自社・店舗URL(websiteUrl)」または「訴求ポイント(sellingPoint)」などがあれば、
+            // 過去のプロフィール設定を一時的に無効化（または上書き）して、今回の入力を最優先させる。
+            if (cleanProductContext?.websiteUrl || cleanProductContext?.sellingPoint) {
+                userProfile = {
+                    ...userProfile,
+                    industry: cleanProductContext.websiteUrl ? 'フォームに入力されたURLの事業' : userProfile.industry,
+                    usp: cleanProductContext.sellingPoint || userProfile.usp,
+                };
+            }
 
             // 1. リサーチ
             const research = await researchTrends(selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedPlatform, cleanProductContext?.location, siteContent, userProfile);
