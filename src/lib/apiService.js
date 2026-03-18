@@ -170,8 +170,8 @@ export async function generatePost(research, platformId, category, targetLabel, 
         }
 
         const prompt = `
-あなたはプロのSNS運用代行者です。以下の「3方向のトレンドリサーチ結果」とコンテキストに基づいて、読者の心を動かす極めて質の高いコンテンツ(${format}フォーマット)を生成してください。
-「AIが診断しました」「AIとしての提案です」などの言葉は絶対に使わず、ビジネスオーナーが直接顧客に語りかける自然なテキストを作成してください。
+あなたは特定の店舗・ブランドに所属し、その魅力を発信する「天才的なSNS運用担当者（中の人）」です。以下の「3方向のトレンドリサーチ結果」とコンテキストに基づいて、読者の心を動かす極めて質の高いコンテンツ(${format}フォーマット)を生成してください。
+「私が考えたキャプションです」「AIとしての提案です」などの言葉は絶対に使わず、ビジネスオーナーや店舗スタッフが直接顧客に語りかける自然なテキストを完成品として出力してください。
 
 ランダムシード: ${Date.now()}_${Math.random()}
 ※最重要指令: 生成するたびに前回の出力パターンを完全に捨て去り、【毎回全く異なる切り口、異なる語り口、異なるストーリー展開、異なるオファーの出し方】をして、ユーザーを飽きさせないクリエイティブなテキストを書き下ろしてください。テンプレ化は厳禁です。
@@ -184,9 +184,9 @@ export async function generatePost(research, platformId, category, targetLabel, 
 - 言語仕様: ${languageInstruction}
 
 # 【最重要】発信者と読者（誰から誰へのメッセージか）
-- 発信者 (You): 「${category?.label}」を運営する自店舗・自社ブランドのアカウント担当者です。
+- 発信者 (You): 「${category?.label}」を運営する自店舗・自社ブランドの現場スタッフ、またはオーナー（中の人）です。
 - 読者 (Reader): その商品やサービスに興味を持ちうる、来店・購入見込みのある「${targetLabel} (${gender})」の一般ユーザーや顧客です。
-※警告: **絶対に「同業者に向けたビジネス哲学」や「SNS運用者向けのマーケティング論や集客ノウハウ」を語らないでください。** あくまで「自分たちのお店やサービスに、読者を惹きつけ、来店・購入やファン化させるためのBtoC（またはBtoB）の魅力発信・宣伝メッセージ」として書いてください。画像に乗せるテキスト（overlay_copy）も、彼ら（見込み客）の興味を惹く強烈なキャッチコピーにしてください。
+※警告: **絶対に「同業者に向けたビジネス哲学」や「SNS運用者向けのマーケティング論や集客ノウハウ」「他社のSNS運用を代行するサービスのアピール」を語らないでください。** あなたの唯一の使命は、「自分たちのお店やサービス（＝入力されたURLや業種の店舗）に読者を惹きつけ、来店・購入やファン化させるためのBtoC（またはBtoB）の魅力発信・宣伝メッセージ」を書くことです。画像に乗せるテキスト（overlay_copy）も、彼ら（見込み客）の興味を惹く強烈なキャッチコピーにしてください。
 
 # 【最重要】投稿の目的（Purpose）
 あなたの今回の執筆のゴールは以下の通りです。このゴールが達成される（ユーザーが行動を起こす）ようにキャプション構成や訴求内容をフルカスタマイズしてください。
@@ -324,9 +324,18 @@ export async function analyzeProductImage(base64Images) {
  */
 export async function scrapeWebsite(url) {
     if (!url) return null;
+    
+    // 【重要バグ修正】
+    // URLに "http" がない場合、Next.js(Vercel)のfetchがこれを「相対パス(/est-kisarazu.com)」と解釈してしまい、
+    // 自社サイトのLanding Page（SNS Agent24）を誤ってスクレイピングしてしまう現象を防止。
+    let validUrl = url.trim();
+    if (!/^https?:\/\//i.test(validUrl)) {
+        validUrl = 'https://' + validUrl;
+    }
+
     try {
         // 実際の商用ではPuppeteer等を使うが、ここでは簡易的なフェッチ
-        const res = await fetch(url);
+        const res = await fetch(validUrl);
         if (!res.ok) return null;
         const html = await res.text();
 
