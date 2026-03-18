@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History } from 'lucide-react';
 import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
-import { CategorySelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
+import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
 import ProfileSetupModal from '@/components/features/ProfileSetupModal';
 
@@ -19,6 +19,7 @@ export default function Home() {
     const [step, setStep] = useState(0); // 0: Platform, 1: Process, 2: Result
     const [selectedPlatform, setSelectedPlatform] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedPurpose, setSelectedPurpose] = useState(null); // 新設: 投稿の目的
     const [selectedTarget, setSelectedTarget] = useState(null);
     const [selectedGender, setSelectedGender] = useState(null);
     const [selectedBusinessStyle, setSelectedBusinessStyle] = useState(null);
@@ -30,20 +31,26 @@ export default function Home() {
     // UIリッチ化用のステート
     const [loadingProgress, setLoadingProgress] = useState(0); // 0〜99の疑似進捗
     const [terminalLogs, setTerminalLogs] = useState([]); // サイバー風の解析ダミーログ
-    const DUMMY_LOGS = [
-        "Initializing neural network...",
-        "Connecting to data nodes...",
-        "Fetching global trend metrics...",
-        "Mapping user persona vectors...",
-        "Analyzing sentiment patterns...",
-        "Extracting high-engagement hashtags...",
-        "Synthesizing core value proposition...",
-        "Generating linguistic variations...",
-        "Optimizing CTA for conversions...",
-        "Applying visual aesthetic filters...",
-        "Rendering canvas nodes...",
-        "Finalizing prompt structures..."
-    ];
+    
+    // パーソナライズされた動的ログの生成関数
+    const getDynamicLogs = (category, targetLabel) => {
+        const cName = category?.label || '指定業種';
+        const tName = targetLabel || 'ターゲット層';
+        return [
+            "システム初期化シーケンスを開始...",
+            "データノードに接続中...",
+            `${cName}におけるグローバルトレンド指標を取得中...`,
+            `${tName}のペルソナベクトルをマッピング...`,
+            "最新の検索インサイトと感情パターンを解析中...",
+            "エンゲージメント率の高いハッシュタグを抽出...",
+            "ユーザーの深層心理（インサイト）に基づいた価値提案を合成...",
+            "ブランドのトンマナに合わせた言語バリエーションを生成...",
+            "来店・コンバージョンに直結するCTAを最適化...",
+            "視覚的アテンションを高めるビジュアルフィルターを適用...",
+            "キャンバスノードへのレンダリングを開始...",
+            "最終プロンプト構造を最適化中..."
+        ];
+    };
 
     const [isStateLoaded, setIsStateLoaded] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -65,6 +72,7 @@ export default function Home() {
                 const parsed = JSON.parse(saved);
                 if (parsed.selectedPlatform) setSelectedPlatform(parsed.selectedPlatform);
                 if (parsed.selectedCategory) setSelectedCategory(parsed.selectedCategory);
+                if (parsed.selectedPurpose) setSelectedPurpose(parsed.selectedPurpose);
                 if (parsed.selectedTarget) setSelectedTarget(parsed.selectedTarget);
                 if (parsed.selectedGender) setSelectedGender(parsed.selectedGender);
                 if (parsed.selectedBusinessStyle) setSelectedBusinessStyle(parsed.selectedBusinessStyle);
@@ -84,6 +92,7 @@ export default function Home() {
             localStorage.setItem('snsAgent24_formState', JSON.stringify({
                 selectedPlatform,
                 selectedCategory,
+                selectedPurpose,
                 selectedTarget,
                 selectedGender,
                 selectedBusinessStyle,
@@ -93,7 +102,7 @@ export default function Home() {
                 productContext
             }));
         }
-    }, [selectedPlatform, selectedCategory, selectedTarget, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, selectedFormat, productContext, isStateLoaded]);
+    }, [selectedPlatform, selectedCategory, selectedPurpose, selectedTarget, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, selectedFormat, productContext, isStateLoaded]);
 
     const [loading, setLoading] = useState(false);
     const [loadingPhase, setLoadingPhase] = useState(0);
@@ -108,8 +117,8 @@ export default function Home() {
         const now = new Date();
         const diffTime = Math.abs(now - createdDate);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        // 最初の7日間は1日3回、それ以降は1日1回
-        return diffDays <= 7 ? 3 : 1; 
+        // 最初の7日間はハビットトライアル（習慣化期間）として回数を大幅緩和、それ以降は1日1回
+        return diffDays <= 7 ? 999 : 1;  
     };
 
     // 回数制限のチェック関数 (localStorageベース)
@@ -192,10 +201,13 @@ export default function Home() {
             }, 600);
 
             // ターミナル風に次々とダミーログを追加していく
-            setTerminalLogs(["> System boot sequence initiated."]);
+            setTerminalLogs(["> システム初期化モジュールを起動..."]);
+            
             logInterval = setInterval(() => {
                 setTerminalLogs(prev => {
-                    const randomLog = DUMMY_LOGS[Math.floor(Math.random() * DUMMY_LOGS.length)];
+                    const targetLabel = selectedTarget === 'teens' ? '10代' : selectedTarget === 'young_adults' ? '20-30代' : selectedTarget === 'parents' ? 'パパママ' : selectedTarget === 'high_end' ? '富裕層' : 'ビジネス層';
+                    const dynamicLogs = getDynamicLogs(selectedCategory, targetLabel);
+                    const randomLog = dynamicLogs[Math.floor(Math.random() * dynamicLogs.length)];
                     const newLog = `> ${randomLog} [${new Date().toISOString().split('T')[1].slice(0, -1)}]`;
                     const updated = [...prev, newLog];
                     // 最新の8件程度だけ保持して表示領域におさめる
@@ -283,7 +295,7 @@ export default function Home() {
     };
 
     const handleGenerate = async () => {
-        if (!selectedCategory || !selectedTarget || !selectedGender || !selectedBusinessStyle || !selectedTone || !selectedFormat) {
+        if (!selectedCategory || !selectedPurpose || !selectedTarget || !selectedGender || !selectedBusinessStyle || !selectedTone || !selectedFormat) {
             alert("すべての項目を選択してください");
             return;
         }
@@ -328,7 +340,7 @@ export default function Home() {
             await new Promise(resolve => setTimeout(resolve, 300)); // ReactのUI再レンダリングを確実に行わせるための待機（ローディングアニメの真実味を出す）
 
             // 2. キャプション生成 (言語指定・フォーマット指定・ユーザープロフィールを追加)
-            const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, cleanProductContext, siteContent, selectedFormat, userProfile);
+            const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, cleanProductContext, siteContent, selectedFormat, userProfile, selectedPurpose);
             setLoadingPhase(2); // 2: "デザインを作成中..."
             await new Promise(resolve => setTimeout(resolve, 300)); // ReactのUI再レンダリングを確実に行わせるための待機
 
@@ -946,6 +958,7 @@ export default function Home() {
                         ) : (
                             <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-500 gap-2">
                                 <CategorySelector selected={{ id: selectedCategory }} onSelect={(c) => setSelectedCategory(c.id)} />
+                                <PurposeSelector selected={selectedPurpose} onSelect={setSelectedPurpose} />
                                 <TargetSelector selected={selectedTarget} onSelect={setSelectedTarget} isPro={isPro} />
                                 <GenderSelector selected={selectedGender} onSelect={setSelectedGender} />
                                 <BusinessStyleSelector selected={selectedBusinessStyle} onSelect={setSelectedBusinessStyle} />
