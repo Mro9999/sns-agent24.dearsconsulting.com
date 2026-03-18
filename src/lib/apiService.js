@@ -98,7 +98,7 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
 /**
  * 投稿内容生成
  */
-export async function generatePost(research, platformId, category, targetLabel, gender, businessStyle, tone, language = 'ja', textContext, siteContent, format = 'single', userProfile = {}) {
+export async function generatePost(research, platformId, category, targetLabel, gender, businessStyle, tone, language = 'ja', textContext, siteContent, format = 'single', userProfile = {}, purpose = null) {
     try {
         let languageInstruction = "【基本言語】すべての出力テキスト（キャプション、ハッシュタグ、コピーなど）は、**必ず完全で自然な「日本語」のみ**で作成してください。";
 
@@ -182,6 +182,10 @@ export async function generatePost(research, platformId, category, targetLabel, 
 - ターゲット: ${targetLabel} (${gender})
 - トーン&マナー: ${tone?.label || tone}
 - 言語仕様: ${languageInstruction}
+
+# 【最重要】投稿の目的（Purpose）
+あなたの今回の執筆のゴールは以下の通りです。このゴールが達成される（ユーザーが行動を起こす）ようにキャプション構成や訴求内容をフルカスタマイズしてください。
+- ゴール: **${purpose === 'reservation' ? '来店・予約を増やしたい（キャンペーン・新規集客・予約誘導）' : purpose === 'relationship' ? '既存客との関係を深めたい（日常・スタッフ紹介・こだわりの裏側）' : purpose === 'branding' ? 'ブランドの世界観を伝えたい（哲学・審美眼・ストーリー）' : purpose === 'announcement' ? '新メニュー・商品を告知したい（新商品・季節メニュー・限定企画）' : '指定なし（通常の魅力発信）'}**
 
 # ユーザー固有コンテキスト（超重要）
 この投稿は以下の「特定のビジネス」からのメッセージとして作成してください。

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 
-// Vercel Cron ジョブとして定期実行される（毎週月曜日を想定）
+export const dynamic = "force-dynamic";// Vercel Cron ジョブとして定期実行される（毎週月曜日を想定）
 // 例: GET /api/cron/weekly-ideas
 export async function GET(req) {
     try {

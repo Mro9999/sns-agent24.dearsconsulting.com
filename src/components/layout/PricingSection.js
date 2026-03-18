@@ -15,7 +15,8 @@ export default function PricingSection({ onUpgrade, isPro }) {
                 "1日1回まで生成可能",
                 "基本的なトレンドリサーチ",
                 "Instagram / X / Facebook 対応",
-                "広告なし"
+                "広告なし",
+                "商用利用不可（個人利用・お試しのみ）"
             ],
             buttonText: isPro ? "フリープラン" : "現在のプラン",
             buttonStyle: isPro ? "secondary" : "current",

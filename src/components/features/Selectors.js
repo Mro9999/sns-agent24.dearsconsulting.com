@@ -1,5 +1,135 @@
 import React from 'react';
 
+// Icons for PurposeSelector
+const CalendarIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1.5" y="3" width="15" height="13.5" rx="2" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M1.5 7.5H16.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M5.25 1.5V4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M12.75 1.5V4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        <circle cx="6" cy="11.25" r="0.75" fill="currentColor" />
+        <circle cx="9" cy="11.25" r="0.75" fill="currentColor" />
+    </svg>
+);
+
+const ChatIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15.75 9C15.75 12.728 12.728 15.75 9 15.75C7.923 15.75 6.908 15.487 6.018 15.023L2.25 15.75L3.228 12.483C2.565 11.449 2.25 10.262 2.25 9C2.25 5.272 5.272 2.25 9 2.25C12.728 2.25 15.75 5.272 15.75 9Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M6 9H12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M6 6.75H10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+);
+
+const StarIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 1.5L10.854 6.636L16.5 6.636L12.073 9.864L13.927 15L9 11.772L4.073 15L5.927 9.864L1.5 6.636L7.146 6.636L9 1.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+    </svg>
+);
+
+const MegaphoneIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13.5 3C13.5 3 11.25 5.25 7.5 6H4.5C3.672 6 3 6.672 3 7.5V9C3 9.828 3.672 10.5 4.5 10.5H5.25L6 13.5H7.5L7.5 10.5C11.25 11.25 13.5 13.5 13.5 13.5V3Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M15.75 8.25C15.75 9.493 15.293 10.5 14.25 10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+);
+
+const CheckIcon = () => (
+    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+);
+
+const purposes = [
+    {
+        id: "reservation",
+        label: "来店・予約を増やしたい",
+        Icon: CalendarIcon,
+        description: "キャンペーン・新規集客・予約誘導",
+        example: "「今月限定オーガニックカラー20%OFF、ご予約はプロフィールリンクから」",
+    },
+    {
+        id: "relationship",
+        label: "既存客との関係を深めたい",
+        Icon: ChatIcon,
+        description: "日常・スタッフ紹介・こだわりの裏側",
+        example: "「今朝仕込んだトリートメント剤、実はこんなこだわりがあります」",
+    },
+    {
+        id: "branding",
+        label: "ブランドの世界観を伝えたい",
+        Icon: StarIcon,
+        description: "哲学・審美眼・ストーリー",
+        example: "「私たちが大切にする、手をかけることの意味」",
+    },
+    {
+        id: "announcement",
+        label: "新メニュー・商品を告知したい",
+        Icon: MegaphoneIcon,
+        description: "新商品・季節メニュー・限定企画",
+        example: "「春の新メニュー『桜カラー』、本日スタートしました」",
+    },
+];
+
+export function PurposeSelector({ selected, onSelect }) {
+    return (
+        <div className="w-full max-w-2xl mb-8">
+            <h3 className="text-xl font-bold mb-2 text-center">この投稿の目的を選んでください</h3>
+            <p className="text-center text-sm text-gray-400 mb-6">目的を選ぶと、AIが最適なコンテンツ戦略に切り替えます</p>
+
+            <div className="flex flex-col gap-3">
+                {purposes.map(({ id, label, Icon, description, example }) => {
+                    const isSelected = selected === id;
+                    return (
+                        <div
+                            key={id}
+                            onClick={() => onSelect(id)}
+                            className={`relative overflow-hidden border rounded-xl p-4 cursor-pointer transition-all duration-200 ${isSelected
+                                ? "border-pink-500/70 bg-pink-500/10 shadow-[0_0_15px_rgba(236,72,153,0.15)]"
+                                : "border-white/10 bg-white/5 hover:bg-white/10"
+                                }`}
+                        >
+                            {isSelected && (
+                                <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-purple-500 to-pink-500 rounded-l-xl" />
+                            )}
+                            <div className="flex items-start gap-3 pl-2">
+                                <div className={`mt-0.5 shrink-0 transition-colors ${isSelected ? "text-pink-400" : "text-gray-400"}`}>
+                                    <Icon />
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-1.5">
+                                        <span className={`text-sm font-bold transition-colors ${isSelected ? "text-pink-300" : "text-white"}`}>
+                                            {label}
+                                        </span>
+                                        {isSelected && (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-bold tracking-wider">
+                                                選択中
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-gray-400 m-0">
+                                        {description}
+                                    </p>
+                                    {isSelected && (
+                                        <div className="mt-3 text-xs text-gray-300 bg-white/5 rounded-lg p-2.5 border-l-2 border-pink-500/50 italic leading-relaxed">
+                                            生成例：{example}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-all ${isSelected
+                                    ? "bg-gradient-to-br from-purple-500 to-pink-500 border-none shadow-md"
+                                    : "border-2 border-gray-600 bg-transparent"
+                                    }`}>
+                                    {isSelected && <CheckIcon />}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 export function CategorySelector({ selected, onSelect }) {
     const categories = [
         { id: 'beauty', label: '美容室・サロン' },
@@ -292,7 +422,10 @@ export function ProductInput({ value = {}, onChange }) {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-1">訴求したいポイントや特徴</label>
+                    <label className="block text-sm font-medium text-gray-400 mb-1 flex items-center gap-2">
+                        訴求したいポイントや特徴
+                        <span className="bg-pink-500/20 text-pink-400 text-[10px] px-2 py-0.5 rounded border border-pink-500/30">※入力するとAIの精度が大幅に上がります</span>
+                    </label>
                     <textarea
                         name="sellingPoint"
                         value={value.sellingPoint || ''}
