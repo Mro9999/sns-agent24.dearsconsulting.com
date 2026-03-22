@@ -66,7 +66,7 @@ export default function Home() {
     }, [isLoaded, isSignedIn, user]);
 
     useEffect(() => {
-        const saved = localStorage.getItem('snsAgent24_formState');
+        const saved = localStorage.getItem('snsAgent24_formState_v2');
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
@@ -89,7 +89,7 @@ export default function Home() {
 
     useEffect(() => {
         if (isStateLoaded) {
-            localStorage.setItem('snsAgent24_formState', JSON.stringify({
+            localStorage.setItem('snsAgent24_formState_v2', JSON.stringify({
                 selectedPlatform,
                 selectedCategory,
                 selectedPurpose,
@@ -117,8 +117,8 @@ export default function Home() {
         const now = new Date();
         const diffTime = Math.abs(now - createdDate);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        // 最初の7日間はハビットトライアル（習慣化期間）として回数を大幅緩和、それ以降は1日1回
-        return diffDays <= 7 ? 999 : 1;  
+        // 最初の7日間はハビットトライアル（習慣化期間）として回数を大幅緩和、それ以降は1日3回
+        return diffDays <= 7 ? 999 : 3;  
     };
 
     // 回数制限のチェック関数 (localStorageベース)
@@ -732,7 +732,8 @@ export default function Home() {
                                     </h3>
                                     <p className="text-gray-400 text-[13px] md:text-sm mb-6 leading-relaxed">
                                         最初から最後まで全自動でキャプションや画像を生成できる<br className="hidden md:block" />
-                                        プロ向けAIエージェントを、登録から7日間は「1日3回」まで無料で体験できます。
+                                        プロ向けAIエージェントを、登録から7日間は【完全無料・回数無制限】で体験できます。<br className="hidden md:block" />
+                                        <span className="text-xs text-gray-500 mt-1 inline-block">（※8日目以降もずっと1日3回まで無料でご利用いただけます）</span>
                                     </p>
 
                                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full px-4">

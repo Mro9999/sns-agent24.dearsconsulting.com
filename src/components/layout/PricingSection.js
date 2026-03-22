@@ -12,7 +12,7 @@ export default function PricingSection({ onUpgrade, isPro }) {
             price: "¥0",
             period: "/ month",
             features: [
-                "1日1回まで生成可能",
+                "1日3回まで生成可能",
                 "基本的なトレンドリサーチ",
                 "Instagram / X / Facebook 対応",
                 "広告なし",
