@@ -1,12 +1,14 @@
 "use client";
 import React, { useState } from 'react';
 import { Target, Briefcase, Zap, CheckCircle2 } from 'lucide-react';
+import { usePostHog } from 'posthog-js/react';
 
 export default function ProfileSetupModal({ isOpen, onClose, user }) {
     const [industry, setIndustry] = useState('');
     const [targetAudience, setTargetAudience] = useState('');
     const [usp, setUsp] = useState('');
     const [loading, setLoading] = useState(false);
+    const posthog = usePostHog();
 
     if (!isOpen) return null;
 
@@ -33,6 +35,11 @@ export default function ProfileSetupModal({ isOpen, onClose, user }) {
             if (user?.reload) {
                 await user.reload();
             }
+
+            posthog?.capture('profile_setup_completed', {
+                industry,
+                targetAudience
+            });
             
             onClose();
         } catch (error) {

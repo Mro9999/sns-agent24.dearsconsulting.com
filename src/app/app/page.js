@@ -6,11 +6,13 @@ import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
 import ProfileSetupModal from '@/components/features/ProfileSetupModal';
+import { usePostHog } from 'posthog-js/react';
 
 export default function Home() {
     const { user, isLoaded, isSignedIn } = useUser();
     const { session } = useSession();
     const { openSignIn, openSignUp } = useClerk();
+    const posthog = usePostHog();
 
     // JWTトークン内のメタデータ（ユーザー自身またはカスタムクレーム）を確実に取得
     const sessionRole = session?.user?.publicMetadata?.role || null;
@@ -299,6 +301,13 @@ export default function Home() {
             alert("すべての項目を選択してください");
             return;
         }
+
+        posthog?.capture('generation_started', {
+            format: selectedFormat,
+            category: selectedCategory?.label,
+            purpose: selectedPurpose,
+            platform: selectedPlatform
+        });
 
         // 無料プランの回数制限チェック
         const maxLimit = getDailyFreeLimit();
@@ -602,7 +611,7 @@ export default function Home() {
                 body: JSON.stringify({
                     platform: selectedPlatform,
                     // ビデオスクリプトの場合はスクリプト本文、それ以外は通常キャプションを保存
-                    caption: selectedFormat === 'video_script' 
+                    caption: selectedFormat === 'video_script'
                         ? (post.video_script || []).map(s => `[${s.time}] ${s.audio}\n${s.text_overlay}`).join('\n\n')
                         : (post.caption || post.overlay_copy || ''),
                     imageUrls: imageUrls
@@ -610,6 +619,10 @@ export default function Home() {
             }).catch(err => console.error("Error saving history:", err));
 
             setResult({ research, post, imageUrls, isSynthesized: true });
+            posthog?.capture('generation_completed', {
+                format: selectedFormat,
+                platform: selectedPlatform
+            });
             setStep(2);
             setTimeout(() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -628,6 +641,18 @@ export default function Home() {
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (mounted) {
+            posthog?.capture('app_opened');
+            setTimeout(() => {
+                const resultsSection = document.getElementById('results-section');
+                if (resultsSection) {
+                    resultsSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100);
+        }
+    }, [mounted, posthog]);
 
     return (
         <div className="min-h-screen bg-[#111112] text-white font-sans selection:bg-purple-500/30 flex flex-col pt-4">
@@ -815,7 +840,6 @@ export default function Home() {
                                     background: 'linear-gradient(90deg, #A85500, #9A2833)'
                                 }}
                             >
-                                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 <span className="relative z-10 text-white drop-shadow-md">
                                     {!mounted || !isLoaded ? '...' : isSignedIn ? 'START' : 'ログインしてください'}
                                 </span>
@@ -1050,6 +1074,7 @@ export default function Home() {
                             <button
                                 onClick={() => {
                                     navigator.clipboard.writeText(result.post.caption + '\n\n' + (result.post.hashtags || []).map(t => t.startsWith('#') ? t : `#${t}`).join(' '));
+                                    posthog?.capture('content_copied', { format: selectedFormat });
                                     alert('コピーしました！');
                                 }}
                                 className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-bold flex flex-row items-center justify-center gap-2 transition-colors"
@@ -1128,6 +1153,7 @@ export default function Home() {
                                 <>
                                     <button
                                         onClick={async (e) => {
+                                            posthog?.capture('image_download_clicked', { format: selectedFormat });
                                             // 全画像をZIPか複数回ダウンロードさせる実装も可能だが、現状は代表して1枚目をロゴ画像合成付きでDL
                                             // カルーセル複数枚の場合は別途機能追加余地あり。今回は1枚目のダウンロード機能として維持
                                             const targetIndex = 0;

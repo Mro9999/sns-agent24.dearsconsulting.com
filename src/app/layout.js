@@ -1,6 +1,7 @@
 import { ClerkProvider } from '@clerk/nextjs'
 import { jaJP } from '@clerk/localizations'
 import './globals.css'
+import { PHProvider } from '../providers/PHProvider'
 
 export const metadata = {
     title: 'SNS Agent24',
@@ -13,7 +14,9 @@ export default function RootLayout({ children }) {
     return (
         <ClerkProvider localization={jaJP}>
             <html lang="ja">
-                <body>{children}</body>
+                <PHProvider>
+                    <body>{children}</body>
+                </PHProvider>
             </html>
         </ClerkProvider>
     )
