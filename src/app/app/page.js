@@ -33,6 +33,7 @@ export default function Home() {
     // UIリッチ化用のステート
     const [loadingProgress, setLoadingProgress] = useState(0); // 0〜99の疑似進捗
     const [terminalLogs, setTerminalLogs] = useState([]); // サイバー風の解析ダミーログ
+    const [batchStatus, setBatchStatus] = useState(''); // バッチ生成のステータス表示用
     
     // パーソナライズされた動的ログの生成関数
     const getDynamicLogs = (category, targetLabel) => {
@@ -636,6 +637,123 @@ export default function Home() {
         }
     };
 
+    const handleBatchGenerate = async (platformType) => {
+        if (!selectedCategory || !selectedPurpose || !selectedTarget || !selectedGender || !selectedBusinessStyle || !selectedTone) {
+            alert("すべての項目を選択してからバッチ生成をお試しください。");
+            return;
+        }
+
+        const count = platformType === 'twitter' ? 21 : 7;
+        const confirmMsg = `${platformType}向けに${count}件の投稿を連続生成し、予約キューに保存します。\n完了まで数分かかりますが実行しますか？`;
+        if (!confirm(confirmMsg)) return;
+
+        setGenerating(true);
+        setLoadingProgress(1);
+        setBatchStatus(`バッチ生成を開始します... (0/${count})`);
+
+        posthog?.capture('batch_generation_started', { platform: platformType, count });
+
+        const userProfile = {
+            industry: selectedCategory?.label || '',
+            targetAudience: targetLabel || '',
+            usp: cleanProductContext?.sellingPoint || ''
+        };
+
+        const varietyAngles = [
+            "ノウハウ提供・独自のナレッジ", 
+            "業界の失敗談やよくある間違い", 
+            "お客様のリアルな悩み解決", 
+            "業界の裏側・最新トレンド考察", 
+            "代表のマインドセット・想い",
+            "自社のこだわり・他社との明確な違い",
+            "よくある質問(FAQ)への専門的な回答"
+        ];
+
+        const results = [];
+
+        try {
+            for (let i = 0; i < count; i++) {
+                setBatchStatus(`[${platformType}] ${i + 1}件目を生成中... (${i + 1}/${count})`);
+                
+                // マンネリ防止のため、ループごとに切り口を強制変更
+                const angle = varietyAngles[i % varietyAngles.length];
+                const currentPurpose = `${selectedPurpose}。\n【重要指示：今回の投稿テーマ切り口】：『${angle}』を軸として、毎回異なる角度・視点で語ってください。`;
+
+                const resData = await generatePost({
+                    platform: platformType,
+                    category: selectedCategory?.label || '',
+                    targetAudience: targetLabel || '',
+                    tone: selectedTone?.label || '',
+                    language: selectedLanguage,
+                    format: platformType === 'instagram' ? 'carousel' : 'normal',
+                    purpose: currentPurpose,
+                    userProfile: userProfile,
+                    productContext: cleanProductContext,
+                    siteContent: siteContent
+                });
+
+                if (resData.error) {
+                    console.error(`Error on post ${i+1}:`, resData.error);
+                    continue;
+                }
+
+                const { post } = resData;
+
+                let imageUrls = [];
+                // API制限を考慮し、X(Twitter)のバッチ時は過度な画像生成を避けるか枚数を絞る
+                if (post.image_idea && post.image_idea !== "なし" && selectedFormat !== 'video_script') {
+                    const imgCount = platformType === 'twitter' ? 1 : 5;
+                    setBatchStatus(`[${platformType}] ${i + 1}件目の画像を生成中...`);
+                    await new Promise(r => setTimeout(r, 2000));
+                    
+                    try {
+                        const imgRes = await generateImage(post.image_idea, imgCount, platformType);
+                        if (imgRes && !imgRes.error) {
+                            imageUrls = imgRes;
+                        }
+                    } catch(e) { console.error("Batch image err", e); }
+                }
+
+                let finalCaption = (post.caption || post.overlay_copy || '');
+                if (post.hashtags && Array.isArray(post.hashtags)) {
+                    finalCaption += '\n\n' + post.hashtags.map(t => t.startsWith('#') ? t : `#${t}`).join(' ');
+                }
+
+                results.push({
+                    platform: platformType,
+                    caption: finalCaption,
+                    image_urls: imageUrls
+                });
+
+                await new Promise(r => setTimeout(r, 6000)); // Rate limit対策 (Google API)
+            }
+
+            setBatchStatus(`DBのキューへ保存中... (${results.length}件)`);
+            
+            const qRes = await fetch('/api/admin/queue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    secret: 'dears-queue-2024-secret',
+                    posts: results
+                })
+            });
+
+            if (!qRes.ok) throw new Error("保存用APIでエラーが発生しました");
+
+            setBatchStatus(`完了！ ${results.length}件を自動投稿キューへ予約しました。`);
+            alert(`【完了】${results.length}件の一括自動生成と、キューへの保存が成功しました。`);
+
+        } catch (error) {
+            console.error("Batch error:", error);
+            setBatchStatus(`エラーが発生しました: ${error.message}`);
+            alert("バッチ処理中にエラーが発生しました。コンソールをご確認ください。");
+        } finally {
+            setGenerating(false);
+            setLoadingProgress(0);
+        }
+    };
+
     // Hydration Mismatch防止: クライアントサイドでのマウント完了を検知する
     const [mounted, setMounted] = useState(false);
     useEffect(() => {
@@ -845,6 +963,40 @@ export default function Home() {
                                 </span>
                             </button>
                         </div>
+                        
+                        {/* 管理者専用：全自動予約バッチ一括生成 UI */}
+                        {isPro && (
+                            <div className="mt-8 p-6 bg-red-900/10 border border-red-500/30 rounded-2xl w-[280px]">
+                                <h4 className="text-red-400 font-bold mb-3 flex items-center justify-center gap-2 text-sm">
+                                    🚀 管理者専用：全自動予約バッチ
+                                </h4>
+                                <p className="text-xs text-red-300/80 mb-4 leading-relaxed text-center">
+                                    現在の入力設定を引き継ぎ、切り口を変えながら複数件を一括生成し、予約キューへ保存します。
+                                </p>
+                                <div className="flex flex-col gap-3">
+                                    <button
+                                        onClick={() => handleBatchGenerate('twitter')}
+                                        disabled={generating}
+                                        className="w-full py-3 bg-gradient-to-r from-red-600/60 to-orange-600/60 hover:from-red-600 hover:to-orange-600 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 border border-red-500/50"
+                                    >
+                                        X (Twitter)用 1週間分(21連)一括予約
+                                    </button>
+                                    <button
+                                        onClick={() => handleBatchGenerate('instagram')}
+                                        disabled={generating}
+                                        className="w-full py-3 bg-gradient-to-r from-pink-600/60 to-purple-600/60 hover:from-pink-600 hover:to-purple-600 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 border border-pink-500/50"
+                                    >
+                                        Instagram用 1週間分(7連)一括予約
+                                    </button>
+                                </div>
+                                {batchStatus && (
+                                    <p className="text-xs text-yellow-300 mt-4 text-center font-bold bg-black/40 py-2 rounded-lg border border-yellow-500/30">
+                                        {batchStatus}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                        
                     </>
                 )}
 
