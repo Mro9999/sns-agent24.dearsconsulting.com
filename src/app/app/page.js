@@ -647,11 +647,31 @@ export default function Home() {
         const confirmMsg = `${platformType}向けに${count}件の投稿を連続生成し、予約キューに保存します。\n完了まで数分かかりますが実行しますか？`;
         if (!confirm(confirmMsg)) return;
 
-        setGenerating(true);
+        setLoading(true);
         setLoadingProgress(1);
         setBatchStatus(`バッチ生成を開始します... (0/${count})`);
 
         posthog?.capture('batch_generation_started', { platform: platformType, count });
+
+        const targetLabel = selectedTarget === 'teens' ? '10代' : selectedTarget === 'young_adults' ? '20-30代' : selectedTarget === 'parents' ? 'パパママ' : selectedTarget === 'high_end' ? '富裕層・ハイエンド' : 'ビジネス層';
+
+        const cleanProductContext = { ...productContext };
+        delete cleanProductContext.logoUrl;
+        delete cleanProductContext.baseImage;
+        delete cleanProductContext.baseImages;
+
+        let siteContent = null;
+        if (cleanProductContext?.websiteUrl) {
+            try {
+                const res = await fetch(`/api/scrape?url=${encodeURIComponent(cleanProductContext.websiteUrl)}`);
+                const data = await res.json();
+                if (data.content) {
+                    siteContent = data.content;
+                }
+            } catch (err) {
+                console.error("Scraping error:", err);
+            }
+        }
 
         const userProfile = {
             industry: selectedCategory?.label || '',
@@ -749,7 +769,7 @@ export default function Home() {
             setBatchStatus(`エラーが発生しました: ${error.message}`);
             alert("バッチ処理中にエラーが発生しました。コンソールをご確認ください。");
         } finally {
-            setGenerating(false);
+            setLoading(false);
             setLoadingProgress(0);
         }
     };
@@ -976,14 +996,14 @@ export default function Home() {
                                 <div className="flex flex-col gap-3">
                                     <button
                                         onClick={() => handleBatchGenerate('twitter')}
-                                        disabled={generating}
+                                        disabled={loading}
                                         className="w-full py-3 bg-gradient-to-r from-red-600/60 to-orange-600/60 hover:from-red-600 hover:to-orange-600 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 border border-red-500/50"
                                     >
                                         X (Twitter)用 1週間分(21連)一括予約
                                     </button>
                                     <button
                                         onClick={() => handleBatchGenerate('instagram')}
-                                        disabled={generating}
+                                        disabled={loading}
                                         className="w-full py-3 bg-gradient-to-r from-pink-600/60 to-purple-600/60 hover:from-pink-600 hover:to-purple-600 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 border border-pink-500/50"
                                     >
                                         Instagram用 1週間分(7連)一括予約
