@@ -990,8 +990,9 @@ export default function Home() {
                                 <h4 className="text-red-400 font-bold mb-3 flex items-center justify-center gap-2 text-sm">
                                     🚀 管理者専用：全自動予約バッチ
                                 </h4>
-                                <p className="text-xs text-red-300/80 mb-4 leading-relaxed text-center">
-                                    現在の入力設定を引き継ぎ、切り口を変えながら複数件を一括生成し、予約キューへ保存します。
+                                <p className="text-[11px] text-red-300/80 mb-4 leading-relaxed text-center">
+                                    現在の入力設定を引き継ぎ、切り口を変えながら複数件を一括生成し、予約キューへ保存します。<br/>
+                                    <span className="text-orange-300/90 font-semibold mt-1 inline-block">※FacebookへはInstagram投稿時の「標準連携（同時投稿）」をそのままお使いいただくのが確実です。</span>
                                 </p>
                                 <div className="flex flex-col gap-3">
                                     <button
