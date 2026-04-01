@@ -692,29 +692,38 @@ export default function Home() {
         const results = [];
 
         try {
+            setBatchStatus(`トレンドリサーチ・事前分析を実行中...`);
+            const research = await researchTrends(selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, platformType, cleanProductContext?.location, siteContent, userProfile);
+
+            if (!research) throw new Error("トレンドリサーチに失敗したため処理を中断しました");
+
             for (let i = 0; i < count; i++) {
                 setBatchStatus(`[${platformType}] ${i + 1}件目を生成中... (${i + 1}/${count})`);
                 
                 // マンネリ防止のため、ループごとに切り口を強制変更
                 const angle = varietyAngles[i % varietyAngles.length];
-                const currentPurpose = `${selectedPurpose}。\n【重要指示：今回の投稿テーマ切り口】：『${angle}』を軸として、毎回異なる角度・視点で語ってください。`;
+                const currentPurpose = `${selectedPurpose || '指定なし'}。\n【重要指示：今回の投稿テーマ切り口】：『${angle}』を軸として、毎回異なる角度・視点で語ってください。`;
 
-                const resData = await generatePost({
-                    platform: platformType,
-                    category: selectedCategory?.label || '',
-                    targetAudience: targetLabel || '',
-                    tone: selectedTone?.label || '',
-                    language: selectedLanguage,
-                    format: platformType === 'instagram' ? 'carousel' : 'normal',
-                    purpose: currentPurpose,
-                    userProfile: userProfile,
-                    productContext: cleanProductContext,
-                    siteContent: siteContent
-                });
+                // 正しい位置引数でgeneratePostを呼び出す
+                const resData = await generatePost(
+                    research, 
+                    platformType, 
+                    selectedCategory, 
+                    targetLabel, 
+                    selectedGender, 
+                    selectedBusinessStyle, 
+                    selectedTone, 
+                    selectedLanguage, 
+                    cleanProductContext, 
+                    siteContent, 
+                    platformType === 'instagram' ? 'carousel' : 'normal', 
+                    userProfile, 
+                    currentPurpose
+                );
 
                 if (resData.error) {
                     console.error(`Error on post ${i+1}:`, resData.error);
-                    continue;
+                    continue; // 1件エラーになってもスキップして次へ進む
                 }
 
                 const { post } = resData;
@@ -723,11 +732,20 @@ export default function Home() {
                 // API制限を考慮し、X(Twitter)のバッチ時は過度な画像生成を避けるか枚数を絞る
                 if (post.image_idea && post.image_idea !== "なし" && selectedFormat !== 'video_script') {
                     const imgCount = platformType === 'twitter' ? 1 : 5;
-                    setBatchStatus(`[${platformType}] ${i + 1}件目の画像を生成中...`);
+                    setBatchStatus(`[${platformType}] ${i + 1}件目の画面用画像を生成中...`);
                     await new Promise(r => setTimeout(r, 2000));
                     
                     try {
-                        const imgRes = await generateImage(post.image_idea, imgCount, platformType);
+                        const imgRes = await generateImage(
+                            selectedCategory, 
+                            targetLabel, 
+                            selectedGender, 
+                            post.image_idea, 
+                            cleanProductContext, 
+                            platformType, 
+                            null, 
+                            imgCount
+                        );
                         if (imgRes && !imgRes.error) {
                             imageUrls = imgRes;
                         }
