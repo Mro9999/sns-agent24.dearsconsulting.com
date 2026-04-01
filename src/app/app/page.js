@@ -721,12 +721,8 @@ export default function Home() {
                     currentPurpose
                 );
 
-                if (resData.error) {
-                    console.error(`Error on post ${i+1}:`, resData.error);
-                    continue; // 1件エラーになってもスキップして次へ進む
-                }
-
-                const { post } = resData;
+                // APIレスポンス自体がpostオブジェクト
+                const post = resData;
 
                 let imageUrls = [];
                 // API制限を考慮し、X(Twitter)のバッチ時は過度な画像生成を避けるか枚数を絞る
