@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History } from 'lucide-react';
+import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History, Smartphone } from 'lucide-react';
 import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
@@ -974,7 +974,7 @@ export default function Home() {
                             {/* モバイル専用機能についての事前警告（PCアクセス時の不満を防ぐ） */}
                             <div className={`w-full max-w-lg mb-8 p-4 bg-orange-900/30 border border-orange-500/40 rounded-xl text-center shadow-lg transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                                 <h4 className="text-orange-400 font-bold text-sm mb-1 flex items-center justify-center gap-2">
-                                    <span className="text-lg">📱</span> スマートフォンからのご利用を推奨
+                                    <Smartphone className="w-5 h-5" /> スマートフォンからのご利用を推奨
                                 </h4>
                                 <p className="text-gray-300 text-xs leading-relaxed">
                                     生成した画像の一括保存（カメラロールへのシェア機能等）は、<br className="hidden sm:block" />
@@ -1002,7 +1002,7 @@ export default function Home() {
                         {isPro && (
                             <div className="mt-8 p-6 bg-red-900/10 border border-red-500/30 rounded-2xl w-[280px]">
                                 <h4 className="text-red-400 font-bold mb-3 flex items-center justify-center gap-2 text-sm">
-                                    🚀 管理者専用：全自動予約バッチ
+                                    <Rocket className="w-5 h-5 text-red-500" /> 管理者専用：全自動予約バッチ
                                 </h4>
                                 <p className="text-[11px] text-red-300/80 mb-4 leading-relaxed text-center">
                                     現在の入力設定を引き継ぎ、切り口を変えながら複数件を一括生成し、予約キューへ保存します。<br/>
