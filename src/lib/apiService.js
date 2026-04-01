@@ -11,13 +11,34 @@ const getAI = () => {
     return new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || '' });
 };
 
+// 絵文字をプログラムレベルで再帰的に完全削除するヘルパー関数
+const removeEmojis = (obj) => {
+    if (typeof obj === 'string') {
+        // 絵文字、顔文字、特殊な絵文字結合子を幅広く除去する強力な正規表現
+        return obj.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}\u200d\uFE0F]/gu, '');
+    }
+    if (Array.isArray(obj)) {
+        return obj.map(removeEmojis);
+    }
+    if (obj !== null && typeof obj === 'object') {
+        const newObj = {};
+        for (const key in obj) {
+            newObj[key] = removeEmojis(obj[key]);
+        }
+        return newObj;
+    }
+    return obj;
+};
+
 // Google Search利用時はresponseMimeType: "application/json"が使えないため、
 // 返却されたテキスト（マークダウン等）からJSON部分だけを安全に抽出してパースする関数
 const extractJSON = (text, fallbackData = {}) => {
     try {
         // "```json ... ```" のようなマークダウンブロックがあれば除去
         const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-        return JSON.parse(cleanText);
+        const parsed = JSON.parse(cleanText);
+        // パースしたJSONオブジェクトから絵文字を強制的にプログラムレベルで除去
+        return removeEmojis(parsed);
     } catch (e) {
         console.error("Failed to parse JSON from AI response:", text);
         console.error("Parse Error Details:", e);
