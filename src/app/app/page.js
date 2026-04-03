@@ -1006,38 +1006,60 @@ export default function Home() {
                             </button>
                         </div>
                         
-                        {/* 管理者専用：全自動予約バッチ一括生成 UI */}
+                        {/* PRO限定：全自動予約バッチ一括生成 UI (Enterprise Autopilot) */}
                         {isPro && (
-                            <div className="mt-12 p-6 bg-slate-50/50 border border-slate-200 border-dashed rounded-2xl w-[280px]">
-                                <h4 className="text-slate-800 font-bold mb-3 flex items-center justify-center gap-2 text-sm">
-                                    <Rocket className="w-5 h-5 text-slate-500" /> 管理者専用予約バッチ
-                                </h4>
-                                <p className="text-[11px] text-slate-500 mb-4 leading-relaxed text-center font-medium">
-                                    現在の入力設定を引き継ぎ、切り口を変えながら複数件を一括生成し、予約キューへ保存します。<br/>
-                                    <span className="text-slate-500/90 font-semibold mt-1 inline-block">※FacebookへはInstagram「標準連携」をお使いください。</span>
-                                </p>
-                                <div className="flex flex-col gap-3">
-                                    <button
-                                        onClick={() => handleBatchGenerate('twitter')}
-                                        disabled={loading}
-                                        className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 shadow-md hover:shadow-lg"
-                                    >
-                                        X (Twitter)用 1週間分(21連)一括予約
-                                    </button>
-                                    <button
-                                        onClick={() => handleBatchGenerate('instagram')}
-                                        disabled={loading}
-                                        className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 shadow-md hover:shadow-lg"
-                                    >
-                                        Instagram用 1週間分(7連)一括予約
-                                    </button>
-                                </div>
-                                {batchStatus && (
-                                    <p className="text-xs text-slate-800 mt-4 text-center font-bold bg-white py-2 rounded-lg border border-slate-200 text-slate-800">
-                                        {batchStatus}
+                            <div className="mt-14 relative w-[320px] group">
+                                {/* 背面のプレミアムな光彩エフェクト */}
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500 to-rose-400 rounded-[1.5rem] blur opacity-40 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
+                                
+                                <div className="relative p-7 bg-[#111111] border border-white/10 rounded-[1.5rem] shadow-2xl flex flex-col items-center">
+                                    {/* PROバッジ */}
+                                    <div className="absolute -top-3 px-3 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-amber-900 text-[10px] font-black tracking-widest rounded-full shadow-[0_4px_10px_rgba(251,191,36,0.3)] border border-white/40">
+                                        ENTERPRISE AUTOPILOT
+                                    </div>
+                                    
+                                    <h4 className="text-white font-extrabold mb-3 flex items-center justify-center gap-2 text-base tracking-wide mt-2">
+                                        <Rocket className="w-5 h-5 text-amber-400" />
+                                        AI全自動スケジュール構築
+                                    </h4>
+                                    
+                                    <p className="text-[11px] text-slate-300 mb-6 leading-relaxed text-center font-medium">
+                                        現在のブランドインサイトとターゲット設定に基づき、AIが最適な切り口で<span className="text-amber-300 font-bold">「1週間分のコンテンツ」</span>を一括構築し、自動投稿キューへ転送します。
                                     </p>
-                                )}
+                                    
+                                    <div className="flex flex-col gap-3 w-full">
+                                        <button
+                                            onClick={() => handleBatchGenerate('instagram')}
+                                            disabled={loading}
+                                            className="w-full relative px-5 py-3.5 bg-gradient-to-br from-violet-600 to-indigo-800 hover:from-violet-500 hover:to-indigo-700 text-white text-[12px] font-bold rounded-xl transition-all disabled:opacity-50 shadow-[0_5px_15px_rgba(79,70,229,0.3)] hover:shadow-[0_8px_25px_rgba(79,70,229,0.5)] overflow-hidden flex items-center justify-center gap-2 group/btn"
+                                        >
+                                            <span className="absolute inset-0 w-full h-full bg-white opacity-0 group-hover/btn:opacity-10 transition-opacity"></span>
+                                            <span>📷</span> Instagram 1週間分 自動構築
+                                        </button>
+                                        
+                                        <button
+                                            onClick={() => handleBatchGenerate('twitter')}
+                                            disabled={loading}
+                                            className="w-full relative px-5 py-3 bg-[#1DA1F2]/10 hover:bg-[#1DA1F2]/20 border border-[#1DA1F2]/30 text-white text-[11px] font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                        >
+                                            <span className="text-[#1DA1F2]">𝕏</span> X (Twitter) 1週間分 自動構築
+                                        </button>
+                                    </div>
+                                    
+                                    <p className="text-[10px] text-slate-500 mt-4 text-center">
+                                        ※FacebookへはInstagramとの標準連携を推奨
+                                    </p>
+
+                                    {batchStatus && (
+                                        <div className="w-full mt-5 px-4 py-3 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
+                                            <p className="text-xs text-amber-300 text-center font-bold animate-pulse">
+                                                {batchStatus}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+
                         )}
                         
                     </>
