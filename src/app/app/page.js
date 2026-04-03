@@ -516,6 +516,7 @@ export default function Home() {
                             }
                         });
 
+                        ctx.save();
                         ctx.fillStyle = '#ffffff';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
@@ -538,12 +539,8 @@ export default function Home() {
                                 ctx.fillText(line, canvas.width / 2, startY + (index * lineHeight));
                             }
                         });
-
-                        // 影のエフェクトを完全にリセット（これがないと後のロゴにも影が落ちて二重に見えてしまう）
-                        ctx.shadowColor = 'rgba(0,0,0,0)';
-                        ctx.shadowBlur = 0;
-                        ctx.shadowOffsetX = 0;
-                        ctx.shadowOffsetY = 0;
+                        
+                        ctx.restore(); // シャドウやテキスト設定をここで完全にリセットし、他に影響を与えない
 
                         // もしロゴ画像があれば、右下（または左上）に合成
                         if (productContext.logoUrl) {
