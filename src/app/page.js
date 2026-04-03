@@ -5,26 +5,26 @@ import PricingSection from '@/components/layout/PricingSection';
 
 export default function LandingPage() {
     return (
-        <div className="min-h-screen bg-[#111112] text-white font-sans selection:bg-purple-500/30 flex flex-col items-center">
+        <div className="min-h-screen bg-gradient-to-br from-[#f8f9fa] via-[#fcfafb] to-[#f1f3f5] text-gray-900 font-sans selection:bg-rose-500/20 flex flex-col items-center relative overflow-hidden">
 
             {/* Header / Nav */}
             <header className="w-full max-w-6xl mx-auto flex justify-between items-center px-6 py-6 border-b border-white/5 relative z-10">
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-rose-400 to-[#D4A373] flex items-center justify-center">
                         <Bot size={16} className="text-white" />
                     </div>
-                    <span className="font-bold text-lg tracking-wider">SNS Agent<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">24</span></span>
+                    <span className="font-bold text-lg tracking-wider text-gray-900">SNS Agent<span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-[#D4AF37]">24</span></span>
                 </div>
                 <div className="flex gap-4">
                     <Link
                         href="/app"
-                        className="px-5 py-2 rounded-full text-sm font-medium border border-white/20 hover:bg-white/5 transition-colors"
+                        className="px-5 py-2 rounded-full text-sm font-medium border border-gray-200/50 hover:bg-white/90 border border-slate-200 shadow-sm text-slate-800 transition-colors text-gray-800"
                     >
                         ログイン
                     </Link>
                     <Link
                         href="/app"
-                        className="px-5 py-2 rounded-full text-sm font-bold bg-white text-black hover:bg-gray-200 transition-colors hidden sm:block"
+                        className="px-5 py-2 rounded-full text-sm font-bold bg-white/80 backdrop-blur-2xl backdrop-blur border border-white shadow-lg text-gray-900 hover:bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-colors hidden sm:block"
                     >
                         AIに投稿を作らせてみる
                     </Link>
@@ -32,22 +32,22 @@ export default function LandingPage() {
             </header>
 
             {/* Hero Section */}
-            <section className="w-full max-w-6xl mx-auto px-6 pt-24 pb-32 flex flex-col items-center justify-center text-center relative overflow-hidden flex-1 w-full">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-600/20 blur-[120px] rounded-full pointer-events-none"></div>
+            <section className="w-full max-w-6xl mx-auto px-6 pt-24 pb-32 flex flex-col items-center justify-center text-center relative overflow-hidden flex-1 z-0">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-tr from-rose-300/40 via-purple-300/30 to-orange-200/40 blur-[100px] rounded-full pointer-events-none -z-10"></div>
 
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-tight drop-shadow-2xl">
-                    <span className="inline-block">センスも、時間も、<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400">担当者も、</span></span><br />
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-tight drop-shadow-sm text-gray-900">
+                    <span className="inline-block">センスも、時間も、<span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-purple-400 to-[#D4A373]">担当者も、</span></span><br />
                     <span className="inline-block">
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-purple-400 to-[#D4A373]">
                             もう要りません。
                         </span>
                     </span><br className="hidden md:block" />
-                    <span className="inline-block text-3xl md:text-4xl lg:text-5xl mt-4 text-gray-200 font-bold">
+                    <span className="inline-block text-3xl md:text-4xl lg:text-5xl mt-4 text-gray-700 font-bold">
                         投稿の『正解』はデータが知っています。
                     </span>
                 </h1>
 
-                <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+                <p className="text-lg md:text-xl text-slate-800 max-w-2xl mx-auto mb-12 leading-relaxed">
                     <span className="inline-block">最新のトレンドリサーチから、</span><span className="inline-block">ターゲットの深層心理を突く</span><span className="inline-block">キャプション構築、</span><br className="hidden md:block" />
                     <span className="inline-block">そしてオリジナル画像との</span><span className="inline-block">完全自動合成まで。</span><span className="inline-block">1分待つだけで</span><span className="inline-block">プロの仕事が完了します。</span><br className="hidden md:block" />
                     <span className="inline-block">圧倒的なROI（費用対効果）を実現する</span><span className="inline-block">次世代SNS運用エージェント。</span>
@@ -56,7 +56,7 @@ export default function LandingPage() {
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                     <Link
                         href="/app"
-                        className="px-6 py-4 md:px-8 md:py-5 rounded-full text-sm md:text-base font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 transition-all shadow-[0_0_30px_rgba(147,51,234,0.3)] hover:shadow-[0_0_40px_rgba(147,51,234,0.5)] flex items-center justify-center gap-2"
+                        className="px-6 py-4 md:px-8 md:py-5 rounded-full text-sm md:text-base font-bold bg-gradient-to-r from-rose-500 to-purple-600 text-white hover:from-rose-400 hover:to-purple-500 transition-all shadow-[0_4px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_8px_30px_rgba(244,63,94,0.4)] hover:-translate-y-1 flex items-center justify-center gap-2"
                     >
                         今すぐあなたのビジネスの投稿を1本、AIに作らせてみる
                         <ArrowRight size={18} />
@@ -64,22 +64,22 @@ export default function LandingPage() {
                 </div>
 
                 {/* Micro Features */}
-                <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mt-12 text-sm text-gray-400 font-medium">
-                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-pink-400" /> クレジットカード登録不要</div>
-                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-pink-400" /> 所要時間わずか60秒</div>
-                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-pink-400" /> スマホ完結デザイン</div>
+                <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mt-12 text-sm text-slate-600 font-medium">
+                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-rose-400" /> クレジットカード登録不要</div>
+                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-rose-400" /> 所要時間わずか60秒</div>
+                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-rose-400" /> スマホ完結デザイン</div>
                 </div>
             </section>
 
             {/* Developer Story (Who made it) */}
             <section className="w-full max-w-5xl mx-auto px-6 pb-16 pt-8 text-center">
-                <div className="inline-block p-[1px] rounded-3xl bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-indigo-500/30 w-full relative overflow-hidden">
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-xl"></div>
+                <div className="inline-block p-[1px] rounded-3xl bg-gradient-to-r from-rose-300/50 via-purple-300/50 to-orange-300/50 w-full relative overflow-hidden shadow-sm">
+                    <div className="absolute inset-0 bg-white/80 backdrop-blur-2xl"></div>
                     <div className="relative z-10 px-6 py-10 md:py-12 rounded-3xl">
-                        <p className="text-lg md:text-2xl font-bold mb-4">
-                            30年間の事業・コンサルティング実績から生まれた、<span className="text-pink-400">現場のための結論</span>。
+                        <p className="text-lg md:text-2xl font-bold mb-4 text-gray-900">
+                            30年間の事業・コンサルティング実績から生まれた、<span className="text-rose-500">現場のための結論</span>。
                         </p>
-                        <p className="text-sm md:text-base text-gray-400 leading-relaxed max-w-3xl mx-auto">
+                        <p className="text-sm md:text-base text-slate-800 leading-relaxed max-w-3xl mx-auto">
                             <span className="inline-block">私たち「DEARS CONSULTING」は、</span><span className="inline-block">数多くの中小企業の</span><span className="inline-block">マーケティングを支援する中で、</span><span className="inline-block">SNS運用の「外注費の無駄」と</span><span className="inline-block">「現場の疲弊」というリアルな痛みに直面してきました。</span><br className="hidden md:block" />
                             <span className="inline-block">このツールは、</span><span className="inline-block">自分たちのクライアントを</span><span className="inline-block">本気で勝たせるために自社開発した</span><span className="inline-block">「完全自動の専属エージェント」です。</span>
                         </p>
@@ -88,41 +88,41 @@ export default function LandingPage() {
             </section>
 
             {/* Value Proposition (3 Magic Features) */}
-            <section className="w-full bg-black/40 border-y border-white/5 py-24 relative overflow-hidden flex flex-col items-center justify-center">
+            <section className="w-full bg-transparent border-y border-gray-200 py-24 relative overflow-hidden flex flex-col items-center justify-center">
                 <div className="w-full max-w-6xl mx-auto px-6 relative z-10 flex flex-col items-center justify-center">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4">圧倒的な品質を生み出す<br />3つの魔法</h2>
-                        <p className="text-gray-400">SNS運用に必要なすべてのクリエイティブをシームレスに統合</p>
+                        <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">圧倒的な品質を生み出す<br />3つの魔法</h2>
+                        <p className="text-slate-600">SNS運用に必要なすべてのクリエイティブをシームレスに統合</p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8">
                         {/* Feature 1 */}
-                        <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 transition-colors group">
-                            <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30 group-hover:scale-110 transition-transform">
-                                <Search className="text-purple-400" size={26} />
+                        <div className="bg-white/80 backdrop-blur-2xl backdrop-blur-md border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-3xl hover:bg-white/80 hover:-translate-y-1 hover:shadow-lg transition-all group">
+                            <div className="w-14 h-14 bg-rose-100 rounded-2xl flex items-center justify-center mb-6 border border-rose-200 group-hover:scale-110 transition-transform">
+                                <Search className="text-rose-500" size={26} />
                             </div>
-                            <h3 className="text-xl font-bold mb-3">競合が気づいていない<br />「顧客の本音」を発見</h3>
-                            <p className="text-gray-400 leading-relaxed text-sm">
+                            <h3 className="text-xl font-bold mb-3 text-gray-900">競合が気づいていない<br />「顧客の本音」を発見</h3>
+                            <p className="text-slate-800 leading-relaxed text-sm">
                                 ターゲット市場の最新トレンドをGoogle検索でリアルタイム取得。表面的なAIポエムではなく、実データに基づいた刺さる切り口となるインサイト（隠れた欲求や不満）を提案します。
                             </p>
                         </div>
                         {/* Feature 2 */}
-                        <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 transition-colors group">
-                            <div className="w-14 h-14 bg-pink-500/20 rounded-2xl flex items-center justify-center mb-6 border border-pink-500/30 group-hover:scale-110 transition-transform">
-                                <PenTool className="text-pink-400" size={26} />
+                        <div className="bg-white/80 backdrop-blur-2xl backdrop-blur-md border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-3xl hover:bg-white/80 hover:-translate-y-1 hover:shadow-lg transition-all group">
+                            <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 border border-purple-200 group-hover:scale-110 transition-transform">
+                                <PenTool className="text-purple-500" size={26} />
                             </div>
-                            <h3 className="text-xl font-bold mb-3">悩む時間をゼロにする、<br />プロ水準の提案</h3>
-                            <p className="text-gray-400 leading-relaxed text-sm">
+                            <h3 className="text-xl font-bold mb-3 text-gray-900">悩む時間をゼロにする、<br />プロ水準の提案</h3>
+                            <p className="text-slate-800 leading-relaxed text-sm">
                                 1枚構成、スワイプ必須の5枚カルーセル、ショート動画台本まで、用途に合わせた文章フォーマットで出力。保存や来店（コンバージョン）を促すCTA（行動喚起）まで計算されています。
                             </p>
                         </div>
                         {/* Feature 3 */}
-                        <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:bg-white/10 transition-colors group">
-                            <div className="w-14 h-14 bg-indigo-500/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/30 group-hover:scale-110 transition-transform">
-                                <ImageIcon className="text-indigo-400" size={26} />
+                        <div className="bg-white/80 backdrop-blur-2xl backdrop-blur-md border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-3xl hover:bg-white/80 hover:-translate-y-1 hover:shadow-lg transition-all group">
+                            <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center mb-6 border border-orange-200 group-hover:scale-110 transition-transform">
+                                <ImageIcon className="text-orange-500" size={26} />
                             </div>
-                            <h3 className="text-xl font-bold mb-3">画像不要。完全手ぶらで<br />プロ級のクリエイティブ</h3>
-                            <p className="text-gray-400 leading-relaxed text-sm">
+                            <h3 className="text-xl font-bold mb-3 text-gray-900">画像不要。完全手ぶらで<br />プロ級のクリエイティブ</h3>
+                            <p className="text-slate-800 leading-relaxed text-sm">
                                 写真を用意する必要さえありません。AIが文脈に合った最適な背景画像を自動生成し、さらにプロのデザイナーのように視認性の高い文字配置を自動合成します。
                             </p>
                         </div>
@@ -133,21 +133,21 @@ export default function LandingPage() {
             {/* Demonstration & Output Sample */}
             <section className="w-full max-w-6xl mx-auto px-6 py-24 relative">
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4">生成される投稿のサンプル</h2>
-                    <p className="text-gray-400">「例えばこんな感じで出力されます」<br />わずか数項目の入力で、このようなデザイン済みの画像と計算された文章が完成します。</p>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">生成される投稿のサンプル</h2>
+                    <p className="text-slate-600">「例えばこんな感じで出力されます」<br />わずか数項目の入力で、このようなデザイン済みの画像と計算された文章が完成します。</p>
                 </div>
 
-                <div className="flex flex-col lg:flex-row items-center gap-12 bg-white/5 border border-white/10 rounded-3xl p-6 md:p-12">
+                <div className="flex flex-col lg:flex-row items-center gap-12 bg-white/80 backdrop-blur-2xl backdrop-blur-md border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-3xl p-6 md:p-12">
 
                     {/* Image Mockup (Carousel style) */}
                     <div className="flex-1 w-full max-w-md relative flex justify-center">
-                        <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-2xl border border-white/20 bg-black">
+                        <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-2xl border border-gray-200 bg-gray-50">
                             {/* Dummy Image Background */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-black opacity-80 mix-blend-overlay"></div>
+                            <div className="absolute inset-0 bg-gradient-to-br from-stone-500/20 to-black/30 opacity-60 mix-blend-overlay"></div>
                             {/* Dummy Image Subject / Overlay */}
                             <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-[url('https://images.unsplash.com/photo-1556761175-4b46a572b786?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center">
-                                <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"></div>
-                                <div className="relative z-10 w-full h-full border-2 border-white/80 p-6 flex flex-col justify-between items-center text-white">
+                                <div className="absolute inset-0 bg-gray-900/10 backdrop-blur-sm"></div>
+                                <div className="relative z-10 w-full h-full border border-white shadow-lg/60 bg-white/90 border border-slate-200 shadow-sm text-slate-800 backdrop-blur-md p-6 flex flex-col justify-between items-center text-gray-900 rounded-xl shadow-sm">
                                     <div className="text-sm font-bold tracking-widest bg-white/20 px-4 py-1 rounded-full backdrop-blur-md">MARKETING TIPS</div>
                                     <h3 className="text-2xl sm:text-3xl font-extrabold leading-snug drop-shadow-lg px-2">なぜ、あなたの<br />SNS投稿は<br /><span className="inline-block"><span className="text-pink-400">読まれない</span>のか？</span></h3>
                                     <div className="text-xs sm:text-sm border-t-2 border-pink-500 pt-2 w-1/2">Swipe to learn more →</div>
@@ -155,57 +155,57 @@ export default function LandingPage() {
                             </div>
 
                             {/* UI Controls */}
-                            <div className="absolute top-1/2 left-2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 flex items-center justify-center text-white/50"><ChevronLeft size={16} /></div>
-                            <div className="absolute top-1/2 right-2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 flex items-center justify-center text-white/90 shadow-lg"><ChevronRight size={16} /></div>
+                            <div className="absolute top-1/2 left-2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-slate-800 shadow-md"><ChevronLeft size={16} /></div>
+                            <div className="absolute top-1/2 right-2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-gray-800 shadow-md"><ChevronRight size={16} /></div>
                             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-white/30"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-white/30"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-white/30"></div>
-                                <div className="w-1.5 h-1.5 rounded-full bg-white/30"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-300/50"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-300/50"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-300/50"></div>
+                                <div className="w-1.5 h-1.5 rounded-full bg-gray-300/50"></div>
                             </div>
                         </div>
                     </div>
 
                     {/* Text / Caption Mockup */}
                     <div className="flex-1 w-full flex flex-col gap-4">
-                        <div className="flex items-center gap-2 text-pink-400 mb-2">
+                        <div className="flex items-center gap-2 text-rose-500 mb-2">
                             <Instagram size={20} />
                             <span className="font-bold">自動生成キャプション</span>
                         </div>
-                        <div className="bg-black/50 border border-white/5 p-6 rounded-2xl text-sm md:text-base text-gray-300 leading-relaxed font-mono shadow-inner h-[400px] overflow-y-auto">
-                            <p className="mb-4 text-white font-bold">【保存必須】SNSマーケティングの罠を回避する方法</p>
+                        <div className="bg-white/80 backdrop-blur-xl border border-white shadow-lg p-6 rounded-2xl text-sm md:text-base text-gray-700 leading-relaxed font-mono shadow-sm h-[400px] overflow-y-auto">
+                            <p className="mb-4 text-gray-900 font-bold">【保存必須】SNSマーケティングの罠を回避する方法</p>
                             <p className="mb-4">一生懸命デザインした画像。でも、インサイトを見たら保存数は「0」…。そんな経験はありませんか？</p>
                             <p className="mb-4">実は、ターゲット層の深層心理で「今すぐ解決したい痛み」にアプローチできていないのが原因かもしれません。</p>
-                            <p className="mb-4 text-pink-400 font-bold">【本日のインサイト（気付き）】</p>
-                            <ul className="mb-4 pl-4 border-l-2 border-pink-500/50 space-y-2">
+                            <p className="mb-4 text-rose-500 font-bold">【本日のインサイト（気付き）】</p>
+                            <ul className="mb-4 pl-4 border-l-2 border-rose-300 space-y-2">
                                 <li>・ユーザーの70%は最初の1枚で離脱する</li>
                                 <li>・「有益な情報」ではなく「共感」を求めている</li>
                                 <li>・保存を促す明確なCTA（行動喚起）が欠けている</li>
                             </ul>
                             <p className="mb-4">これらを自動で分析し、最適な文脈で投稿を作成するのが『SNS Agent24』。もう悩む必要はありません。</p>
-                            <p className="mb-4 text-gray-500">...<br />#SNS運用 #マーケティング #集客ノウハウ</p>
+                            <p className="mb-4 text-slate-700 font-medium">...<br />#SNS運用 #マーケティング #集客ノウハウ</p>
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* Pricing Section (Re-used Component) */}
-            <div className="w-full mt-12 bg-black/30 border-y border-white/5 pt-16">
+            <div className="w-full mt-12 bg-white/90 border border-slate-200 shadow-sm text-slate-800 backdrop-blur-md border-y border-gray-200/60 pt-16">
                 <PricingSection />
             </div>
 
             {/* Footer CTA */}
-            <section className="w-full bg-[#111112] py-32 flex flex-col items-center justify-center text-center px-6">
+            <section className="w-full bg-transparent py-32 flex flex-col items-center justify-center text-center px-6">
                 <div className="w-full max-w-4xl mx-auto flex flex-col items-center justify-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto flex items-center justify-center mb-8 shadow-[0_0_40px_rgba(219,39,119,0.4)]">
+                    <div className="w-20 h-20 bg-gradient-to-br from-rose-500 to-[#D4A373] rounded-full mx-auto flex items-center justify-center mb-8 shadow-[0_10px_30px_rgba(244,63,94,0.3)]">
                         <Zap size={36} className="text-white drop-shadow-md" />
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-bold mb-6"><span className="inline-block">SNS運用を、</span><span className="inline-block">次の次元へ。</span></h2>
-                    <p className="text-xl text-gray-400 mb-10 w-full max-w-lg text-center">今すぐ無料アカウントを作成し、AIの手による革新的なクリエイティブを体験してください。</p>
+                    <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900"><span className="inline-block">SNS運用を、</span><span className="inline-block">次の次元へ。</span></h2>
+                    <p className="text-xl text-slate-800 mb-10 w-full max-w-lg text-center">今すぐ無料アカウントを作成し、AIの手による革新的なクリエイティブを体験してください。</p>
                     <Link
                         href="/app"
-                        className="inline-flex px-10 py-5 rounded-full text-lg font-bold bg-white text-black hover:bg-gray-200 transition-all hover:scale-105"
+                        className="inline-flex px-10 py-5 rounded-full text-lg font-bold bg-gray-900 text-white shadow-xl hover:shadow-2xl hover:bg-black hover:-translate-y-1 transition-all"
                     >
                         無料でログインして開始する
                     </Link>
@@ -213,15 +213,15 @@ export default function LandingPage() {
             </section>
 
             {/* Footer */}
-            <footer className="w-full border-t border-white/5 py-12 px-6 flex flex-col items-center justify-center text-center text-sm text-gray-500">
-                <Link href="https://dearsconsulting.com" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 mb-4 hover:text-white transition-colors group">
-                    <Globe size={16} className="text-gray-600 group-hover:text-purple-400 transition-colors" />
-                    <span className="font-bold tracking-widest text-gray-400 group-hover:text-white transition-colors">DEARS CONSULTING</span>
+            <footer className="w-full border-t border-gray-200/60 py-12 px-6 flex flex-col items-center justify-center text-center text-sm text-slate-700 font-medium">
+                <Link href="https://dearsconsulting.com" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 mb-4 hover:text-rose-500 transition-colors group">
+                    <Globe size={16} className="text-slate-700 font-medium group-hover:text-rose-400 transition-colors" />
+                    <span className="font-bold tracking-widest text-slate-600 group-hover:text-rose-500 transition-colors">DEARS CONSULTING</span>
                 </Link>
                 <div className="flex gap-4 mb-6">
-                    <Link href="https://dearsconsulting.com/sns-agent24/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-400 transition-colors">About SNS Agent24</Link>
+                    <Link href="https://dearsconsulting.com/sns-agent24/" target="_blank" rel="noopener noreferrer" className="hover:text-rose-400 transition-colors">About SNS Agent24</Link>
                     <span>|</span>
-                    <Link href="https://dearsconsulting.com/otoiawase/" target="_blank" rel="noopener noreferrer" className="hover:text-purple-400 transition-colors">Contact</Link>
+                    <Link href="https://dearsconsulting.com/otoiawase/" target="_blank" rel="noopener noreferrer" className="hover:text-rose-400 transition-colors">Contact</Link>
                 </div>
                 <p>&copy; {new Date().getFullYear()} DEARS CONSULTING ALL RIGHTS RESERVED.</p>
             </footer>

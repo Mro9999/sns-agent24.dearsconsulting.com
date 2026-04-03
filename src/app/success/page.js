@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle, ArrowRight } from 'lucide-react';
@@ -7,17 +8,29 @@ import { CheckCircle, ArrowRight } from 'lucide-react';
 export default function SuccessPage() {
     const searchParams = useSearchParams();
     const sessionId = searchParams.get('session_id');
+    const { user } = useUser();
     const [status, setStatus] = useState('loading'); // loading, complete, error
 
     useEffect(() => {
-        if (sessionId) {
-            // Note: In a real app, you might want to verify the session_id with your backend
-            // But since Stripe redirected here, we can assume it's successful for this UI
-            setStatus('complete');
-        } else {
-            setStatus('error');
+        async function fetchAndReload() {
+            if (sessionId) {
+                // セッションがある場合、Clerkのサーバーから最新のユーザーメタデータ(Pro権限)を再取得する
+                if (user) {
+                    try {
+                        await user.reload();
+                        console.log("User session reloaded for Pro plan sync");
+                    } catch (e) {
+                        console.error("Failed to reload user session", e);
+                    }
+                }
+                setStatus('complete');
+            } else {
+                setStatus('error');
+            }
         }
-    }, [sessionId]);
+        
+        fetchAndReload();
+    }, [sessionId, user]);
 
     return (
         <div className="min-h-screen bg-[#111112] text-white flex flex-col items-center justify-center p-4">

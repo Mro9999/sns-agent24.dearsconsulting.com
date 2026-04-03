@@ -14,9 +14,22 @@ export default function Home() {
     const { openSignIn, openSignUp } = useClerk();
     const posthog = usePostHog();
 
+    const [serverIsPro, setServerIsPro] = useState(null);
+    useEffect(() => {
+        if (isSignedIn) {
+            fetch('/api/user/status')
+                .then(res => res.json())
+                .then(data => {
+                    console.log("Strict Backend Check:", data);
+                    if (data.isPro) setServerIsPro(true);
+                })
+                .catch(console.error);
+        }
+    }, [isSignedIn]);
+
     // JWTトークン内のメタデータ（ユーザー自身またはカスタムクレーム）を確実に取得
     const sessionRole = session?.user?.publicMetadata?.role || null;
-    const isPro = sessionRole === 'pro' || user?.publicMetadata?.role === 'pro';
+    const isPro = serverIsPro === true || sessionRole === 'pro' || user?.publicMetadata?.role === 'pro';
 
     const [step, setStep] = useState(0); // 0: Platform, 1: Process, 2: Result
     const [selectedPlatform, setSelectedPlatform] = useState(null);
@@ -807,43 +820,43 @@ export default function Home() {
     }, [mounted, posthog]);
 
     return (
-        <div className="min-h-screen bg-[#111112] text-white font-sans selection:bg-purple-500/30 flex flex-col pt-4">
+        <div className="min-h-screen bg-slate-50 text-gray-900 font-sans selection:bg-purple-500/30 flex flex-col pt-4">
             {/* Header */}
             <header className="w-full flex justify-end items-center px-6 py-2">
                 <div className="flex items-center gap-4">
                     {mounted && !isPro ? (
                         <button
                             onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
-                            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-bold py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all shadow-[0_0_15px_rgba(147,51,234,0.3)]"
+                            className="bg-gradient-to-r from-rose-500 to-[#D4A373] hover:from-purple-400 hover:to-indigo-500 text-gray-900 font-bold py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
                         >
-                            <Gem size={16} className="text-cyan-300" />
+                            <Gem size={16} className="text-[#D4A373]" />
                             Proにアップグレード
                         </button>
                     ) : mounted && isPro ? (
                         <div className="flex items-center gap-3">
                             <a
                                 href="/dashboard"
-                                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
+                                className="bg-white/60 backdrop-blur-xl hover:bg-white/20 border border-rose-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
                             >
-                                <History size={16} className="text-pink-300" />
+                                <History size={16} className="text-slate-500" />
                                 過去の履歴
                             </a>
                             <button
                                 onClick={handlePortal}
-                                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
+                                className="bg-white/60 backdrop-blur-xl hover:bg-white/20 border border-rose-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
                             >
-                                <Gem size={16} className="text-cyan-300" />
+                                <Gem size={16} className="text-[#D4A373]" />
                                 Proプラン管理
                             </button>
                         </div>
                     ) : (
-                        <div className="w-32 h-8 rounded-full bg-gray-800 animate-pulse"></div> // マウント前のプレースホルダー
+                        <div className="w-32 h-8 rounded-full bg-white/80 animate-pulse"></div> // マウント前のプレースホルダー
                     )}
 
                     {mounted && isLoaded && isSignedIn ? (
                         <UserButton afterSignOutUrl="/" />
                     ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-700 animate-pulse border-2 border-transparent"></div>
+                        <div className="w-8 h-8 rounded-full bg-slate-200 animate-pulse border-2 border-transparent"></div>
                     )}
                 </div>
             </header>
@@ -855,22 +868,22 @@ export default function Home() {
                     <>
                         {/* Logo & Hero */}
                         <div className="flex flex-col items-center mb-16 mt-4 w-full max-w-4xl text-center">
-                            {/* Circle Logo - Animated Pulse */}
-                            <div className="w-24 h-24 bg-black rounded-full flex flex-col items-center justify-center mb-8 shadow-[0_0_30px_rgba(255,255,255,0.05)] border border-white/10 relative group">
-                                <div className="absolute inset-0 rounded-full border border-purple-500/30 group-hover:border-purple-500/80 transition-all duration-700 animate-[spin_10s_linear_infinite]"></div>
-                                <span className="text-white text-[15px] tracking-[0.2em] font-light leading-tight">DEARS</span>
-                                <span className="text-white text-[9px] tracking-[0.1em] font-light opacity-80 mt-1">CONSULTING</span>
+                        {/* Circle Logo - Animated Glass */}
+                            <div className="w-24 h-24 bg-white/80 backdrop-blur-xl rounded-full flex flex-col items-center justify-center mb-8 shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-200 relative group">
+                                <div className="absolute inset-0 rounded-full border border-rose-200/50 shadow-[0_4px_15px_rgba(244,63,94,0.1)] group-hover:border-rose-400 transition-all duration-700 animate-[spin_10s_linear_infinite]"></div>
+                                <span className="text-slate-800 text-[15px] tracking-[0.2em] font-light leading-tight relative z-10">DEARS</span>
+                                <span className="text-slate-600 text-[9px] tracking-[0.1em] font-light mt-1 relative z-10">CONSULTING</span>
                             </div>
 
                             {/* Main Title & Hero Copy */}
                             <div className="animate-in fade-in slide-in-from-bottom-6 duration-1000 fill-mode-both">
-                                <h1 className="text-5xl md:text-7xl font-extrabold mb-4 tracking-tight drop-shadow-2xl">
-                                    SNS Agent<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">24</span>
+                                <h1 className="text-5xl md:text-7xl font-extrabold mb-4 tracking-tight drop-shadow-sm text-slate-900">
+                                    SNS Agent<span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-[#D4A373]">24</span>
                                 </h1>
-                                <h2 className="text-2xl md:text-3xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-500 tracking-wide">
-                                    AIが、あなたの専属SNSマーケターに。
+                                <h2 className="text-2xl md:text-3xl font-bold mb-6 text-slate-700 tracking-wide">
+                                    AIが、<span className="text-slate-800">あなた専属</span>のSNSマーケターに。
                                 </h2>
-                                <p className="text-gray-400 text-sm md:text-base max-w-2xl mx-auto leading-relaxed mb-10">
+                                <p className="text-slate-600 font-medium text-sm md:text-base max-w-2xl mx-auto leading-relaxed mb-10">
                                     高精度なトレンドリサーチから、ターゲットの深層心理を突くキャプション構築、
                                     そしてプロ品質のビジュアル合成まで。すべてを全自動で完結。
                                 </p>
@@ -879,16 +892,16 @@ export default function Home() {
                             {/* Feature Badges */}
                             <div className="flex flex-wrap justify-center gap-3 w-full mb-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 fill-mode-both">
                                 <div className="flex items-center gap-2 bg-gradient-to-r from-cyan-950/40 to-cyan-900/10 border border-cyan-500/20 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-                                    <Search size={16} className="text-cyan-400" />
-                                    <span className="text-gray-300 text-xs md:text-sm font-semibold tracking-wide">最新トレンドリアルタイム解析</span>
+                                    <Search size={16} className="text-[#D4A373]" />
+                                    <span className="text-gray-700 text-xs md:text-sm font-semibold tracking-wide">最新トレンドリアルタイム解析</span>
                                 </div>
                                 <div className="flex items-center gap-2 bg-gradient-to-r from-purple-950/40 to-purple-900/10 border border-purple-500/20 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-                                    <Brain size={16} className="text-purple-400" />
-                                    <span className="text-gray-300 text-xs md:text-sm font-semibold tracking-wide">ターゲット深層心理プロファイリング</span>
+                                    <Brain size={16} className="text-slate-500" />
+                                    <span className="text-gray-700 text-xs md:text-sm font-semibold tracking-wide">ターゲット深層心理プロファイリング</span>
                                 </div>
                                 <div className="flex items-center gap-2 bg-gradient-to-r from-pink-950/40 to-pink-900/10 border border-pink-500/20 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.1)]">
-                                    <Palette size={16} className="text-pink-400" />
-                                    <span className="text-gray-300 text-xs md:text-sm font-semibold tracking-wide">オリジナルSNSバナー完全自動合成</span>
+                                    <Palette size={16} className="text-slate-500" />
+                                    <span className="text-gray-700 text-xs md:text-sm font-semibold tracking-wide">オリジナルSNSバナー完全自動合成</span>
                                 </div>
                             </div>
                         </div>
@@ -898,25 +911,25 @@ export default function Home() {
                             {!mounted || !isLoaded ? (
                                 <div className="flex flex-col items-center justify-center h-48">
                                     <div className="animate-spin border-4 border-purple-500 border-t-transparent rounded-full w-12 h-12 mb-4"></div>
-                                    <p className="text-gray-400 text-sm">ユーザー情報を確認中...</p>
+                                    <p className="text-slate-800 font-medium text-sm">ユーザー情報を確認中...</p>
                                 </div>
                             ) : !isSignedIn ? (
-                                <div className="bg-[#1a1a24] border border-purple-500/30 rounded-2xl p-6 mb-10 w-full max-w-lg text-center shadow-2xl relative overflow-hidden">
+                                <div className="bg-white/60 backdrop-blur-xl backdrop-blur-xl border border-white shadow-lg border border-white shadow-lg shadow-[0_4px_15px_rgba(0,0,0,0.03)] rounded-2xl p-6 mb-10 w-full max-w-lg text-center shadow-2xl relative overflow-hidden">
                                     <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500"></div>
-                                    <h3 className="text-xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2">
                                         <Zap size={20} className="text-yellow-400" />
                                         まずは無料でスタート
                                     </h3>
-                                    <p className="text-gray-400 text-[13px] md:text-sm mb-6 leading-relaxed">
+                                    <p className="text-slate-800 font-medium text-[13px] md:text-sm mb-6 leading-relaxed">
                                         最初から最後まで全自動でキャプションや画像を生成できる<br className="hidden md:block" />
                                         プロ向けAIエージェントを、登録から7日間は【完全無料・回数無制限】で体験できます。<br className="hidden md:block" />
-                                        <span className="text-xs text-gray-500 mt-1 inline-block">（※8日目以降もずっと1日3回まで無料でご利用いただけます）</span>
+                                        <span className="text-xs text-slate-600 mt-1 inline-block">（※8日目以降もずっと1日3回まで無料でご利用いただけます）</span>
                                     </p>
 
                                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full px-4">
                                         <button
                                             onClick={() => openSignUp()}
-                                            className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3.5 px-8 rounded-full transition-all shadow-[0_0_20px_rgba(219,39,119,0.4)] hover:shadow-[0_0_30px_rgba(219,39,119,0.6)] transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                                            className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-gray-900 font-bold py-3.5 px-8 rounded-full transition-all shadow-[0_0_20px_rgba(219,39,119,0.4)] hover:shadow-[0_0_30px_rgba(219,39,119,0.6)] transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
                                         >
                                             <Rocket size={18} />
                                             新規アカウント登録 (無料)
@@ -924,18 +937,18 @@ export default function Home() {
 
                                         <button
                                             onClick={() => openSignIn()}
-                                            className="w-full sm:w-auto bg-transparent border border-white/20 text-white font-bold py-3.5 px-8 rounded-full hover:bg-white/10 transition-all"
+                                            className="w-full sm:w-auto bg-transparent border border-rose-200 text-gray-900 font-bold py-3.5 px-8 rounded-full hover:bg-white/60 backdrop-blur-xl transition-all"
                                         >
                                             ログイン
                                         </button>
                                     </div>
-                                    <p className="text-[11px] text-gray-500 mt-4">
+                                    <p className="text-[11px] text-slate-600 mt-4">
                                         ※登録でクレジットカード等は不要です
                                     </p>
                                 </div>
                             ) : null}
 
-                            <h2 className={`text-xl md:text-2xl font-bold mb-8 text-center drop-shadow-sm ${!mounted || !isLoaded ? 'opacity-0' : isSignedIn ? 'text-white' : 'text-gray-500'}`}>
+                            <h2 className={`text-xl md:text-2xl font-bold mb-8 text-center drop-shadow-sm ${!mounted || !isLoaded ? 'opacity-0' : isSignedIn ? 'text-gray-900' : 'text-slate-600'}`}>
                                 投稿するプラットフォームを選択
                             </h2>
 
@@ -944,41 +957,41 @@ export default function Home() {
                                 <button
                                     onClick={() => setSelectedPlatform('instagram')}
                                     disabled={!mounted || !isLoaded || !isSignedIn}
-                                    className={`flex flex-col items-center justify-center py-8 px-4 rounded-2xl border ${selectedPlatform === 'instagram' ? 'bg-white/10 border-white text-white scale-105' : 'bg-transparent border-white/10 text-gray-400 hover:bg-white/5 hover:border-white/30'} transition-all duration-300 group`}
+                                    className={`flex flex-col items-center justify-center py-8 px-4 rounded-[2rem] border transition-all duration-300 group ${selectedPlatform === 'instagram' ? 'bg-slate-900 border-slate-900 text-white shadow-[0_10px_35px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-md border-white/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-slate-500 hover:shadow-[0_8px_25px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:border-slate-200'}`}
                                 >
-                                    <Instagram size={36} className={`mb-4 ${selectedPlatform === 'instagram' ? 'text-white' : 'group-hover:text-white'}`} strokeWidth={1.5} />
-                                    <span className="font-semibold tracking-wide text-sm">Instagram</span>
+                                    <Instagram size={36} className={`mb-4 transition-colors ${selectedPlatform === 'instagram' ? 'text-white' : 'text-slate-400 group-hover:text-slate-700'}`} strokeWidth={1.5} />
+                                    <span className={`font-bold tracking-wide transition-colors text-sm ${selectedPlatform === 'instagram' ? 'text-white' : 'text-slate-700'}`}>Instagram</span>
                                 </button>
 
                                 {/* X (Twitter) */}
                                 <button
                                     onClick={() => setSelectedPlatform('twitter')}
                                     disabled={!mounted || !isLoaded || !isSignedIn}
-                                    className={`flex flex-col items-center justify-center py-8 px-4 rounded-2xl border ${selectedPlatform === 'twitter' ? 'bg-white/10 border-white text-white scale-105' : 'bg-transparent border-white/10 text-gray-400 hover:bg-white/5 hover:border-white/30'} transition-all duration-300 group`}
+                                    className={`flex flex-col items-center justify-center py-8 px-4 rounded-[2rem] border transition-all duration-300 group ${selectedPlatform === 'twitter' ? 'bg-slate-900 border-slate-900 text-white shadow-[0_10px_35px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-md border-white/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-slate-500 hover:shadow-[0_8px_25px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:border-slate-200'}`}
                                 >
-                                    <Twitter size={36} className={`mb-4 ${selectedPlatform === 'twitter' ? 'text-white' : 'group-hover:text-white'}`} strokeWidth={1.5} />
-                                    <span className="font-semibold tracking-wide text-sm">X (Twitter)</span>
+                                    <Twitter size={36} className={`mb-4 transition-colors ${selectedPlatform === 'twitter' ? 'text-white' : 'text-slate-400 group-hover:text-slate-700'}`} strokeWidth={1.5} />
+                                    <span className={`font-bold tracking-wide transition-colors text-sm ${selectedPlatform === 'twitter' ? 'text-white' : 'text-slate-700'}`}>X (Twitter)</span>
                                 </button>
 
                                 {/* Facebook */}
                                 <button
                                     onClick={() => setSelectedPlatform('facebook')}
                                     disabled={!mounted || !isLoaded || !isSignedIn}
-                                    className={`col-span-2 lg:col-span-1 flex flex-col items-center justify-center py-8 px-4 rounded-2xl border ${selectedPlatform === 'facebook' ? 'bg-white/10 border-white text-white scale-105' : 'bg-transparent border-white/10 text-gray-400 hover:bg-white/5 hover:border-white/30'} transition-all duration-300 group`}
+                                    className={`col-span-2 lg:col-span-1 flex flex-col items-center justify-center py-8 px-4 rounded-[2rem] border transition-all duration-300 group ${selectedPlatform === 'facebook' ? 'bg-slate-900 border-slate-900 text-white shadow-[0_10px_35px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-md border-white/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-slate-500 hover:shadow-[0_8px_25px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:border-slate-200'}`}
                                 >
-                                    <Facebook size={36} className={`mb-4 ${selectedPlatform === 'facebook' ? 'text-white' : 'group-hover:text-white'}`} strokeWidth={1.5} />
-                                    <span className="font-semibold tracking-wide text-sm">Facebook</span>
+                                    <Facebook size={36} className={`mb-4 transition-colors ${selectedPlatform === 'facebook' ? 'text-white' : 'text-slate-400 group-hover:text-slate-700'}`} strokeWidth={1.5} />
+                                    <span className={`font-bold tracking-wide transition-colors text-sm ${selectedPlatform === 'facebook' ? 'text-white' : 'text-slate-700'}`}>Facebook</span>
                                 </button>
                             </div>
 
                             {/* モバイル専用機能についての事前警告（PCアクセス時の不満を防ぐ） */}
-                            <div className={`w-full max-w-lg mb-8 p-4 bg-orange-900/30 border border-orange-500/40 rounded-xl text-center shadow-lg transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-                                <h4 className="text-orange-400 font-bold text-sm mb-1 flex items-center justify-center gap-2">
+                            <div className={`w-full max-w-lg mb-8 p-4 bg-white/40 backdrop-blur-xl border border-white rounded-xl text-center shadow-sm transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+                                <h4 className="text-slate-500 font-bold text-sm mb-1 flex items-center justify-center gap-2">
                                     <Smartphone className="w-5 h-5" /> スマートフォンからのご利用を推奨
                                 </h4>
-                                <p className="text-gray-300 text-xs leading-relaxed">
+                                <p className="text-slate-400 text-xs leading-relaxed font-medium">
                                     生成した画像の一括保存（カメラロールへのシェア機能等）は、<br className="hidden sm:block" />
-                                    <strong className="text-orange-300">スマートフォン環境（iOS / Android）専用</strong>の機能です。<br />
+                                    <strong className="text-slate-500">スマートフォン環境（iOS / Android）専用</strong>の機能です。<br />
                                     PC等で生成された場合、ダウンロード機能に制限がありますのでご注意ください。
                                 </p>
                             </div>
@@ -987,12 +1000,10 @@ export default function Home() {
                             <button
                                 onClick={handleStart}
                                 disabled={!mounted || !isLoaded || !isSignedIn}
-                                className={`w-[280px] h-14 rounded overflow-hidden relative group text-xl font-bold tracking-wider transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : isSignedIn ? 'opacity-100 shadow-[0_0_30px_rgba(200,50,50,0.4)] cursor-pointer scale-100' : 'opacity-40 cursor-not-allowed grayscale'}`}
-                                style={{
-                                    background: 'linear-gradient(90deg, #A85500, #9A2833)'
-                                }}
+                                className={`w-[280px] h-14 rounded-full overflow-hidden relative group text-xl font-bold tracking-[0.15em] transition-all duration-500 ${!mounted || !isLoaded ? "opacity-0 scale-95" : isSignedIn ? "opacity-100 shadow-[0_10px_35px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_45px_rgba(0,0,0,0.25)] hover:-translate-y-1 cursor-pointer scale-100 bg-slate-900 border border-slate-800" : "opacity-40 cursor-not-allowed grayscale bg-slate-300"}`}
+                                
                             >
-                                <span className="relative z-10 text-white drop-shadow-md">
+                                <span className="relative z-10 text-white/95">
                                     {!mounted || !isLoaded ? '...' : isSignedIn ? 'START' : 'ログインしてください'}
                                 </span>
                             </button>
@@ -1000,32 +1011,32 @@ export default function Home() {
                         
                         {/* 管理者専用：全自動予約バッチ一括生成 UI */}
                         {isPro && (
-                            <div className="mt-8 p-6 bg-red-900/10 border border-red-500/30 rounded-2xl w-[280px]">
-                                <h4 className="text-red-400 font-bold mb-3 flex items-center justify-center gap-2 text-sm">
-                                    <Rocket className="w-5 h-5 text-red-500" /> 管理者専用：全自動予約バッチ
+                            <div className="mt-12 p-6 bg-slate-50/50 border border-slate-200 border-dashed rounded-2xl w-[280px]">
+                                <h4 className="text-slate-800 font-bold mb-3 flex items-center justify-center gap-2 text-sm">
+                                    <Rocket className="w-5 h-5 text-slate-500" /> 管理者専用予約バッチ
                                 </h4>
-                                <p className="text-[11px] text-red-300/80 mb-4 leading-relaxed text-center">
+                                <p className="text-[11px] text-slate-500 mb-4 leading-relaxed text-center font-medium">
                                     現在の入力設定を引き継ぎ、切り口を変えながら複数件を一括生成し、予約キューへ保存します。<br/>
-                                    <span className="text-orange-300/90 font-semibold mt-1 inline-block">※FacebookへはInstagram投稿時の「標準連携（同時投稿）」をそのままお使いいただくのが確実です。</span>
+                                    <span className="text-slate-500/90 font-semibold mt-1 inline-block">※FacebookへはInstagram「標準連携」をお使いください。</span>
                                 </p>
                                 <div className="flex flex-col gap-3">
                                     <button
                                         onClick={() => handleBatchGenerate('twitter')}
                                         disabled={loading}
-                                        className="w-full py-3 bg-gradient-to-r from-red-600/60 to-orange-600/60 hover:from-red-600 hover:to-orange-600 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 border border-red-500/50"
+                                        className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 shadow-md hover:shadow-lg"
                                     >
                                         X (Twitter)用 1週間分(21連)一括予約
                                     </button>
                                     <button
                                         onClick={() => handleBatchGenerate('instagram')}
                                         disabled={loading}
-                                        className="w-full py-3 bg-gradient-to-r from-pink-600/60 to-purple-600/60 hover:from-pink-600 hover:to-purple-600 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 border border-pink-500/50"
+                                        className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50 shadow-md hover:shadow-lg"
                                     >
                                         Instagram用 1週間分(7連)一括予約
                                     </button>
                                 </div>
                                 {batchStatus && (
-                                    <p className="text-xs text-yellow-300 mt-4 text-center font-bold bg-black/40 py-2 rounded-lg border border-yellow-500/30">
+                                    <p className="text-xs text-slate-800 mt-4 text-center font-bold bg-white py-2 rounded-lg border border-slate-200 text-slate-800">
                                         {batchStatus}
                                     </p>
                                 )}
@@ -1038,7 +1049,7 @@ export default function Home() {
                 {step === 1 && (
                     <div className="w-full max-w-2xl px-4 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="w-full flex items-center mb-8">
-                            <button onClick={() => setStep(0)} disabled={loading} className={`text-gray-400 hover:text-white flex items-center gap-1 transition-opacity ${loading ? 'opacity-0 cursor-default' : 'opacity-100'}`}>
+                            <button onClick={() => setStep(0)} disabled={loading} className={`text-slate-800 font-medium hover:text-gray-900 flex items-center gap-1 transition-opacity ${loading ? 'opacity-0 cursor-default' : 'opacity-100'}`}>
                                 <ChevronLeft size={20} /> <span className="text-sm">戻る</span>
                             </button>
                         </div>
@@ -1050,8 +1061,8 @@ export default function Home() {
                                     {/* 外側の高速回転データリング */}
                                     <div className="absolute inset-0 rounded-full border border-t-[3px] border-r-transparent border-b-transparent border-l-transparent border-cyan-400 animate-spin-fast shadow-[0_0_15px_rgba(6,182,212,0.5)]"></div>
                                     <div className="absolute inset-1 rounded-full border border-b-[3px] border-t-transparent border-r-transparent border-l-transparent border-pink-500 animate-[spin_2s_linear_infinite_reverse] shadow-[0_0_15px_rgba(236,72,153,0.5)]"></div>
-                                    <div className="absolute inset-5 rounded-full border border-dashed border-purple-500/50 animate-[spin_6s_linear_infinite]"></div>
-                                    <div className="absolute inset-8 rounded-full border-[0.5px] border-white/10"></div>
+                                    <div className="absolute inset-5 rounded-full border border-dashed border-white animate-[spin_6s_linear_infinite]"></div>
+                                    <div className="absolute inset-8 rounded-full border-[0.5px] border-white shadow-lg"></div>
 
                                     {/* パルス（波紋）エフェクト */}
                                     <div className="absolute inset-4 rounded-full border border-cyan-400/30 animate-ping"></div>
@@ -1065,9 +1076,9 @@ export default function Home() {
                                         <div className="relative z-10 flex flex-col items-center justify-center">
                                             <span className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white to-cyan-200 drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] tabular-nums tracking-tighter">
                                                 {loadingProgress}
-                                                <span className="text-sm text-cyan-400 opacity-80">%</span>
+                                                <span className="text-sm text-[#D4A373] opacity-80">%</span>
                                             </span>
-                                            <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-cyan-400 mt-1 opacity-80">
+                                            <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#D4A373] mt-1 opacity-80">
                                                 Processing
                                             </span>
                                         </div>
@@ -1083,7 +1094,7 @@ export default function Home() {
                                     AI SYNC IN PROGRESS
                                 </h3>
 
-                                <div className="w-full flex border h-4 mt-8 rounded-full border-white/20">
+                                <div className="w-full flex border h-4 mt-8 rounded-full border-rose-200">
                                     <div className="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-full transition-all duration-300 ease-out shadow-[0_0_15px_rgba(168,85,247,0.8)]" style={{ width: `${loadingProgress}%` }}></div>
                                 </div>
 
@@ -1106,7 +1117,7 @@ export default function Home() {
                                 </div>
 
                                 <div className="w-full max-w-sm mt-8">
-                                    <div className="flex flex-col space-y-4 font-medium text-sm text-gray-300 relative z-10 w-full">
+                                    <div className="flex flex-col space-y-4 font-medium text-sm text-gray-700 relative z-10 w-full">
                                         {/* Phase 1 */}
                                         <div className={`flex items-start gap-4 transition-all duration-700 ${loadingPhase >= 0 ? 'opacity-100' : 'opacity-30 blur-[1px]'}`}>
                                             <div className="mt-1 relative flex items-center justify-center w-3 h-3">
@@ -1114,8 +1125,8 @@ export default function Home() {
                                                 <span className={`relative w-2 h-2 rounded-full ${loadingPhase >= 0 ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]' : 'bg-gray-600'}`}></span>
                                             </div>
                                             <div className="flex-1">
-                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 0 ? 'text-white' : 'text-gray-500'}`}>1. 市場・競合リサーチ中</p>
-                                                <p className="text-[11px] text-gray-400 leading-tight">指定プラットフォームの最新トレンドデータと検索ボリュームを抽出</p>
+                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 0 ? 'text-gray-900' : 'text-slate-600'}`}>1. 市場・競合リサーチ中</p>
+                                                <p className="text-[11px] text-slate-800 font-medium leading-tight">指定プラットフォームの最新トレンドデータと検索ボリュームを抽出</p>
                                             </div>
                                         </div>
 
@@ -1126,8 +1137,8 @@ export default function Home() {
                                                 <span className={`relative w-2 h-2 rounded-full ${loadingPhase >= 1 ? 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]' : 'bg-gray-600'}`}></span>
                                             </div>
                                             <div className="flex-1">
-                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 1 ? 'text-white' : 'text-gray-500'}`}>2. ユーザー心理プロファイリング</p>
-                                                <p className="text-[11px] text-gray-400 leading-tight">ターゲット情報から深層心理・行動パターンを解析中</p>
+                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 1 ? 'text-gray-900' : 'text-slate-600'}`}>2. ユーザー心理プロファイリング</p>
+                                                <p className="text-[11px] text-slate-800 font-medium leading-tight">ターゲット情報から深層心理・行動パターンを解析中</p>
                                             </div>
                                         </div>
 
@@ -1138,8 +1149,8 @@ export default function Home() {
                                                 <span className={`relative w-2 h-2 rounded-full ${loadingPhase >= 2 ? 'bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.8)]' : 'bg-gray-600'}`}></span>
                                             </div>
                                             <div className="flex-1">
-                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 2 ? 'text-white' : 'text-gray-500'}`}>3. コアバリュー最適化</p>
-                                                <p className="text-[11px] text-gray-400 leading-tight">貴社・サービス情報を独自の強み（USP）に変換・統合</p>
+                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 2 ? 'text-gray-900' : 'text-slate-600'}`}>3. コアバリュー最適化</p>
+                                                <p className="text-[11px] text-slate-800 font-medium leading-tight">貴社・サービス情報を独自の強み（USP）に変換・統合</p>
                                             </div>
                                         </div>
 
@@ -1150,8 +1161,8 @@ export default function Home() {
                                                 <span className={`relative w-2 h-2 rounded-full ${loadingPhase >= 3 ? 'bg-pink-400 shadow-[0_0_8px_rgba(244,114,182,0.8)]' : 'bg-gray-600'}`}></span>
                                             </div>
                                             <div className="flex-1">
-                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 3 ? 'text-white' : 'text-gray-500'}`}>4. コピーライティング構築</p>
-                                                <p className="text-[11px] text-gray-400 leading-tight">エンゲージメントを最大化する構文とハッシュタグを生成中</p>
+                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 3 ? 'text-gray-900' : 'text-slate-600'}`}>4. コピーライティング構築</p>
+                                                <p className="text-[11px] text-slate-800 font-medium leading-tight">エンゲージメントを最大化する構文とハッシュタグを生成中</p>
                                             </div>
                                         </div>
 
@@ -1162,15 +1173,15 @@ export default function Home() {
                                                 <span className={`relative w-2 h-2 rounded-full ${loadingPhase >= 4 ? 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.8)]' : 'bg-gray-600'}`}></span>
                                             </div>
                                             <div className="flex-1">
-                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 4 ? 'text-white' : 'text-gray-500'}`}>5. ビジュアルクリエイティブ合成</p>
-                                                <p className="text-[11px] text-gray-400 leading-tight">コンテキストに最適化した高精細クリエイティブを最終出力</p>
+                                                <p className={`font-bold mb-0.5 ${loadingPhase >= 4 ? 'text-gray-900' : 'text-slate-600'}`}>5. ビジュアルクリエイティブ合成</p>
+                                                <p className="text-[11px] text-slate-800 font-medium leading-tight">コンテキストに最適化した高精細クリエイティブを最終出力</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="w-64 h-[1px] bg-gradient-to-r from-transparent via-purple-500 to-transparent mt-12 animate-pulse"></div>
-                                <p className="text-xs text-gray-500 mt-4">※高精度な解析と画像生成を行うため、通常50〜60秒ほどかかります。そのままお待ちください。</p>
+                                <p className="text-xs text-slate-600 mt-4">※高精度な解析と画像生成を行うため、通常50〜60秒ほどかかります。そのままお待ちください。</p>
                             </div>
                         ) : (
                             <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-500 gap-2">
@@ -1187,10 +1198,9 @@ export default function Home() {
                                 <div className="mt-8 mb-16">
                                     <button
                                         onClick={handleGenerate}
-                                        className="w-[280px] h-14 rounded overflow-hidden shadow-[0_0_30px_rgba(200,50,50,0.4)] hover:scale-105 transition-all text-white font-bold text-lg flex items-center justify-center gap-2"
-                                        style={{ background: 'linear-gradient(90deg, #A85500, #9A2833)' }}
+                                        className="w-[320px] h-16 rounded-full overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.25)] hover:scale-105 hover:-translate-y-1 transition-all duration-300 text-white font-extrabold tracking-widest text-lg flex items-center justify-center gap-3 bg-slate-900 border border-slate-700/50"
                                     >
-                                        <Sparkles size={20} />
+                                        <Sparkles size={22} className="text-white" />
                                         生成する
                                     </button>
                                 </div>
@@ -1202,7 +1212,7 @@ export default function Home() {
                 {step === 2 && result && (
                     <div className="w-full max-w-3xl px-4 flex flex-col items-center animate-in fade-in duration-500">
                         <div className="w-full flex items-center mb-8">
-                            <button onClick={() => { setStep(0); setResult(null); }} className="text-gray-400 hover:text-white flex items-center gap-1">
+                            <button onClick={() => { setStep(0); setResult(null); }} className="text-slate-800 font-medium hover:text-gray-900 flex items-center gap-1">
                                 <ChevronLeft size={20} /> <span className="text-sm">トップに戻る</span>
                             </button>
                         </div>
@@ -1211,50 +1221,50 @@ export default function Home() {
                             生成が完了しました！
                         </h2>
 
-                        <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 mb-6">
-                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-blue-400">
+                        <div className="w-full bg-white/90 border border-slate-200 shadow-sm text-slate-8000 border border-white shadow-lg/80 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-2xl p-6 mb-6">
+                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-[#D4A373]">
                                 <BrainCircuit size={20} /> 3D AIトレンドリサーチ
                             </h3>
 
                             <div className="space-y-4">
-                                <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-4 rounded-xl border border-white shadow-lg/5">
                                     <h4 className="text-sm font-bold text-gray-200 mb-2 flex items-center gap-2">
-                                        <Globe size={16} className="text-gray-400" /> ① 世の中の大きなトレンド
+                                        <Globe size={16} className="text-slate-800 font-medium" /> ① 世の中の大きなトレンド
                                     </h4>
-                                    <p className="text-gray-400 text-sm leading-relaxed">{result.research.insight_macro}</p>
+                                    <p className="text-slate-800 font-medium text-sm leading-relaxed">{result.research.insight_macro}</p>
                                 </div>
-                                <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-4 rounded-xl border border-white shadow-lg/5">
                                     <h4 className="text-sm font-bold text-gray-200 mb-2 flex items-center gap-2">
-                                        <Building size={16} className="text-gray-400" /> ② 業界内でのトレンド
+                                        <Building size={16} className="text-slate-800 font-medium" /> ② 業界内でのトレンド
                                     </h4>
-                                    <p className="text-gray-400 text-sm leading-relaxed">{result.research.insight_industry}</p>
+                                    <p className="text-slate-800 font-medium text-sm leading-relaxed">{result.research.insight_industry}</p>
                                 </div>
-                                <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-4 rounded-xl border border-white shadow-lg/5">
                                     <h4 className="text-sm font-bold text-gray-200 mb-2 flex items-center gap-2">
-                                        <Target size={16} className="text-gray-400" /> ③ ターゲット層のトレンド
+                                        <Target size={16} className="text-slate-800 font-medium" /> ③ ターゲット層のトレンド
                                     </h4>
-                                    <p className="text-gray-400 text-sm leading-relaxed">{result.research.insight_target}</p>
+                                    <p className="text-slate-800 font-medium text-sm leading-relaxed">{result.research.insight_target}</p>
                                 </div>
 
                                 <div className="mt-6 bg-blue-900/20 p-5 rounded-xl border border-blue-500/30">
                                     <h4 className="text-sm font-bold text-blue-300 mb-2 flex items-center gap-2">
-                                        <Lightbulb size={16} className="text-blue-400" /> 統合インサイト（今回のアプローチ方針）
+                                        <Lightbulb size={16} className="text-[#D4A373]" /> 統合インサイト（今回のアプローチ方針）
                                     </h4>
-                                    <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+                                    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
                                         {result.research.insight_summary}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 mb-6">
+                        <div className="w-full bg-white/90 border border-slate-200 shadow-sm text-slate-8000 border border-white shadow-lg/80 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-2xl p-6 mb-6">
                             <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-green-400">
                                 <PenTool size={20} /> 生成されたキャプション {selectedFormat === 'video_script' && '（投稿文用）'}
                             </h3>
-                            <div className="bg-white/5 border border-white/5 p-4 rounded-xl mb-4 text-sm leading-relaxed whitespace-pre-wrap">
+                            <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg/5 p-4 rounded-xl mb-4 text-sm leading-relaxed whitespace-pre-wrap">
                                 {result.post.caption}
                                 {'\n\n'}
-                                <span className="text-blue-400">
+                                <span className="text-[#D4A373]">
                                     {(result.post.hashtags || []).map(t => t.startsWith('#') ? t : `#${t}`).join(' ')}
                                 </span>
                             </div>
@@ -1264,38 +1274,38 @@ export default function Home() {
                                     posthog?.capture('content_copied', { format: selectedFormat });
                                     alert('コピーしました！');
                                 }}
-                                className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-bold flex flex-row items-center justify-center gap-2 transition-colors"
+                                className="w-full py-3 bg-white/60 backdrop-blur-xl hover:bg-white/20 rounded-lg text-sm font-bold flex flex-row items-center justify-center gap-2 transition-colors"
                             >
                                 <Copy size={16} /> キャプションをコピー
                             </button>
                         </div>
 
-                        <div className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 mb-8">
+                        <div className="w-full bg-white/90 border border-slate-200 shadow-sm text-slate-8000 border border-white shadow-lg/80 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-2xl p-6 mb-8">
                             {selectedFormat === 'video_script' ? (
                                 <>
                                     <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-orange-400">
                                         <ImageIcon size={20} /> ショート動画台本 (TikTok / Reels / Shorts)
                                     </h3>
-                                    <p className="text-xs text-gray-500 mb-4">{result.post.image_idea}</p>
+                                    <p className="text-xs text-slate-600 mb-4">{result.post.image_idea}</p>
 
                                     <div className="space-y-4">
                                         {(result.post.video_script || []).map((script, idx) => (
-                                            <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-2">
+                                            <div key={idx} className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-xl p-4 flex flex-col gap-2">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <span className="bg-orange-500/20 text-orange-400 px-2 py-1 rounded text-xs font-bold">{script.time}</span>
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <h5 className="text-[10px] font-bold text-gray-400 mb-1">【映像・音声】</h5>
-                                                        <p className="text-sm font-medium text-white mb-2 max-w-full">
+                                                        <h5 className="text-[10px] font-bold text-slate-800 font-medium mb-1">【映像・音声】</h5>
+                                                        <p className="text-sm font-medium text-gray-900 mb-2 max-w-full">
                                                             <span className="text-blue-300">🎵 </span>{script.audio}
                                                         </p>
-                                                        <p className="text-xs text-gray-400">
-                                                            <span className="text-gray-500">🎥 </span>{script.visual}
+                                                        <p className="text-xs text-slate-800 font-medium">
+                                                            <span className="text-slate-600">🎥 </span>{script.visual}
                                                         </p>
                                                     </div>
-                                                    <div className="bg-black/30 p-3 rounded-lg border border-white/5">
-                                                        <h5 className="text-[10px] font-bold text-gray-400 mb-1">【画面テロップ】</h5>
+                                                    <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-8000 p-3 rounded-lg border border-white shadow-lg/5">
+                                                        <h5 className="text-[10px] font-bold text-slate-800 font-medium mb-1">【画面テロップ】</h5>
                                                         <p className="text-sm font-bold text-center text-yellow-300 drop-shadow-md py-4">{script.text_overlay}</p>
                                                     </div>
                                                 </div>
@@ -1308,29 +1318,24 @@ export default function Home() {
                                     <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-orange-400">
                                         <ImageIcon size={20} /> {selectedFormat === 'carousel' ? 'カルーセル用 画像一覧' : 'AI生成画像'}
                                     </h3>
-                                    <p className="text-xs text-gray-500 mb-4">{result.post.image_idea}</p>
+                                    <p className="text-xs text-slate-600 mb-4">{result.post.image_idea}</p>
 
                                     {/* 複数枚画像コンテナ (スマホでは縦積み100%幅、PC等ではFlex横並び) */}
                                     <div className="w-full flex flex-col md:flex-row md:flex-wrap justify-center gap-6 pb-4">
                                         {result.imageUrls && result.imageUrls.length > 0 ? (
                                             result.imageUrls.map((url, idx) => (
-                                                <div key={idx} className="w-full md:w-[45%] lg:w-[30%] aspect-square bg-[#1a1a1a] rounded-xl overflow-hidden relative shadow-[0_4px_20px_rgba(0,0,0,0.5)] border border-white/10 mx-auto">
+                                                <div key={idx} className="w-full md:w-[45%] lg:w-[30%] aspect-square bg-[#1a1a1a] rounded-xl overflow-hidden relative shadow-[0_4px_20px_rgba(0,0,0,0.5)] border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] mx-auto">
                                                     <img src={url} alt={`Generated ${idx + 1}`} className="w-full h-full object-cover" />
-                                                    {/* CSSロゴ合成 (未合成時) */}
-                                                    {productContext?.logoUrl && !productContext.baseImage && (
-                                                        <div className="absolute bottom-4 right-4 max-w-[25%] max-h-[25%] opacity-90 drop-shadow-lg pointer-events-none rounded-full overflow-hidden border-2 border-white/20 bg-black/40">
-                                                            <img src={productContext.logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                                                        </div>
-                                                    )}
+
                                                     {selectedFormat === 'carousel' && (
-                                                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md font-bold border border-white/20">
+                                                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-gray-900 text-xs px-2 py-1 rounded-md font-bold border border-rose-200">
                                                             {idx + 1}枚目
                                                         </div>
                                                     )}
                                                 </div>
                                             ))
                                         ) : (
-                                            <div className="w-full aspect-square flex items-center justify-center text-gray-500 text-sm bg-black/20 rounded-xl">画像生成に失敗しました（または制限）</div>
+                                            <div className="w-full aspect-square flex items-center justify-center text-slate-600 text-sm bg-white/90 border border-slate-200 shadow-sm text-slate-800 rounded-xl">画像生成に失敗しました（または制限）</div>
                                         )}
                                     </div>
                                 </>
@@ -1487,8 +1492,8 @@ export default function Home() {
                                     >
                                         <Download size={16} /> {selectedFormat === 'carousel' ? 'すべての画像をダウンロード' : '画像をダウンロード'}
                                     </button>
-                                    <p className="text-[11px] text-gray-400 mt-2 text-center leading-relaxed">
-                                        ※画像保存（シェア機能）は<strong className="text-gray-300">スマートフォン専用</strong>です。<br />
+                                    <p className="text-[11px] text-slate-800 font-medium mt-2 text-center leading-relaxed">
+                                        ※画像保存（シェア機能）は<strong className="text-gray-700">スマートフォン専用</strong>です。<br />
                                         PC等をご利用の方は、お手数ですがスマホから再度ご確認ください。
                                     </p>
                                 </>
@@ -1501,27 +1506,27 @@ export default function Home() {
                             <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl -ml-8 -mb-8 pointer-events-none"></div>
                             
                             <div className="relative z-10">
-                                <h3 className="text-xl font-bold mb-2 flex items-center justify-center gap-2 text-white">
-                                    <Rocket size={24} className="text-pink-400" /> 次にやること（Next Action）
+                                <h3 className="text-xl font-bold mb-2 flex items-center justify-center gap-2 text-gray-900">
+                                    <Rocket size={24} className="text-slate-500" /> 次にやること（Next Action）
                                 </h3>
                                 <p className="text-center text-indigo-200 text-sm mb-6">
                                     AIが生成した最高のコンテンツを、今すぐ世界に届けましょう！
                                 </p>
 
                                 <div className="space-y-3 mb-6 max-w-lg mx-auto">
-                                    <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-3 rounded-xl">
+                                    <div className="flex items-center gap-3 bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-3 rounded-xl">
                                         <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm">1</div>
                                         <div className="flex-1 text-sm text-gray-200">画像をダウンロードする</div>
-                                        <Download size={16} className="text-gray-500" />
+                                        <Download size={16} className="text-slate-600" />
                                     </div>
-                                    <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-3 rounded-xl">
+                                    <div className="flex items-center gap-3 bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-3 rounded-xl">
                                         <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm">2</div>
                                         <div className="flex-1 text-sm text-gray-200">キャプションとハッシュタグをコピーする</div>
-                                        <Copy size={16} className="text-gray-500" />
+                                        <Copy size={16} className="text-slate-600" />
                                     </div>
                                     <div className="flex items-center gap-3 bg-indigo-500/20 border border-indigo-500/30 p-3 rounded-xl shadow-[0_0_15px_rgba(99,102,241,0.2)]">
-                                        <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shadow-lg border border-indigo-400">3</div>
-                                        <div className="flex-1 text-sm font-bold text-white">アプリを開いて貼り付け、投稿を完了する！</div>
+                                        <div className="w-8 h-8 rounded-full bg-indigo-500 text-gray-900 flex items-center justify-center font-bold text-sm shadow-lg border border-indigo-400">3</div>
+                                        <div className="flex-1 text-sm font-bold text-gray-900">アプリを開いて貼り付け、投稿を完了する！</div>
                                         <Zap size={16} className="text-yellow-400 animate-pulse" />
                                     </div>
                                 </div>
@@ -1559,7 +1564,7 @@ export default function Home() {
                                                 window.open(webUrls[platform], '_blank');
                                             }
                                         }}
-                                        className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-md font-bold text-white flex flex-row items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(147,51,234,0.4)] hover:shadow-[0_0_30px_rgba(147,51,234,0.6)] transform hover:-translate-y-1"
+                                        className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-md font-bold text-gray-900 flex flex-row items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(147,51,234,0.4)] hover:shadow-[0_0_30px_rgba(147,51,234,0.6)] transform hover:-translate-y-1"
                                     >
                                         {selectedPlatform === 'instagram' && <Instagram size={20} />}
                                         {selectedPlatform === 'twitter' && <Twitter size={20} />}
@@ -1587,7 +1592,7 @@ export default function Home() {
                     </div>
                 )}
                 {isCheckoutLoading && (
-                    <div className="text-purple-400 mb-8 max-w-2xl w-full mx-4 text-center animate-pulse">
+                    <div className="text-slate-500 mb-8 max-w-2xl w-full mx-4 text-center animate-pulse">
                         <p className="font-bold">決済画面の準備中です...</p>
                         <p className="text-sm mt-1">Stripeと通信しています。そのままお待ちください。</p>
                     </div>
@@ -1597,7 +1602,7 @@ export default function Home() {
 
             {/* Footer */}
             <footer className="w-full text-center pb-8 pt-12 flex flex-col items-center gap-1">
-                <div className="text-gray-500 text-xs font-medium tracking-wide">
+                <div className="text-slate-600 text-xs font-medium tracking-wide">
                     SNS Agent24 v2.3 | © 2026 DEARS CONSULTING
                 </div>
                 <a

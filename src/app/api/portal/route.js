@@ -14,12 +14,19 @@ export async function POST(req) {
         const user = await currentUser();
         const stripeCustomerId = user.privateMetadata.stripeCustomerId;
 
-        if (!stripeCustomerId) {
-            return new NextResponse("No Stripe Customer ID found", { status: 404 });
-        }
-
         const reqUrl = new URL(req.url);
         const origin = reqUrl.origin;
+
+        if (!stripeCustomerId) {
+            // ローカル開発中のWebhook未到達などで「Stripe顧客IDがないのにProになっている」エラー状態（Ghost Pro）の場合の自己修復
+            console.log("No Stripe Customer ID found. Auto-healing ghost pro user.");
+            const clerk = clerkClient();
+            await clerk.users.updateUserMetadata(userId, {
+                publicMetadata: { role: null }
+            });
+            // 課金プラン画面にリダイレクト
+            return NextResponse.json({ url: `${origin}/app#pricing` });
+        }
 
         const session = await stripe.billingPortal.sessions.create({
             customer: stripeCustomerId,
