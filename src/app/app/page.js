@@ -1005,23 +1005,36 @@ export default function Home() {
                                 </span>
                             </button>
                         </div>
-                        
                         {/* PRO MAX 限定：全自動予約バッチ一括生成 UI */}
                         {isPro && (
-                            <div className="mt-14 relative w-[320px] sm:w-[360px] group">
-                                {/* 背面のプレミアムな光彩エフェクト (Satin Whiteの微発光) */}
-                                <div className="absolute -inset-0.5 bg-gradient-to-r from-slate-400/20 to-white/10 rounded-[1.5rem] blur-md opacity-40 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+                            <div className="w-full flex flex-col items-center mt-20 pt-16 border-t border-slate-300/60 relative">
+                                {/* 区切りの装飾 */}
+                                <div className="absolute top-[-14px] bg-slate-50 px-4 text-xs font-bold text-slate-400 tracking-widest">
+                                    ADVANCED OPTIONS
+                                </div>
                                 
-                                <div className="relative p-7 bg-[#050505] border border-white/10 rounded-[1.5rem] shadow-2xl flex flex-col items-center">
-                                    {/* PRO MAX バッジ */}
-                                    <div className="absolute -top-3.5 px-5 py-1.5 bg-gradient-to-r from-slate-100 to-slate-300 text-slate-900 text-[11px] font-black tracking-[0.2em] rounded-full shadow-[0_4px_15px_rgba(255,255,255,0.15)] border border-white/50">
-                                        Pro Max Plan
-                                    </div>
+                                <p className="text-slate-500 text-xs mb-10 text-center leading-relaxed font-medium">
+                                    日々の生成だけでなく、<span className="text-slate-700 font-bold">1週間分の完全自動化</span>を構築したい場合は<br className="hidden sm:block"/>
+                                    こちらの「Pro Max Plan」機能がおすすめです。
+                                </p>
+
+                                <div className="relative w-[320px] sm:w-[360px] group">
+                                    {/* 背面のプレミアムな光彩エフェクト (Satin Whiteの微発光) */}
+                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-slate-400/20 to-white/10 rounded-[1.5rem] blur-md opacity-40 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
                                     
-                                    <h4 className="text-white font-extrabold mb-4 flex items-center justify-center gap-2 text-[15px] tracking-widest mt-4">
-                                        <Rocket className="w-5 h-5 text-slate-300" />
-                                        AI全自動スケジュール構築
-                                    </h4>
+                                    <div className="relative p-7 bg-[#050505] border border-white/10 rounded-[1.5rem] shadow-2xl flex flex-col items-center">
+                                        {/* PRO MAX バッジ */}
+                                        <div className="absolute -top-3.5 px-5 py-1.5 bg-gradient-to-r from-slate-100 to-slate-300 text-slate-900 text-[11px] font-black tracking-[0.2em] rounded-full shadow-[0_4px_15px_rgba(255,255,255,0.15)] border border-white/50">
+                                            Pro Max Plan
+                                        </div>
+                                        
+                                        <h4 className="text-white font-extrabold mb-1 flex items-center justify-center gap-2 text-[15px] tracking-widest mt-4">
+                                            <Rocket className="w-5 h-5 text-slate-300" />
+                                            AI全自動スケジュール構築
+                                        </h4>
+                                        <p className="text-slate-400 text-[10px] font-medium tracking-wide mb-5 text-center">
+                                            ※さらに高度な自動運用を求める企業様へ推奨
+                                        </p>
                                     
                                     <p className="text-[11px] text-slate-400 mb-5 leading-relaxed text-center font-medium">
                                         現在のブランドインサイトとターゲット設定に基づき、AIが最適な切り口で<span className="text-white font-bold">「1週間分のコンテンツ」</span>を一括構築し、自動投稿キューへ転送します。
@@ -1071,6 +1084,7 @@ export default function Home() {
                                             </p>
                                         </div>
                                     )}
+                                </div>
                                 </div>
                             </div>
                         )}
