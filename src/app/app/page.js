@@ -1094,7 +1094,7 @@ export default function Home() {
                                             {isProMax ? (
                                                 <><span className="text-slate-300">📷</span> Instagram 1週間分 自動構築</>
                                             ) : (
-                                                <><Lock className="w-4 h-4 text-slate-400" /> Pro Maxプランで解放する</>
+                                                <><Lock className="w-4 h-4 text-slate-400" /> Instagram 全自動構築を解放する</>
                                             )}
                                         </button>
                                         
@@ -1113,7 +1113,7 @@ export default function Home() {
                                             {isProMax ? (
                                                 <><span className="text-slate-300">𝕏</span> X (Twitter) 1週間分 自動構築</>
                                             ) : (
-                                                <><Lock className="w-4 h-4 text-slate-400" /> Pro Maxプランで解放する</>
+                                                <><Lock className="w-4 h-4 text-slate-400" /> X (Twitter) 全自動構築を解放する</>
                                             )}
                                         </button>
                                     </div>
