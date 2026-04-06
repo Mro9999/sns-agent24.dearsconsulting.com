@@ -30,17 +30,26 @@ export async function POST(req) {
             return new NextResponse("User ID is missing in session metadata", { status: 400 });
         }
 
+        const priceId = subscription.items.data[0].price.id;
+        
+        // プランを判定
+        const isProMax = 
+            priceId === process.env.STRIPE_PRICE_ID_PROMAX_MONTHLY || 
+            priceId === process.env.STRIPE_PRICE_ID_PROMAX_YEARLY;
+            
+        const assignedRole = isProMax ? 'promax' : 'pro';
+
         await clerkClient.users.updateUserMetadata(session.metadata.userId, {
             privateMetadata: {
                 stripeSubscriptionId: subscription.id,
                 stripeCustomerId: subscription.customer,
-                stripePriceId: subscription.items.data[0].price.id,
+                stripePriceId: priceId,
                 stripeCurrentPeriodEnd: new Date(
                     subscription.current_period_end * 1000
                 ),
             },
             publicMetadata: {
-                role: 'pro'
+                role: assignedRole
             }
         });
 
@@ -71,7 +80,8 @@ export async function POST(req) {
                 const customerName = session.customer_details?.name || '不明';
                 const amount = session.amount_total ? `¥${session.amount_total.toLocaleString()}` : '不明';
 
-                const emailContent = `SNS Agent24でProプランの新規サブスクリプション契約が完了しました。\n\nお名前: ${customerName}\nメールアドレス: ${customerEmail}\n決済金額: ${amount}\nユーザーID (Clerk): ${session.metadata.userId}\nStripe顧客ID: ${subscription.customer}\n契約日時: ${new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}`;
+                const planName = isProMax ? 'Pro Maxプラン' : 'Proプラン';
+                const emailContent = `SNS Agent24で${planName}の新規サブスクリプション契約が完了しました。\n\nお名前: ${customerName}\nメールアドレス: ${customerEmail}\n決済金額: ${amount}\nユーザーID (Clerk): ${session.metadata.userId}\nStripe顧客ID: ${subscription.customer}\n契約日時: ${new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}`;
 
                 const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
                     method: 'POST',
@@ -82,7 +92,7 @@ export async function POST(req) {
                     body: JSON.stringify({
                         personalizations: [{ to: [{ email: adminEmail }] }],
                         from: { email: 'notifications@dearsconsulting.com', name: 'SNS Agent24 通知システム' },
-                        subject: `【Pro登録完了】${customerName} 様がサブスク契約しました`,
+                        subject: `【${planName}登録完了】${customerName} 様がサブスク契約しました`,
                         content: [{ type: 'text/plain', value: emailContent }]
                     })
                 });

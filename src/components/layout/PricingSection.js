@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Check, Star, Zap, User, Building } from 'lucide-react';
 import styles from './PricingSection.module.css';
 
-export default function PricingSection({ onUpgrade, isPro }) {
+export default function PricingSection({ onUpgrade, isPro, isProMax }) {
     const [billingCycle, setBillingCycle] = useState('month'); // 'month' or 'year'
 
     const plans = [
@@ -37,10 +37,28 @@ export default function PricingSection({ onUpgrade, isPro }) {
                 "新機能への早期アクセス",
                 "商用利用完全OK"
             ],
-            buttonText: isPro ? "ご契約内容の管理" : "Proにアップグレード",
-            buttonStyle: isPro ? "current" : "primary",
-            action: () => onUpgrade(billingCycle),
-            isCurrentPlan: isPro
+            buttonText: (isPro && !isProMax) ? "ご契約内容の管理" : isProMax ? "現在のプラン" : "Proにアップグレード",
+            buttonStyle: (isPro && !isProMax) ? "current" : isProMax ? "secondary" : "primary",
+            action: () => onUpgrade ? onUpgrade(billingCycle, 'pro') : window.location.href = '/app',
+            isCurrentPlan: isPro && !isProMax
+        },
+        {
+            name: "Pro Max Plan",
+            price: billingCycle === 'year' ? "¥298,000" : "¥29,800",
+            period: billingCycle === 'year' ? "/ year" : "/ month",
+            subtext: billingCycle === 'year' ? "（月あたり約 ¥24,833）" : null,
+            badge: "エンタープライズ",
+            features: [
+                "Pro Planの全機能",
+                "1週間分の全自動スケジュール構築",
+                "外部システム連携（Webhook等）",
+                "専任担当によるオンボーディング",
+                "優先度最上位のプレミアムサポート"
+            ],
+            buttonText: isProMax ? "ご契約内容の管理" : "Pro Maxにアップグレード",
+            buttonStyle: isProMax ? "current" : "primary",
+            action: () => onUpgrade ? onUpgrade(billingCycle, 'promax') : window.location.href = '/app',
+            isCurrentPlan: isProMax
         }
     ];
 
@@ -154,7 +172,7 @@ export default function PricingSection({ onUpgrade, isPro }) {
 
                 <div className={styles.grid}>
                     {plans.map((plan, index) => (
-                        <div key={index} className={`${styles.card} ${plan.name === 'Pro Plan' ? styles.proCard : ''} ${plan.isCurrentPlan ? styles.currentPlanCard : ''}`}>
+                        <div key={index} className={`${styles.card} ${plan.name === 'Pro Max Plan' ? styles.proCard : ''} ${plan.isCurrentPlan ? styles.currentPlanCard : ''}`}>
                             {plan.isCurrentPlan && <div className={styles.currentBadge}>現在のプラン</div>}
                             {!plan.isCurrentPlan && plan.badge && <div className={styles.badge}>{plan.badge}</div>}
                             <h3 className={styles.planName}>{plan.name}</h3>

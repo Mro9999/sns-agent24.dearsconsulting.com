@@ -14,7 +14,8 @@ export async function GET() {
         const email = user.emailAddresses[0]?.emailAddress;
 
         return NextResponse.json({ 
-            isPro: role === 'pro',
+            isPro: role === 'pro' || role === 'promax' || role === 'admin',
+            isProMax: role === 'promax' || role === 'admin',
             role: role,
             email: email
         });

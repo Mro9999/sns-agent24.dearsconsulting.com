@@ -15,6 +15,7 @@ export default function Home() {
     const posthog = usePostHog();
 
     const [serverIsPro, setServerIsPro] = useState(null);
+    const [serverIsProMax, setServerIsProMax] = useState(null);
     useEffect(() => {
         if (isSignedIn) {
             fetch('/api/user/status')
@@ -22,6 +23,7 @@ export default function Home() {
                 .then(data => {
                     console.log("Strict Backend Check:", data);
                     if (data.isPro) setServerIsPro(true);
+                    if (data.isProMax) setServerIsProMax(true);
                 })
                 .catch(console.error);
         }
@@ -29,7 +31,8 @@ export default function Home() {
 
     // JWTトークン内のメタデータ（ユーザー自身またはカスタムクレーム）を確実に取得
     const sessionRole = session?.user?.publicMetadata?.role || null;
-    const isPro = serverIsPro === true || sessionRole === 'pro' || user?.publicMetadata?.role === 'pro';
+    const isProMax = serverIsProMax === true || sessionRole === 'promax' || user?.publicMetadata?.role === 'promax' || sessionRole === 'admin' || user?.publicMetadata?.role === 'admin';
+    const isPro = isProMax || serverIsPro === true || sessionRole === 'pro' || user?.publicMetadata?.role === 'pro';
 
     const [step, setStep] = useState(0); // 0: Platform, 1: Process, 2: Result
     const [selectedPlatform, setSelectedPlatform] = useState(null);
@@ -785,6 +788,27 @@ export default function Home() {
 
             if (!qRes.ok) throw new Error("保存用APIでエラーが発生しました");
 
+            // Make.com への一括転送処理
+            setBatchStatus(`Make.com 自動化システムへ転送中...`);
+            try {
+                const makeRes = await fetch('/api/webhooks/make', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        platform: platformType,
+                        category: selectedCategory,
+                        purpose: selectedPurpose,
+                        posts: results
+                    })
+                });
+                
+                if (!makeRes.ok) {
+                    console.warn("Make.com連携エラー（モックモードの場合は無視可能）");
+                }
+            } catch (makeErr) {
+                console.error("Make webhook failed:", makeErr);
+            }
+
             setBatchStatus(`完了！ ${results.length}件を自動投稿キューへ予約しました。`);
             alert(`【完了】${results.length}件の一括自動生成と、キューへの保存が成功しました。`);
 
@@ -1006,7 +1030,7 @@ export default function Home() {
                             </button>
                         </div>
                         {/* PRO MAX 限定：全自動予約バッチ一括生成 UI */}
-                        {isPro && (
+                        {(isPro || isProMax) && (
                             <div className="w-full flex flex-col items-center mt-20 pt-16 border-t border-slate-300/60 relative">
                                 {/* 区切りの装飾 */}
                                 <div className="absolute top-[-14px] bg-slate-50 px-4 text-xs font-bold text-slate-400 tracking-widest">
@@ -1055,21 +1079,34 @@ export default function Home() {
                                     
                                     <div className="flex flex-col gap-3 w-full">
                                         <button
-                                            onClick={() => handleBatchGenerate('instagram')}
+                                            onClick={() => {
+                                                if (!isProMax) {
+                                                    document.querySelector('.pro-modal-trigger')?.click(); // 簡易的なフック用、実際にはhandleCheckoutなどで制御
+                                                    handleCheckout('month', 'promax');
+                                                    return;
+                                                }
+                                                handleBatchGenerate('instagram');
+                                            }}
                                             disabled={loading}
                                             className="w-full relative px-5 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[12px] font-bold rounded-xl transition-all disabled:opacity-50 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)] overflow-hidden flex items-center justify-center gap-2 group/btn"
                                         >
                                             <span className="absolute inset-0 w-full h-full bg-white opacity-0 group-hover/btn:opacity-5 transition-opacity"></span>
-                                            <span className="text-slate-300">📷</span> Instagram 1週間分 自動構築
+                                            <span className="text-slate-300">📷</span> {isProMax ? 'Instagram 1週間分 自動構築' : '鍵を解除して利用する (Pro Maxへ)'}
                                         </button>
                                         
                                         <button
-                                            onClick={() => handleBatchGenerate('twitter')}
+                                            onClick={() => {
+                                                if (!isProMax) {
+                                                    handleCheckout('month', 'promax');
+                                                    return;
+                                                }
+                                                handleBatchGenerate('twitter');
+                                            }}
                                             disabled={loading}
                                             className="w-full relative px-5 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[11px] font-bold rounded-xl transition-all disabled:opacity-50 overflow-hidden flex items-center justify-center gap-2 group/btn"
                                         >
                                             <span className="absolute inset-0 w-full h-full bg-white opacity-0 group-hover/btn:opacity-5 transition-opacity"></span>
-                                            <span className="text-slate-300">𝕏</span> X (Twitter) 1週間分 自動構築
+                                            <span className="text-slate-300">𝕏</span> {isProMax ? 'X (Twitter) 1週間分 自動構築' : '鍵を解除して利用する (Pro Maxへ)'}
                                         </button>
                                     </div>
                                     
@@ -1643,7 +1680,7 @@ export default function Home() {
                         <p className="text-sm mt-1">Stripeと通信しています。そのままお待ちください。</p>
                     </div>
                 )}
-                <PricingSection onUpgrade={handleCheckout} isPro={isPro} />
+                <PricingSection onUpgrade={handleCheckout} isPro={isPro} isProMax={isProMax} />
             </div>
 
             {/* Footer */}

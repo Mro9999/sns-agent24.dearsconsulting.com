@@ -15,11 +15,23 @@ export async function POST(req) {
         }
 
         const reqBody = await req.json().catch(() => ({}));
-        const { interval = 'month' } = reqBody;
+        const { interval = 'month', tier = 'pro' } = reqBody;
 
-        const priceId = interval === 'year'
-            ? process.env.STRIPE_PRICE_ID_YEARLY
-            : (process.env.STRIPE_PRICE_ID_MONTHLY || process.env.STRIPE_PRICE_ID);
+        let priceId;
+        if (tier === 'promax') {
+            priceId = interval === 'year' 
+                ? process.env.STRIPE_PRICE_ID_PROMAX_YEARLY
+                : process.env.STRIPE_PRICE_ID_PROMAX_MONTHLY;
+        } else {
+            priceId = interval === 'year'
+                ? process.env.STRIPE_PRICE_ID_YEARLY
+                : (process.env.STRIPE_PRICE_ID_MONTHLY || process.env.STRIPE_PRICE_ID);
+        }
+
+        if (!priceId) {
+            console.error("Missing Stripe Price ID for tier:", tier, "interval:", interval);
+            return new NextResponse("Server Configuration Error", { status: 500 });
+        }
 
         const reqUrl = new URL(req.url);
         const origin = reqUrl.origin;
@@ -39,10 +51,12 @@ export async function POST(req) {
             customer_email: user.emailAddresses[0].emailAddress,
             metadata: {
                 userId: userId,
+                planTier: tier
             },
             subscription_data: {
                 metadata: {
                     userId: userId,
+                    planTier: tier
                 },
             },
         });
