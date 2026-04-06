@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Gem, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History, Smartphone } from 'lucide-react';
+import { Gem, Lock, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History, Smartphone } from 'lucide-react';
 import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
@@ -1091,7 +1091,11 @@ export default function Home() {
                                             className="w-full relative px-5 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[12px] font-bold rounded-xl transition-all disabled:opacity-50 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)] overflow-hidden flex items-center justify-center gap-2 group/btn"
                                         >
                                             <span className="absolute inset-0 w-full h-full bg-white opacity-0 group-hover/btn:opacity-5 transition-opacity"></span>
-                                            <span className="text-slate-300">📷</span> {isProMax ? 'Instagram 1週間分 自動構築' : '鍵を解除して利用する (Pro Maxへ)'}
+                                            {isProMax ? (
+                                                <><span className="text-slate-300">📷</span> Instagram 1週間分 自動構築</>
+                                            ) : (
+                                                <><Lock className="w-4 h-4 text-slate-400" /> Pro Maxプランで解放する</>
+                                            )}
                                         </button>
                                         
                                         <button
@@ -1106,7 +1110,11 @@ export default function Home() {
                                             className="w-full relative px-5 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[11px] font-bold rounded-xl transition-all disabled:opacity-50 overflow-hidden flex items-center justify-center gap-2 group/btn"
                                         >
                                             <span className="absolute inset-0 w-full h-full bg-white opacity-0 group-hover/btn:opacity-5 transition-opacity"></span>
-                                            <span className="text-slate-300">𝕏</span> {isProMax ? 'X (Twitter) 1週間分 自動構築' : '鍵を解除して利用する (Pro Maxへ)'}
+                                            {isProMax ? (
+                                                <><span className="text-slate-300">𝕏</span> X (Twitter) 1週間分 自動構築</>
+                                            ) : (
+                                                <><Lock className="w-4 h-4 text-slate-400" /> Pro Maxプランで解放する</>
+                                            )}
                                         </button>
                                     </div>
                                     
