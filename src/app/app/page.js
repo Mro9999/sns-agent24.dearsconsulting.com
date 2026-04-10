@@ -1061,40 +1061,32 @@ export default function Home() {
                                         </p>
                                     
                                     {/* フロー図（ステップ説明） */}
-                                    <div className="w-full mb-8 mt-2">
-                                        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full px-2">
+                                    <div className="w-full mb-8 mt-2 px-1">
+                                        <div className="flex flex-col gap-3 w-full">
                                             {/* Step 1 */}
-                                            <div className="flex flex-1 flex-col sm:flex-row items-center gap-3 bg-white/5 border border-white/10 px-4 py-3 rounded-xl w-full">
-                                                <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30 text-sm font-black shrink-0 shadow-[0_0_10px_rgba(59,130,246,0.2)]">1</div>
-                                                <div className="flex flex-col text-center sm:text-left">
-                                                    <p className="text-sm text-slate-200 font-bold leading-tight">ターゲット・トレンド分析</p>
-                                                    <span className="text-[10px] text-slate-400 font-medium">見込み客の「今の悩み」を抽出</span>
+                                            <div className="flex items-center gap-4 bg-white/5 border border-white/10 px-4 py-3.5 rounded-xl w-full">
+                                                <div className="w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30 text-sm font-black shrink-0 shadow-[0_0_10px_rgba(59,130,246,0.2)]">1</div>
+                                                <div className="flex flex-col text-left">
+                                                    <p className="text-sm text-slate-200 font-bold leading-tight mb-1">ターゲット・トレンド分析</p>
+                                                    <span className="text-[11px] text-slate-400 font-medium">見込み客の「今の悩み」を抽出</span>
                                                 </div>
                                             </div>
                                             
-                                            {/* Arrow */}
-                                            <div className="text-slate-500 hidden sm:block"><ArrowRight size={20} /></div>
-                                            <div className="text-slate-500 sm:hidden"><ArrowDown size={20} /></div>
-                                            
                                             {/* Step 2 */}
-                                            <div className="flex flex-1 flex-col sm:flex-row items-center gap-3 bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-purple-500/40 px-4 py-3 rounded-xl w-full shadow-[0_0_15px_rgba(168,85,247,0.15)] transform hover:scale-105 transition-transform">
-                                                <div className="w-8 h-8 rounded-full bg-purple-500/30 text-purple-200 flex items-center justify-center border border-purple-400/50 text-sm font-black shrink-0 shadow-[0_0_10px_rgba(168,85,247,0.3)]">2</div>
-                                                <div className="flex flex-col text-center sm:text-left">
-                                                    <p className="text-sm text-white font-bold leading-tight drop-shadow-md">7日分をAIが一括作成</p>
-                                                    <span className="text-[10px] text-purple-200/80 font-medium tracking-wide">画像と最適な文章を即座に合成</span>
+                                            <div className="flex items-center gap-4 bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-purple-500/40 px-4 py-3.5 rounded-xl w-full shadow-[0_0_15px_rgba(168,85,247,0.15)] transform hover:scale-[1.02] transition-transform">
+                                                <div className="w-9 h-9 rounded-full bg-purple-500/30 text-purple-200 flex items-center justify-center border border-purple-400/50 text-sm font-black shrink-0 shadow-[0_0_10px_rgba(168,85,247,0.3)]">2</div>
+                                                <div className="flex flex-col text-left">
+                                                    <p className="text-sm text-white font-bold leading-tight drop-shadow-md mb-1">7日分をAIが一括作成</p>
+                                                    <span className="text-[11px] text-purple-200/80 font-medium tracking-wide">画像と最適な文章を即座に合成</span>
                                                 </div>
                                             </div>
 
-                                            {/* Arrow */}
-                                            <div className="text-slate-500 hidden sm:block"><ArrowRight size={20} /></div>
-                                            <div className="text-slate-500 sm:hidden"><ArrowDown size={20} /></div>
-                                            
                                             {/* Step 3 */}
-                                            <div className="flex flex-1 flex-col sm:flex-row items-center gap-3 bg-emerald-900/20 border border-emerald-500/30 px-4 py-3 rounded-xl w-full shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-                                                <div className="w-8 h-8 rounded-full bg-emerald-500/30 text-emerald-300 flex items-center justify-center border border-emerald-400/50 text-sm font-black shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.3)]">3</div>
-                                                <div className="flex flex-col text-center sm:text-left">
-                                                    <p className="text-sm text-emerald-100 font-bold leading-tight">毎日自動でSNSへ投稿</p>
-                                                    <span className="text-[10px] text-emerald-300/80 font-medium">一切の操作不要。完全放置で集客</span>
+                                            <div className="flex items-center gap-4 bg-emerald-900/20 border border-emerald-500/30 px-4 py-3.5 rounded-xl w-full shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                                                <div className="w-9 h-9 rounded-full bg-emerald-500/30 text-emerald-300 flex items-center justify-center border border-emerald-400/50 text-sm font-black shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.3)]">3</div>
+                                                <div className="flex flex-col text-left">
+                                                    <p className="text-sm text-emerald-100 font-bold leading-tight mb-1">毎日自動でSNSへ投稿</p>
+                                                    <span className="text-[11px] text-emerald-300/80 font-medium">一切の操作不要。完全放置で集客</span>
                                                 </div>
                                             </div>
                                         </div>
