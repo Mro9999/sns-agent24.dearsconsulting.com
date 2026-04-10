@@ -1031,18 +1031,18 @@ export default function Home() {
                         </div>
                         {/* PRO MAX 限定：全自動予約バッチ一括生成 UI */}
                         {(isPro || isProMax) && (
-                            <div className="w-full flex flex-col items-center mt-24 pt-20 relative">
+                            <div className="w-full flex flex-col items-center mt-36 pt-10 relative">
                                 {/* 区切りの装飾（視認性を極限まで高めたプレミアムバッジ） */}
-                                <div className="absolute top-0 left-0 right-0 flex items-center justify-center">
+                                <div className="absolute top-0 left-0 right-0 flex items-center justify-center -translate-y-1/2">
                                     <div className="w-full max-w-4xl h-[2px] bg-gradient-to-r from-transparent via-slate-800/40 to-transparent"></div>
-                                    <div className="absolute px-8 py-2.5 bg-gradient-to-r from-slate-800 to-black border border-slate-700/80 rounded-full shadow-[0_10px_25px_-5px_rgba(0,0,0,0.3)] flex items-center gap-3 transform -translate-y-1/2">
+                                    <div className="absolute px-8 py-2.5 bg-gradient-to-r from-slate-800 to-black border border-slate-700/80 rounded-full shadow-[0_10px_25px_-5px_rgba(0,0,0,0.3)] flex items-center gap-3">
                                         <Sparkles size={18} className="text-amber-400 animate-pulse" />
                                         <span className="text-sm md:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-amber-300 to-yellow-500 tracking-[0.25em]">ADVANCED OPTIONS</span>
                                         <Sparkles size={18} className="text-amber-400 animate-pulse" />
                                     </div>
                                 </div>
                                 
-                                <p className="text-slate-500 text-xs mt-2 mb-10 text-center leading-relaxed font-medium">
+                                <p className="text-slate-500 text-xs mt-2 mb-8 text-center leading-relaxed font-medium">
                                     日々の生成だけでなく、<span className="text-slate-700 font-bold">1週間分の完全自動化</span>を構築したい場合は<br className="hidden sm:block"/>
                                     こちらの「Pro Max Plan」機能がおすすめです。
                                 </p>
