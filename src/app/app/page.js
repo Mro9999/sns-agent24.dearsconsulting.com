@@ -1048,53 +1048,53 @@ export default function Home() {
                                     
                                     <div className="relative p-7 bg-[#050505] border border-white/10 rounded-[1.5rem] shadow-2xl flex flex-col items-center">
                                         {/* PRO MAX バッジ */}
-                                        <div className="absolute -top-3.5 px-5 py-1.5 bg-gradient-to-r from-slate-100 to-slate-300 text-slate-900 text-[11px] font-black tracking-[0.2em] rounded-full shadow-[0_4px_15px_rgba(255,255,255,0.15)] border border-white/50">
+                                        <div className="absolute -top-4 px-6 py-2 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-900 text-xs md:text-sm font-black tracking-[0.2em] rounded-full shadow-[0_4px_15px_rgba(255,255,255,0.2)] border border-white/60">
                                             Pro Max Plan
                                         </div>
                                         
-                                        <h4 className="text-white font-extrabold mb-1 flex items-center justify-center gap-2 text-[15px] tracking-widest mt-4">
-                                            <Rocket className="w-5 h-5 text-slate-300" />
+                                        <h4 className="text-white font-black mb-2 flex items-center justify-center gap-2 text-lg md:text-xl tracking-widest mt-5 drop-shadow-[0_2px_10px_rgba(255,255,255,0.3)]">
+                                            <Rocket className="w-6 h-6 text-slate-200" />
                                             AI全自動スケジュール構築
                                         </h4>
-                                        <p className="text-slate-400 text-[10px] font-medium tracking-wide mb-5 text-center">
+                                        <p className="text-slate-400 text-xs font-semibold tracking-wider mb-6 text-center">
                                             ※さらに高度な自動運用を求める企業様へ推奨
                                         </p>
                                     
-                                    <p className="text-[11px] text-slate-400 mb-5 leading-relaxed text-center font-medium">
-                                        現在のブランドインサイトとターゲット設定に基づき、AIが最適な切り口で<span className="text-white font-bold">「1週間分のコンテンツ」</span>を一括構築し、自動投稿キューへ転送します。
+                                    <p className="text-sm md:text-base text-slate-300 mb-6 leading-relaxed text-center font-medium px-2">
+                                        現在のブランドインサイトとターゲット設定に基づき、AIが最適な切り口で<span className="text-white font-bold bg-white/10 px-2 py-0.5 rounded mx-1">「1週間分のコンテンツ」</span>を一括構築し、自動投稿キューへ転送します。
                                     </p>
 
                                     {/* 価格表示 */}
-                                    <div className="w-full flex items-center justify-between border-y border-white/10 py-3.5 mb-6 px-1">
+                                    <div className="w-full flex items-center justify-between border-y border-white/10 py-5 mb-8 px-2 bg-white/5 rounded-lg mt-2">
                                         <div className="text-center w-1/2">
-                                            <p className="text-[9px] text-slate-500 font-bold tracking-widest mb-0.5">ANNUAL (年間一括)</p>
-                                            <p className="text-white font-black text-[13px] tracking-wide">¥298,000</p>
+                                            <p className="text-[10px] md:text-xs text-slate-400 font-bold tracking-widest mb-1">MONTHLY (月額)</p>
+                                            <p className="text-white font-black text-base md:text-lg tracking-wider">¥29,800</p>
                                         </div>
-                                        <div className="w-px h-8 bg-white/10"></div>
+                                        <div className="w-px h-10 bg-white/20"></div>
                                         <div className="text-center w-1/2">
-                                            <p className="text-[9px] text-slate-500 font-bold tracking-widest mb-0.5">MONTHLY (月額)</p>
-                                            <p className="text-white font-black text-[13px] tracking-wide">¥29,800</p>
+                                            <p className="text-[10px] md:text-xs text-slate-400 font-bold tracking-widest mb-1">ANNUAL (年間一括)</p>
+                                            <p className="text-white font-black text-base md:text-lg tracking-wider">¥298,000</p>
                                         </div>
                                     </div>
                                     
-                                    <div className="flex flex-col gap-3 w-full">
+                                    <div className="flex flex-col gap-4 w-full">
                                         <button
                                             onClick={() => {
                                                 if (!isProMax) {
-                                                    document.querySelector('.pro-modal-trigger')?.click(); // 簡易的なフック用、実際にはhandleCheckoutなどで制御
+                                                    document.querySelector('.pro-modal-trigger')?.click();
                                                     handleCheckout('month', 'promax');
                                                     return;
                                                 }
                                                 handleBatchGenerate('instagram');
                                             }}
                                             disabled={loading}
-                                            className="w-full relative px-5 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[12px] font-bold rounded-xl transition-all disabled:opacity-50 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)] overflow-hidden flex items-center justify-center gap-2 group/btn"
+                                            className="w-full relative px-6 py-4 bg-gradient-to-r from-purple-900/50 to-pink-900/50 hover:from-purple-800/70 hover:to-pink-800/70 border border-purple-500/40 text-white text-sm md:text-base font-bold rounded-xl transition-all shadow-[0_0_25px_rgba(168,85,247,0.2)] hover:shadow-[0_0_35px_rgba(168,85,247,0.4)] disabled:opacity-50 overflow-hidden flex items-center justify-center gap-2 group/btn"
                                         >
                                             <span className="absolute inset-0 w-full h-full bg-white opacity-0 group-hover/btn:opacity-5 transition-opacity"></span>
                                             {isProMax ? (
-                                                <><span className="text-slate-300">📷</span> Instagram 1週間分 自動構築</>
+                                                <><span className="text-purple-200 text-lg">📷</span> Instagram 1週間分 自動構築</>
                                             ) : (
-                                                <><Lock className="w-4 h-4 text-slate-400" /> Instagram 全自動構築を解放する</>
+                                                <><Lock className="w-5 h-5 text-purple-300" /> Instagram 全自動構築を解放する</>
                                             )}
                                         </button>
                                         
@@ -1107,26 +1107,41 @@ export default function Home() {
                                                 handleBatchGenerate('twitter');
                                             }}
                                             disabled={loading}
-                                            className="w-full relative px-5 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[11px] font-bold rounded-xl transition-all disabled:opacity-50 overflow-hidden flex items-center justify-center gap-2 group/btn"
+                                            className="w-full relative px-6 py-4 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 text-white text-sm md:text-base font-bold rounded-xl transition-all shadow-md disabled:opacity-50 overflow-hidden flex items-center justify-center gap-2 group/btn"
                                         >
                                             <span className="absolute inset-0 w-full h-full bg-white opacity-0 group-hover/btn:opacity-5 transition-opacity"></span>
                                             {isProMax ? (
-                                                <><span className="text-slate-300">𝕏</span> X (Twitter) 1週間分 自動構築</>
+                                                <><span className="text-slate-200 text-lg">𝕏</span> X (Twitter) 1週間分 自動構築</>
                                             ) : (
-                                                <><Lock className="w-4 h-4 text-slate-400" /> X (Twitter) 全自動構築を解放する</>
+                                                <><Lock className="w-5 h-5 text-slate-400" /> X (Twitter) 全自動構築を解放する</>
                                             )}
                                         </button>
                                     </div>
                                     
-                                    <p className="text-[10px] text-slate-600 mt-5 text-center tracking-wide font-medium">
+                                    <p className="text-xs text-slate-500 mt-6 text-center tracking-wide font-medium">
                                         ※FacebookへはInstagramとの標準連携を推奨
                                     </p>
 
                                     {batchStatus && (
-                                        <div className="w-full mt-5 px-4 py-3 bg-white/5 shadow-inner backdrop-blur-md rounded-xl border border-white/10">
-                                            <p className="text-[11px] text-white text-center font-bold tracking-wide animate-pulse">
-                                                {batchStatus}
-                                            </p>
+                                        <div className="w-full mt-8 px-5 py-5 bg-black/60 shadow-inner backdrop-blur-xl rounded-2xl border border-cyan-500/40 relative overflow-hidden">
+                                            {/* Top loading bar */}
+                                            <div 
+                                                className="absolute top-0 left-0 h-1 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500" 
+                                                style={{ width: `${loadingProgress}%`, transition: 'width 0.5s ease-out' }}
+                                            ></div>
+                                            {/* Scanning light effect */}
+                                            <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent animate-pulse-scan pointer-events-none"></div>
+
+                                            <div className="flex flex-col items-center justify-center gap-4 relative z-10">
+                                                <div className="relative w-10 h-10 flex items-center justify-center">
+                                                    <div className="absolute inset-0 rounded-full border-[3px] border-t-cyan-400 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+                                                    <div className="absolute inset-1 rounded-full border-[3px] border-b-purple-400 border-r-transparent border-t-transparent border-l-transparent animate-[spin_1.5s_linear_infinite_reverse]"></div>
+                                                    <div className="w-3 h-3 bg-cyan-300 rounded-full animate-ping opacity-80"></div>
+                                                </div>
+                                                <p className="text-sm md:text-base text-cyan-50 text-center font-bold tracking-wide animate-pulse">
+                                                    {batchStatus}
+                                                </p>
+                                            </div>
                                         </div>
                                     )}
                                 </div>

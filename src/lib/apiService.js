@@ -137,6 +137,23 @@ export async function generatePost(research, platformId, category, targetLabel, 
         languageInstruction += `\n\n【超重要・多言語混入防止】上記で指定された言語（および一般的な固有名詞）以外の言語が1文字でも混入することはシステムエラーとなるため固く禁じます。特にロシア語（例: готовые）、アラビア語、フランス語などが意図せず出力されないよう、出力言語を極めて厳密にコントロールしてください。`;
 
         let formatInstruction = "";
+        let basePurpose = purpose;
+        let additionalInstruction = "";
+        
+        if (purpose && typeof purpose === 'string' && purpose.includes('【重要指示：今回の投稿テーマ切り口】')) {
+            const parts = purpose.split('。\n');
+            basePurpose = parts[0];
+            additionalInstruction = '\n' + parts.slice(1).join('。\n');
+        }
+
+        let goalText = '指定なし（通常の魅力発信）';
+        if (basePurpose === 'reservation') goalText = '来店・予約を増やしたい（キャンペーン・新規集客・予約誘導）';
+        else if (basePurpose === 'relationship') goalText = '既存客との関係を深めたい（日常・スタッフ紹介・こだわりの裏側）';
+        else if (basePurpose === 'branding') goalText = 'ブランドの世界観を伝えたい（哲学・審美眼・ストーリー）';
+        else if (basePurpose === 'announcement') goalText = '新メニュー・商品を告知したい（新商品・季節メニュー・限定企画）';
+        else if (basePurpose) goalText = basePurpose;
+
+        goalText += additionalInstruction;
         if (format === 'carousel') {
             formatInstruction = `
 # 出力形式 (JSONのみ)
@@ -150,7 +167,7 @@ export async function generatePost(research, platformId, category, targetLabel, 
         { "overlay_copy": "4枚目の見出し", "text": "4枚目での詳細な解説文" },
         { "overlay_copy": "最後の行動喚起(CTA)コピー", "text": "保存やフォロー、リンククリックを促す文章" }
     ],
-    "image_idea": "この投稿全体の世界観を表す、${IMAGE_MODEL}で背景画像を生成するための詳細な画像プロンプト案（英語、50単語程度）",
+    "image_idea": "この投稿全体の世界観を表す、${IMAGE_MODEL}で背景画像を生成するための詳細な画像プロンプト案（★毎回必ず異なる構図・切り口・被写体にする。英語、50単語程度）",
     "variants": [
         { "style": "標準", "caption": "...", "hashtags": ["..."] },
         { "style": "エモーショナル", "caption": "...", "hashtags": ["..."] }
@@ -168,7 +185,7 @@ export async function generatePost(research, platformId, category, targetLabel, 
         { "time": "15-25秒 (解決・価値提供)", "visual": "画面指示...", "audio": "セリフ...", "text_overlay": "テロップ..." },
         { "time": "25-30秒 (CTA)", "visual": "画面指示...", "audio": "セリフ...", "text_overlay": "テロップ..." }
     ],
-    "image_idea": "動画のサムネイルとして使える、${IMAGE_MODEL}向けの画像プロンプト案（英語、50単語程度）",
+    "image_idea": "動画のサムネイルとして使える、${IMAGE_MODEL}向けの画像プロンプト案（★毎回必ず異なる構図・切り口・被写体にする。英語、50単語程度）",
     "variants": [
         { "style": "標準", "caption": "...", "hashtags": ["..."] }
     ]
@@ -180,7 +197,7 @@ export async function generatePost(research, platformId, category, targetLabel, 
 {
     "caption": "一切の絵文字や顔文字を使用せず、ターゲットに深く響く知的で洗練されたプロフェッショナルな投稿文（最後にCTAやURLを含む）",
     "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
-    "image_idea": "この投稿文に合う、${IMAGE_MODEL}で生成するための詳細な画像プロンプト案（英語、50単語程度）",
+    "image_idea": "この投稿文に合う、${IMAGE_MODEL}で生成するための詳細な画像プロンプト案（★毎回必ず異なる構図・切り口・被写体にする。英語、50単語程度）",
     "overlay_copy": "写真上にデカデカと表示する短く強烈なキャッチコピー（10文字〜最大25文字程度。視覚的に美しくするために途中に改行記号 '\\n' を入れることを推奨）",
     "variants": [
         { "style": "標準", "caption": "...", "hashtags": ["..."] },
@@ -216,7 +233,7 @@ export async function generatePost(research, platformId, category, targetLabel, 
 
 # 【最重要】投稿の目的（Purpose）
 あなたの今回の執筆のゴールは以下の通りです。このゴールが達成される（ユーザーが行動を起こす）ようにキャプション構成や訴求内容をフルカスタマイズしてください。
-- ゴール: **${purpose === 'reservation' ? '来店・予約を増やしたい（キャンペーン・新規集客・予約誘導）' : purpose === 'relationship' ? '既存客との関係を深めたい（日常・スタッフ紹介・こだわりの裏側）' : purpose === 'branding' ? 'ブランドの世界観を伝えたい（哲学・審美眼・ストーリー）' : purpose === 'announcement' ? '新メニュー・商品を告知したい（新商品・季節メニュー・限定企画）' : '指定なし（通常の魅力発信）'}**
+- ゴール: **${goalText}**
 
 # ユーザー固有コンテキスト（超重要）
 この投稿は以下の「特定のビジネス」からのメッセージとして作成してください。
