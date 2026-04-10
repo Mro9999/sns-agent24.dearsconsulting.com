@@ -1068,7 +1068,7 @@ export default function Home() {
                                                 <div className="w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30 text-sm font-black shrink-0 shadow-[0_0_10px_rgba(59,130,246,0.2)]">1</div>
                                                 <div className="flex flex-col text-left">
                                                     <p className="text-sm text-slate-200 font-bold leading-tight mb-1">ターゲット・トレンド分析</p>
-                                                    <span className="text-[11px] text-slate-400 font-medium">見込み客の「今の悩み」を抽出</span>
+                                                    <span className="text-[11px] text-slate-400 font-medium">見込み客の「今の悩みや興味」を抽出</span>
                                                 </div>
                                             </div>
                                             
