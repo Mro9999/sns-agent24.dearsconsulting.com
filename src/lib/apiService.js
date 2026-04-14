@@ -1,6 +1,9 @@
 "use server";
 // src/lib/apiService.js
 import { GoogleGenAI } from '@google/genai';
+import { auth } from '@clerk/nextjs/server';
+import { supabaseAdmin } from './supabaseAdmin';
+import crypto from 'crypto';
 
 // Gemini SDK 初期化関数 (モジュール読み込み時のエラーを防ぐための遅延評価)
 // Vercelの本番環境で環境変数がロードされる前に呼ばれてクラッシュするのを防ぎます
@@ -312,10 +315,46 @@ export async function generateImage(category, targetLabel, gender, imageContext,
 
         // Base64エンコードされた画像の配列を取得してData URIに変換
         if (data && data.predictions && data.predictions.length > 0) {
-            const imageUrls = data.predictions.map(pred =>
-                `data:image/jpeg;base64,${pred.bytesBase64Encoded}`
-            );
-            return count === 1 ? [imageUrls[0]] : imageUrls;
+            const BUCKET_NAME = 'generated-images';
+            let currentUserId = 'anonymous';
+            try {
+                const clerkAuth = await auth();
+                if (clerkAuth && clerkAuth.userId) currentUserId = clerkAuth.userId;
+            } catch (e) {}
+
+            const uploadPromises = data.predictions.map(async (pred) => {
+                try {
+                    const rawBase64 = pred.bytesBase64Encoded;
+                    const buffer = Buffer.from(rawBase64, 'base64');
+                    
+                    const randomString = crypto.randomBytes(16).toString('hex');
+                    const fileName = `${currentUserId}/${Date.now()}_${randomString}.jpg`;
+                    
+                    const { error: uploadError } = await supabaseAdmin.storage
+                        .from(BUCKET_NAME)
+                        .upload(fileName, buffer, {
+                            contentType: 'image/jpeg',
+                            upsert: false
+                        });
+                        
+                    if (uploadError) {
+                        console.error("Supabase Upload Error:", uploadError);
+                        return `data:image/jpeg;base64,${rawBase64}`; // Fallback to base64 if upload fails
+                    }
+                    
+                    const { data: publicUrlData } = supabaseAdmin.storage
+                        .from(BUCKET_NAME)
+                        .getPublicUrl(fileName);
+                        
+                    return publicUrlData.publicUrl;
+                } catch (err) {
+                    console.error("Image Processing Error:", err);
+                    return `data:image/jpeg;base64,${pred.bytesBase64Encoded}`;
+                }
+            });
+
+            const publicUrls = await Promise.all(uploadPromises);
+            return count === 1 ? [publicUrls[0]] : publicUrls;
         } else {
             throw new Error("No image data returned from API.");
         }
