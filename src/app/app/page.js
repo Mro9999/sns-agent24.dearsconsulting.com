@@ -657,7 +657,8 @@ export default function Home() {
         }
 
         const count = platformType === 'twitter' ? 21 : 7;
-        const confirmMsg = `${platformType}向けに${count}件の投稿を連続生成し、予約キューに保存します。\n完了まで数分かかりますが実行しますか？`;
+        const displayPlatform = platformType === 'twitter' ? 'X' : 'Instagram';
+        const confirmMsg = `${displayPlatform}向けに${count}件の投稿を連続生成し、予約キューに保存します。\n完了まで数分かかりますが実行しますか？`;
         if (!confirm(confirmMsg)) return;
 
         setLoading(true);
@@ -711,7 +712,7 @@ export default function Home() {
             if (!research) throw new Error("トレンドリサーチに失敗したため処理を中断しました");
 
             for (let i = 0; i < count; i++) {
-                setBatchStatus(`[${platformType}] ${i + 1}件目を生成中... (${i + 1}/${count})`);
+                setBatchStatus(`[${displayPlatform}] ${i + 1}件目を生成中... (${i + 1}/${count})`);
                 
                 // マンネリ防止のため、ループごとに切り口を強制変更
                 const angle = varietyAngles[i % varietyAngles.length];
@@ -741,7 +742,7 @@ export default function Home() {
                 // API制限を考慮し、X(Twitter)のバッチ時は過度な画像生成を避けるか枚数を絞る
                 if (post.image_idea && post.image_idea !== "なし" && selectedFormat !== 'video_script') {
                     const imgCount = platformType === 'twitter' ? 1 : 5;
-                    setBatchStatus(`[${platformType}] ${i + 1}件目の画面用画像を生成中...`);
+                    setBatchStatus(`[${displayPlatform}] ${i + 1}件目の画面用画像を生成中...`);
                     await new Promise(r => setTimeout(r, 2000));
                     
                     try {
@@ -756,7 +757,33 @@ export default function Home() {
                             imgCount
                         );
                         if (imgRes && !imgRes.error) {
-                            imageUrls = imgRes;
+                            const publicUrls = [];
+                            for (let j = 0; j < imgRes.length; j++) {
+                                const imgData = imgRes[j];
+                                if (imgData && imgData.startsWith('data:image')) {
+                                    setBatchStatus(`[${displayPlatform}] ${i + 1}件目: 画像(${j + 1}/${imgRes.length})をクラウドへ保存中...`);
+                                    try {
+                                        const upRes = await fetch('/api/upload-image', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ base64Data: imgData })
+                                        });
+                                        if (upRes.ok) {
+                                            const r = await upRes.json();
+                                            publicUrls.push(r.url);
+                                        } else {
+                                            console.error("Upload failed", await upRes.text());
+                                            publicUrls.push(imgData); // フォールバック: そのまま
+                                        }
+                                    } catch (upErr) {
+                                        console.error("Upload Error:", upErr);
+                                        publicUrls.push(imgData);
+                                    }
+                                } else {
+                                    publicUrls.push(imgData);
+                                }
+                            }
+                            imageUrls = publicUrls;
                         }
                     } catch(e) { console.error("Batch image err", e); }
                 }
@@ -810,16 +837,23 @@ export default function Home() {
             }
 
             setBatchStatus(`完了！ ${results.length}件を自動投稿キューへ予約しました。`);
-            alert(`【完了】${results.length}件の一括自動生成と、キューへの保存が成功しました。`);
+            
+            // アラートの代わりに3秒後に自動でローディング画面を閉じる
+            setTimeout(() => {
+                setLoading(false);
+                setLoadingProgress(0);
+                setBatchStatus(null);
+            }, 3000);
 
         } catch (error) {
             console.error("Batch error:", error);
             setBatchStatus(`エラーが発生しました: ${error.message}`);
             alert("バッチ処理中にエラーが発生しました。コンソールをご確認ください。");
-        } finally {
             setLoading(false);
             setLoadingProgress(0);
+            setBatchStatus(null);
         }
+
     };
 
     // Hydration Mismatch防止: クライアントサイドでのマウント完了を検知する
@@ -1008,11 +1042,12 @@ export default function Home() {
                             {/* モバイル専用機能についての事前警告（PCアクセス時の不満を防ぐ） */}
                             <div className={`w-full max-w-lg mb-8 p-4 bg-white/40 backdrop-blur-xl border border-white rounded-xl text-center shadow-sm transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                                 <h4 className="text-slate-500 font-bold text-sm mb-1 flex items-center justify-center gap-2">
-                                    <Smartphone className="w-5 h-5" /> スマートフォンからのご利用を推奨
+                                    <Smartphone className="w-5 h-5" /> iOS端末からのご利用を推奨
                                 </h4>
                                 <p className="text-slate-400 text-xs leading-relaxed font-medium">
                                     生成した画像の一括保存（カメラロールへのシェア機能等）は、<br className="hidden sm:block" />
-                                    <strong className="text-slate-500">スマートフォン環境（iOS / Android）専用</strong>の機能です。<br />
+                                    <strong className="text-slate-500">iOS端末専用</strong>の機能となっております。<br />
+                                    <span className="text-[10px] text-slate-400">（※Android環境での動作は未確認のため推奨しておりません）</span><br />
                                     PC等で生成された場合、ダウンロード機能に制限がありますのでご注意ください。
                                 </p>
                             </div>
