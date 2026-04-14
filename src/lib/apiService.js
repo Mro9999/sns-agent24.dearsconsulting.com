@@ -282,8 +282,8 @@ export async function generateImage(category, targetLabel, gender, imageContext,
             ? `${basePrompt}, incorporating product style: ${visualDescription}, specifically featuring Japanese/Asian models.`
             : `${basePrompt}, specifically featuring Japanese/Asian models.`;
 
-        // Gemini 4 ImagenのURL (v1beta) - APIキーを埋め込み
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`;
+        // Gemini 3.0 ImagenのURL (v1beta) - APIキーを埋め込み
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`;
 
         const response = await fetch(url, {
             method: 'POST',
