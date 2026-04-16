@@ -25,13 +25,14 @@ export async function GET(req) {
             return NextResponse.json({ error: 'Platform parameter is required' }, { status: 400 });
         }
 
-        // 最も古い未投稿のデータを1件取得
+        // 予約時刻が現在時刻以前の、最も古い未投稿データを1件取得
         const { data: posts, error: fetchError } = await supabase
             .from('scheduled_posts')
             .select('*')
             .eq('status', 'queued')
             .eq('platform', platform)
-            .order('created_at', { ascending: true })
+            .lte('scheduled_at', new Date().toISOString())
+            .order('scheduled_at', { ascending: true })
             .limit(1);
 
         if (fetchError) throw fetchError;
@@ -83,6 +84,7 @@ export async function POST(req) {
             platform: p.platform,
             caption: p.caption,
             image_urls: p.image_urls || [],
+            scheduled_at: p.scheduled_at || null,
             status: 'queued'
         }));
 

@@ -797,10 +797,16 @@ export default function Home() {
                         finalCaption += '\n\n' + post.hashtags.map(t => t.startsWith('#') ? t : `#${t}`).join(' ');
                     }
 
+                    // 投稿予約時刻を割り当て（翌日12:00 JSTから1日ずつ）
+                    const schedDate = new Date();
+                    schedDate.setDate(schedDate.getDate() + 1 + i); // 翌日から1日ずつ
+                    schedDate.setHours(12, 0, 0, 0); // 12:00 JST
+
                     results.push({
                         platform: platformType,
                         caption: finalCaption,
-                        image_urls: imageUrls
+                        image_urls: imageUrls,
+                        scheduled_at: schedDate.toISOString()
                     });
                 } catch (loopError) {
                     console.error(`[${displayPlatform}] ${i + 1}件目でエラー発生:`, loopError);
