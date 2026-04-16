@@ -684,11 +684,7 @@ export default function Home() {
         let siteContent = null;
         if (cleanProductContext?.websiteUrl) {
             try {
-                const res = await fetch(`/api/scrape?url=${encodeURIComponent(cleanProductContext.websiteUrl)}`);
-                const data = await res.json();
-                if (data.content) {
-                    siteContent = data.content;
-                }
+                siteContent = await scrapeWebsite(cleanProductContext.websiteUrl);
             } catch (err) {
                 console.error("Scraping error:", err);
             }
@@ -738,7 +734,7 @@ export default function Home() {
                         selectedLanguage, 
                         cleanProductContext, 
                         siteContent, 
-                        platformType === 'instagram' ? 'carousel' : 'normal', 
+                        platformType === 'instagram' ? 'carousel' : 'single',
                         userProfile, 
                         currentPurpose
                     );
@@ -749,7 +745,7 @@ export default function Home() {
                     let imageUrls = [];
                     // API制限を考慮し、X(Twitter)のバッチ時は過度な画像生成を避けるか枚数を絞る
                     if (post.image_idea && post.image_idea !== "なし" && selectedFormat !== 'video_script') {
-                        const imgCount = platformType === 'twitter' ? 1 : 5;
+                        const imgCount = platformType === 'twitter' ? 1 : 3;
                         setBatchStatus(`[${displayPlatform}] ${i + 1}件目の画面用画像を生成中...`);
                         await new Promise(r => setTimeout(r, 2000));
                         
