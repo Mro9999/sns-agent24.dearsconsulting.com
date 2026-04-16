@@ -85,7 +85,7 @@ const withRetry = async (fn, maxRetries = 3, baseDelay = 3000) => {
 
 // モデル名
 const TEXT_MODEL = 'gemini-2.5-pro'; // 高機能・最新の文章・推論用モデル
-const IMAGE_MODEL = 'imagen-3.0-generate-001'; // 最新の画像生成モデル
+const IMAGE_MODEL = 'imagen-4.0-generate-001'; // 最新の画像生成モデル
 
 /**
  * トレンドリサーチ
@@ -312,7 +312,7 @@ ${formatInstruction}
 }
 
 /**
- * 画像生成 (Gemini 3 Pro Image = imagen-3.0-generate-001 利用)
+ * 画像生成 (Gemini 3 Pro Image = imagen-4.0-generate-001 利用)
  */
 export async function generateImage(category, targetLabel, gender, imageContext, textContext, platformId, visualDescription, count = 1) {
     try {
@@ -323,7 +323,7 @@ export async function generateImage(category, targetLabel, gender, imageContext,
             : `${basePrompt}, specifically featuring Japanese/Asian models.`;
 
         // Gemini 3.0 ImagenのURL (v1beta) - APIキーを埋め込み
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`;
 
         const response = await withRetry(async () => {
             const res = await fetch(url, {
