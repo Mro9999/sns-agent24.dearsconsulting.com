@@ -389,15 +389,17 @@ export default function Home() {
             }
 
             if (baseImagesArray.length === 0) {
-                // ユーザーアップロード画像がない場合、AI(Gemini)で背景用画像を1枚生成する
+                // ユーザーアップロード画像がない場合、AIで背景用画像を生成する
                 setLoadingPhase(3); // 3: "画像を生成・合成中..."
                 await new Promise(resolve => setTimeout(resolve, 300)); // UI更新の待機
 
                 const imgContext = post.image_idea || research.insight_summary;
-                const generated = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, 1);
+                // カルーセルの場合は3枚生成して視覚的バリエーションを確保（5枚だとAPI負荷が大きいため3枚をローテーション）
+                const imgCount = selectedFormat === 'carousel' ? 3 : 1;
+                const generated = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, imgCount);
 
                 if (generated && generated.length > 0) {
-                    baseImagesArray = [generated[0]]; // AIが生成した画像を配列の1要素目とする
+                    baseImagesArray = generated;
                 } else {
                     throw new Error("AI画像生成に失敗しました（結果が空です）。");
                 }
