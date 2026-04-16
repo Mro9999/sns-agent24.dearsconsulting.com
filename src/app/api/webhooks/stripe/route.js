@@ -20,6 +20,7 @@ export async function POST(req) {
     }
 
     const session = event.data.object;
+    const clerk = clerkClient();
 
     if (event.type === "checkout.session.completed") {
         const subscription = await stripe.subscriptions.retrieve(
@@ -31,15 +32,14 @@ export async function POST(req) {
         }
 
         const priceId = subscription.items.data[0].price.id;
-        
-        // プランを判定
-        const isProMax = 
-            priceId === process.env.STRIPE_PRICE_ID_PROMAX_MONTHLY || 
-            priceId === process.env.STRIPE_PRICE_ID_PROMAX_YEARLY;
-            
-        const assignedRole = isProMax ? 'promax' : 'pro';
 
-        await clerkClient.users.updateUserMetadata(session.metadata.userId, {
+        // プランを判定
+        const isProMax =
+            priceId === process.env.STRIPE_PRICE_ID_PROMAX_MONTHLY ||
+            priceId === process.env.STRIPE_PRICE_ID_PROMAX_YEARLY;
+
+        const assignedRole = isProMax ? 'promax' : 'pro';
+        await clerk.users.updateUserMetadata(session.metadata.userId, {
             privateMetadata: {
                 stripeSubscriptionId: subscription.id,
                 stripeCustomerId: subscription.customer,
@@ -113,7 +113,7 @@ export async function POST(req) {
         const userId = subscription.metadata?.userId;
 
         if (userId) {
-            await clerkClient.users.updateUserMetadata(userId, {
+            await clerk.users.updateUserMetadata(userId, {
                 privateMetadata: {
                     stripeSubscriptionId: null,
                     stripePriceId: null,

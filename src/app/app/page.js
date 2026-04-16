@@ -248,19 +248,20 @@ export default function Home() {
     }, [loading]); // loadingPhaseはRef経由で参照するため除外し、勝手にリセット・再起動されるのを防ぐ
     // ----------------------------------------
 
-    const handleCheckout = async (interval = 'month') => {
+    const handleCheckout = async (interval = 'month', tier = 'pro') => {
         try {
             if (!isSignedIn) {
                 openSignUp();
                 return;
             }
+            posthog?.capture('upgrade_button_clicked', { tier, interval });
             setCheckoutError(null);
             setIsCheckoutLoading(true);
 
             const res = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ interval })
+                body: JSON.stringify({ interval, tier })
             });
 
             if (!res.ok) {
@@ -270,12 +271,14 @@ export default function Home() {
 
             const data = await res.json();
             if (data.url) {
+                posthog?.capture('checkout_redirect', { tier, interval });
                 window.location.href = data.url;
             } else {
                 throw new Error("決済URLが取得できませんでした");
             }
         } catch (e) {
             console.error(e);
+            posthog?.capture('checkout_error', { tier, interval, error: e.message });
             setCheckoutError(e.message);
             if (e.message !== "ログインが必要です。") {
                 reportErrorToAdmin(e, "handleCheckout - Stripeチェックアウト遷移時");
@@ -287,6 +290,7 @@ export default function Home() {
 
     const handlePortal = async () => {
         try {
+            posthog?.capture('portal_opened');
             const res = await fetch('/api/portal', { method: 'POST' });
             const data = await res.json();
             if (data.url) window.location.href = data.url;
@@ -329,6 +333,7 @@ export default function Home() {
         // 無料プランの回数制限チェック
         const maxLimit = getDailyFreeLimit();
         if (!checkLimitAndRecord()) {
+            posthog?.capture('free_limit_hit', { daily_limit: maxLimit, platform: selectedPlatform });
             alert(`本日の無料生成枠（${maxLimit}回）を使い切りました。\n引き続き無制限でご利用いただくには、Proプランへのアップグレードをご検討ください！`);
             document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
             return;
@@ -714,92 +719,103 @@ export default function Home() {
             for (let i = 0; i < count; i++) {
                 setBatchStatus(`[${displayPlatform}] ${i + 1}件目を生成中... (${i + 1}/${count})`);
                 
-                // マンネリ防止のため、ループごとに切り口を強制変更
-                const angle = varietyAngles[i % varietyAngles.length];
-                const currentPurpose = `${selectedPurpose || '指定なし'}。\n【重要指示：今回の投稿テーマ切り口】：『${angle}』を軸として、毎回異なる角度・視点で語ってください。`;
+                try {
+                    // マンネリ防止のため、ループごとに切り口を強制変更
+                    const angle = varietyAngles[i % varietyAngles.length];
+                    const currentPurpose = `${selectedPurpose || '指定なし'}。\n【重要指示：今回の投稿テーマ切り口】：『${angle}』を軸として、毎回異なる角度・視点で語ってください。`;
 
-                // 正しい位置引数でgeneratePostを呼び出す
-                const resData = await generatePost(
-                    research, 
-                    platformType, 
-                    selectedCategory, 
-                    targetLabel, 
-                    selectedGender, 
-                    selectedBusinessStyle, 
-                    selectedTone, 
-                    selectedLanguage, 
-                    cleanProductContext, 
-                    siteContent, 
-                    platformType === 'instagram' ? 'carousel' : 'normal', 
-                    userProfile, 
-                    currentPurpose
-                );
+                    // 正しい位置引数でgeneratePostを呼び出す
+                    const resData = await generatePost(
+                        research, 
+                        platformType, 
+                        selectedCategory, 
+                        targetLabel, 
+                        selectedGender, 
+                        selectedBusinessStyle, 
+                        selectedTone, 
+                        selectedLanguage, 
+                        cleanProductContext, 
+                        siteContent, 
+                        platformType === 'instagram' ? 'carousel' : 'normal', 
+                        userProfile, 
+                        currentPurpose
+                    );
 
-                // APIレスポンス自体がpostオブジェクト
-                const post = resData;
+                    // APIレスポンス自体がpostオブジェクト
+                    const post = resData;
 
-                let imageUrls = [];
-                // API制限を考慮し、X(Twitter)のバッチ時は過度な画像生成を避けるか枚数を絞る
-                if (post.image_idea && post.image_idea !== "なし" && selectedFormat !== 'video_script') {
-                    const imgCount = platformType === 'twitter' ? 1 : 5;
-                    setBatchStatus(`[${displayPlatform}] ${i + 1}件目の画面用画像を生成中...`);
-                    await new Promise(r => setTimeout(r, 2000));
-                    
-                    try {
-                        const imgRes = await generateImage(
-                            selectedCategory, 
-                            targetLabel, 
-                            selectedGender, 
-                            post.image_idea, 
-                            cleanProductContext, 
-                            platformType, 
-                            null, 
-                            imgCount
-                        );
-                        if (imgRes && !imgRes.error) {
-                            const publicUrls = [];
-                            for (let j = 0; j < imgRes.length; j++) {
-                                const imgData = imgRes[j];
-                                if (imgData && imgData.startsWith('data:image')) {
-                                    setBatchStatus(`[${displayPlatform}] ${i + 1}件目: 画像(${j + 1}/${imgRes.length})をクラウドへ保存中...`);
-                                    try {
-                                        const upRes = await fetch('/api/upload-image', {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ base64Data: imgData })
-                                        });
-                                        if (upRes.ok) {
-                                            const r = await upRes.json();
-                                            publicUrls.push(r.url);
-                                        } else {
-                                            console.error("Upload failed", await upRes.text());
-                                            publicUrls.push(imgData); // フォールバック: そのまま
+                    let imageUrls = [];
+                    // API制限を考慮し、X(Twitter)のバッチ時は過度な画像生成を避けるか枚数を絞る
+                    if (post.image_idea && post.image_idea !== "なし" && selectedFormat !== 'video_script') {
+                        const imgCount = platformType === 'twitter' ? 1 : 5;
+                        setBatchStatus(`[${displayPlatform}] ${i + 1}件目の画面用画像を生成中...`);
+                        await new Promise(r => setTimeout(r, 2000));
+                        
+                        try {
+                            const imgRes = await generateImage(
+                                selectedCategory, 
+                                targetLabel, 
+                                selectedGender, 
+                                post.image_idea, 
+                                cleanProductContext, 
+                                platformType, 
+                                null, 
+                                imgCount
+                            );
+                            if (imgRes && !imgRes.error) {
+                                const publicUrls = [];
+                                for (let j = 0; j < imgRes.length; j++) {
+                                    const imgData = imgRes[j];
+                                    if (imgData && imgData.startsWith('data:image')) {
+                                        setBatchStatus(`[${displayPlatform}] ${i + 1}件目: 画像(${j + 1}/${imgRes.length})をクラウドへ保存中...`);
+                                        try {
+                                            const upRes = await fetch('/api/upload-image', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ base64Data: imgData })
+                                            });
+                                            if (upRes.ok) {
+                                                const r = await upRes.json();
+                                                publicUrls.push(r.url);
+                                            } else {
+                                                console.error("Upload failed", await upRes.text());
+                                                publicUrls.push(imgData); // フォールバック: そのまま
+                                            }
+                                        } catch (upErr) {
+                                            console.error("Upload Error:", upErr);
+                                            publicUrls.push(imgData);
                                         }
-                                    } catch (upErr) {
-                                        console.error("Upload Error:", upErr);
+                                    } else {
                                         publicUrls.push(imgData);
                                     }
-                                } else {
-                                    publicUrls.push(imgData);
                                 }
+                                imageUrls = publicUrls;
                             }
-                            imageUrls = publicUrls;
-                        }
-                    } catch(e) { console.error("Batch image err", e); }
-                }
+                        } catch(e) { console.error("Batch image err", e); }
+                    }
 
-                let finalCaption = (post.caption || post.overlay_copy || '');
-                if (post.hashtags && Array.isArray(post.hashtags)) {
-                    finalCaption += '\n\n' + post.hashtags.map(t => t.startsWith('#') ? t : `#${t}`).join(' ');
-                }
+                    let finalCaption = (post.caption || post.overlay_copy || '');
+                    if (post.hashtags && Array.isArray(post.hashtags)) {
+                        finalCaption += '\n\n' + post.hashtags.map(t => t.startsWith('#') ? t : `#${t}`).join(' ');
+                    }
 
-                results.push({
-                    platform: platformType,
-                    caption: finalCaption,
-                    image_urls: imageUrls
-                });
+                    results.push({
+                        platform: platformType,
+                        caption: finalCaption,
+                        image_urls: imageUrls
+                    });
+                } catch (loopError) {
+                    console.error(`[${displayPlatform}] ${i + 1}件目でエラー発生:`, loopError);
+                    setBatchStatus(`[${displayPlatform}] ${i + 1}件目をスキップします (API制限等)`);
+                    await new Promise(r => setTimeout(r, 10000)); // エラー時は制限回復を狙って長めに待機
+                    continue;
+                }
 
                 await new Promise(r => setTimeout(r, 6000)); // Rate limit対策 (Google API)
+            }
+
+            if (results.length === 0) {
+                throw new Error("すべての生成に失敗しました（API通信エラー等の可能性があります）");
             }
 
             setBatchStatus(`DBのキューへ保存中... (${results.length}件)`);
@@ -848,7 +864,7 @@ export default function Home() {
         } catch (error) {
             console.error("Batch error:", error);
             setBatchStatus(`エラーが発生しました: ${error.message}`);
-            alert("バッチ処理中にエラーが発生しました。コンソールをご確認ください。");
+            alert(`バッチ処理中にエラーが発生しました。\n\n【エラー内容】\n${error.message}\n\nコンソールも合わせてご確認ください。`);
             setLoading(false);
             setLoadingProgress(0);
             setBatchStatus(null);
@@ -873,6 +889,24 @@ export default function Home() {
             }, 100);
         }
     }, [mounted, posthog]);
+
+    // Pricingセクションの表示を追跡（離脱ファネル分析用）
+    useEffect(() => {
+        if (!mounted || !posthog) return;
+        const pricingEl = document.getElementById('pricing');
+        if (!pricingEl) return;
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    posthog.capture('pricing_viewed', { source: isPro ? 'pro_user' : 'free_user' });
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.3 }
+        );
+        observer.observe(pricingEl);
+        return () => observer.disconnect();
+    }, [mounted, posthog, isPro]);
 
     return (
         <div className="min-h-screen bg-slate-50 text-gray-900 font-sans selection:bg-purple-500/30 flex flex-col pt-4">

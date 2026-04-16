@@ -50,6 +50,39 @@ const extractJSON = (text, fallbackData = {}) => {
     }
 };
 
+// APIリトライ用の汎用ヘルパー関数
+// 503 (MODEL_CAPACITY_EXHAUSTED) や 429 などの一時的なエラー時に自動で再試行する
+const withRetry = async (fn, maxRetries = 3, baseDelay = 3000) => {
+    let attempt = 0;
+    while (attempt < maxRetries) {
+        try {
+            return await fn();
+        } catch (error) {
+            attempt++;
+            const errorMessage = String(error?.message || error).toLowerCase();
+            
+            // リトライ対象となるエラー文字列の判定
+            const isRetryable = errorMessage.includes('503') || 
+                                errorMessage.includes('429') || 
+                                errorMessage.includes('capacity') || 
+                                errorMessage.includes('exhausted') || 
+                                errorMessage.includes('timeout') || 
+                                errorMessage.includes('fetch');
+
+            console.error(`[API Error] Attempt ${attempt}/${maxRetries} failed:`, error.message || error);
+
+            if (!isRetryable || attempt >= maxRetries) {
+                throw error; // リトライ不可、または最大回数に達した場合はエラーを投げる
+            }
+            
+            const delay = baseDelay * Math.pow(2, attempt - 1); // 3秒, 6秒, 12秒... と待機時間を増やす(Exponential Backoff)
+            console.log(`[API Retry] Wait for ${delay / 1000} seconds before next attempt...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+};
+
+
 // モデル名
 const TEXT_MODEL = 'gemini-2.5-pro'; // 高機能・最新の文章・推論用モデル
 const IMAGE_MODEL = 'imagen-3.0-generate-001'; // 最新の画像生成モデル
@@ -103,13 +136,15 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
 }
 `;
         const ai = getAI();
-        const response = await ai.models.generateContent({
-            model: TEXT_MODEL,
-            contents: prompt,
-            config: {
-                temperature: 0.95, // 多様性を最大化
-                tools: [{ googleSearch: {} }] // ← ここでGoogle Search Grounding（最新情報検索機能）を有効化
-            }
+        const response = await withRetry(async () => {
+            return await ai.models.generateContent({
+                model: TEXT_MODEL,
+                contents: prompt,
+                config: {
+                    temperature: 0.95, // 多様性を最大化
+                    tools: [{ googleSearch: {} }] // ← ここでGoogle Search Grounding（最新情報検索機能）を有効化
+                }
+            });
         });
 
         return extractJSON(response.text);
@@ -258,13 +293,15 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後�
 ${formatInstruction}
 `;
         const ai = getAI();
-        const response = await ai.models.generateContent({
-            model: TEXT_MODEL,
-            contents: prompt,
-            config: {
-                temperature: 0.95, // 多様性を最大化
-                tools: [{ googleSearch: {} }] // ← 投稿内容生成時にもネットの最新情報を統合
-            }
+        const response = await withRetry(async () => {
+            return await ai.models.generateContent({
+                model: TEXT_MODEL,
+                contents: prompt,
+                config: {
+                    temperature: 0.95, // 多様性を最大化
+                    tools: [{ googleSearch: {} }] // ← 投稿内容生成時にもネットの最新情報を統合
+                }
+            });
         });
 
         return extractJSON(response.text);
@@ -288,28 +325,31 @@ export async function generateImage(category, targetLabel, gender, imageContext,
         // Gemini 3.0 ImagenのURL (v1beta) - APIキーを埋め込み
         const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`;
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                instances: [
-                    { prompt: finalPrompt }
-                ],
-                parameters: {
-                    sampleCount: count,
-                    outputOptions: {
-                        mimeType: 'image/jpeg'
+        const response = await withRetry(async () => {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    instances: [
+                        { prompt: finalPrompt }
+                    ],
+                    parameters: {
+                        sampleCount: count,
+                        outputOptions: {
+                            mimeType: 'image/jpeg'
+                        }
                     }
-                }
-            })
-        });
+                })
+            });
 
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Gemini Image 4 API Error: ${errText}`);
-        }
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`Gemini Image API Error (Status ${res.status}): ${errText}`);
+            }
+            return res;
+        });
 
         const data = await response.json();
 

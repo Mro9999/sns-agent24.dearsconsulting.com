@@ -4,11 +4,13 @@ import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle, ArrowRight } from 'lucide-react';
+import { usePostHog } from 'posthog-js/react';
 
 export default function SuccessPage() {
     const searchParams = useSearchParams();
     const sessionId = searchParams.get('session_id');
     const { user } = useUser();
+    const posthog = usePostHog();
     const [status, setStatus] = useState('loading'); // loading, complete, error
 
     useEffect(() => {
@@ -23,6 +25,7 @@ export default function SuccessPage() {
                         console.error("Failed to reload user session", e);
                     }
                 }
+                posthog?.capture('payment_completed', { session_id: sessionId });
                 setStatus('complete');
             } else {
                 setStatus('error');
