@@ -3,7 +3,9 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 // 認証不要なルート（公開ページ、ログイン画面、Webhookなど）を定義
 const isPublicRoute = createRouteMatcher([
     '/',
-    '/api/webhooks(.*)'
+    '/api/webhooks(.*)',
+    '/api/admin/queue',
+    '/api/cron(.*)'
 ]);
 
 export default clerkMiddleware((auth, req) => {
