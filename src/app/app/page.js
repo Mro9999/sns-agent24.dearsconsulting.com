@@ -5,6 +5,7 @@ import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
+import { drawCanvasImage, VISUAL_VARIETY_DIRECTIVES, SUBJECT_VARIETY_DIRECTIVES } from '@/lib/canvasHelper';
 import ProfileSetupModal from '@/components/features/ProfileSetupModal';
 import { usePostHog } from 'posthog-js/react';
 
@@ -408,203 +409,10 @@ export default function Home() {
                 await new Promise(resolve => setTimeout(resolve, 300)); // UI更新の待機
             }
 
-            // 4. 文字合成を汎用的に行うヘルパー関数 (背景画像を引数で受ける, indexでエフェクト分岐)
-            const drawCanvasImage = async (textToOverlay, bgUrl, index = 0) => {
-                return new Promise((resolve) => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 1080;
-                    canvas.height = 1080;
-                    const ctx = canvas.getContext('2d');
-
-                    const bgImg = new Image();
-                    if (bgUrl && bgUrl.startsWith('http')) {
-                        bgImg.crossOrigin = 'anonymous';
-                    }
-
-                    bgImg.onload = async () => {
-                        // エフェクト用の定数定義 (デフォルトは等倍、中央配置、フィルターなし)
-                        let zoomScale = 1.0;
-                        let filter = 'none';
-                        let panX = 0.5; // 0.0 (左端) 〜 1.0 (右端)
-                        let panY = 0.5; // 0.0 (上端) 〜 1.0 (下端)
-
-                        // カルーセルのページ(index)に応じた大胆な視覚的バリエーション（パン＆ズーム効果）の適用
-                        if (index === 1) {
-                            // 2枚目: 1.4倍にズームし、画像の「左上」寄りにパン（視点を動かす）
-                            zoomScale = 1.4;
-                            panX = 0.2;
-                            panY = 0.2;
-                        } else if (index === 2) {
-                            // 3枚目: 1.5倍にズームし、「右下」寄りにパン ＋ 強いモノクロ調（過去や課題感を演出）
-                            zoomScale = 1.5;
-                            panX = 0.8;
-                            panY = 0.8;
-                            filter = 'grayscale(100%) brightness(0.6) contrast(1.2)';
-                        } else if (index === 3) {
-                            // 4枚目: 1.3倍ズームし、「右上」寄りにパン ＋ セピア調でエモーショナルに
-                            zoomScale = 1.3;
-                            panX = 0.8;
-                            panY = 0.2;
-                            filter = 'sepia(0.8) contrast(1.3) brightness(0.7)';
-                        } else if (index === 4) {
-                            // 5枚目(結論/CTA等): 1.6倍の超ズームで「左下」寄りにパン ＋ ブラー（背景を完全にボカして文字に全集中）
-                            zoomScale = 1.6;
-                            panX = 0.2;
-                            panY = 0.8;
-                            filter = 'blur(8px) brightness(0.6)';
-                        }
-
-                        // アスペクト比を維持しつつカバー全面に描画(中央切り抜きベース)
-                        const baseScale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
-                        const finalScale = baseScale * zoomScale;
-                        const drawWidth = bgImg.width * finalScale;
-                        const drawHeight = bgImg.height * finalScale;
-
-                        // panX, panY に基づいて描画開始位置(dx, dy)を決定する
-                        // pan = 0.5 のときは従来通り中央揃えになる
-                        const dx = (canvas.width - drawWidth) * panX;
-                        const dy = (canvas.height - drawHeight) * panY;
-
-                        ctx.save();
-                        ctx.filter = filter;
-                        // スムージングを有効にして粗さを軽減
-                        ctx.imageSmoothingEnabled = true;
-                        ctx.imageSmoothingQuality = 'high';
-                        ctx.drawImage(bgImg, dx, dy, drawWidth, drawHeight);
-                        ctx.restore();
-
-                        // テキストを読みやすくするためのダークグラデーションフィルターを追加
-                        const grad = ctx.createLinearGradient(0, canvas.height * 0.3, 0, canvas.height);
-                        grad.addColorStop(0, 'rgba(0,0,0,0)');
-                        grad.addColorStop(0.5, 'rgba(0,0,0,0.4)');
-                        grad.addColorStop(1, 'rgba(0,0,0,0.85)');
-                        ctx.fillStyle = grad;
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                        // 描画するテキスト
-                        const text = textToOverlay || `${cleanProductContext.companyName ? cleanProductContext.companyName + '\\n' : ''}最新のトレンド情報をチェック！`;
-
-                        // 動的フォントサイズ初期設定 (文字量が多い場合は少し小さくする)
-                        let fontSize = text.length > 30 ? 60 : 80;
-                        ctx.font = `bold ${fontSize}px "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif`;
-
-                        // 文字の自動折り返し（ワードラップ）処理（単語単位で自然に）
-                        const maxWidth = canvas.width - 160; // 左右に80pxずつの広めの余白
-                        // AIが文字列として返した '\n' や '\\n' を実際の改行コードに置換し、さらに描画時の「。」を削除する
-                        const actualText = text.replace(/\\n/g, '\n').replace(/\\\\n/g, '\n').replace(/。/g, '');
-                        const segmentLines = actualText.split('\n');
-                        const lines = [];
-
-                        // 日本語対応の単語セグメンター（形態素や単語の区切りを判定）
-                        const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
-
-                        segmentLines.forEach(segment => {
-                            // 空行の場合はパディングとして空文字を入れるが、無駄な記号は描画しないように前処理
-                            if (!segment.trim()) {
-                                lines.push('');
-                                return;
-                            }
-
-                            let currentLine = '';
-                            const words = Array.from(segmenter.segment(segment)).map(s => s.segment);
-
-                            words.forEach((word) => {
-                                const testLine = currentLine + word;
-                                const metrics = ctx.measureText(testLine);
-                                const testWidth = metrics.width;
-
-                                // 単語を追加して幅を超えたら、一つ前の状態(currentLine)を確定させて改行
-                                if (testWidth > maxWidth && currentLine !== '') {
-                                    lines.push(currentLine.trim());
-                                    currentLine = word; // 新しい行は今の単語から始める
-                                } else {
-                                    currentLine = testLine;
-                                }
-                            });
-                            if (currentLine.trim()) {
-                                lines.push(currentLine.trim());
-                            }
-                        });
-
-                        ctx.save();
-                        ctx.fillStyle = '#ffffff';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-
-                        // 文字のドロップシャドウ (可読性向上のため強化)
-                        ctx.shadowColor = 'rgba(0,0,0,0.95)';
-                        ctx.shadowBlur = 30;
-                        ctx.shadowOffsetX = 4;
-                        ctx.shadowOffsetY = 4;
-
-                        // 行ごとに中央やや下寄りに描画
-                        const lineHeight = fontSize * 1.5; // 行間を少し広げて読みやすく
-                        // 全体の高さを計算
-                        const totalTextHeight = (lines.length - 1) * lineHeight;
-                        // Y座標の開始位置（画像全体の高さを基準に中央に配置する）
-                        const startY = (canvas.height / 2) - (totalTextHeight / 2);
-
-                        lines.forEach((line, index) => {
-                            if (line) { // 空文字以外の場合のみ描画
-                                ctx.fillText(line, canvas.width / 2, startY + (index * lineHeight));
-                            }
-                        });
-                        
-                        ctx.restore(); // シャドウやテキスト設定をここで完全にリセットし、他に影響を与えない
-
-                        // もしロゴ画像があれば、右下（または左上）に合成
-                        if (productContext.logoUrl) {
-                            try {
-                                const logoImg = new Image();
-                                if (productContext.logoUrl.startsWith('http')) {
-                                    logoImg.crossOrigin = 'anonymous';
-                                }
-                                await new Promise((res, rej) => { logoImg.onload = res; logoImg.onerror = rej; logoImg.src = productContext.logoUrl; });
-
-                                const maxLogoSize = 250;
-                                const size = Math.min(maxLogoSize, logoImg.width, logoImg.height);
-                                const padding = 40;
-                                // 右下に配置（画像そのものの左上座標）
-                                const x = canvas.width - padding - size;
-                                const y = canvas.height - padding - size;
-                                // 円の中心座標
-                                const centerX = x + size / 2;
-                                const centerY = y + size / 2;
-
-                                ctx.save();
-
-                                // シャドウリセットの念押し
-                                ctx.shadowColor = 'rgba(0,0,0,0)';
-                                ctx.shadowBlur = 0;
-                                ctx.shadowOffsetX = 0;
-                                ctx.shadowOffsetY = 0;
-
-                                // 既にSelectors.js側で丸く透過PNG化されているので、そのまま描画
-                                ctx.drawImage(logoImg, x, y, size, size);
-
-                                // ロゴの外周を囲う白枠
-                                ctx.beginPath();
-                                ctx.arc(centerX, centerY, size / 2, 0, Math.PI * 2, true);
-                                ctx.lineWidth = 4;
-                                ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-                                ctx.stroke();
-                                ctx.restore();
-                            } catch (e) {
-                                console.log("ロゴの合成に失敗しました", e);
-                            }
-                        }
-
-                        // 完成した画像をBase64として出力
-                        resolve(canvas.toDataURL('image/jpeg', 0.95));
-                    };
-
-                    bgImg.onerror = () => {
-                        console.error('Base Image load error');
-                        resolve(null); // エラー時はnullを返す
-                    };
-
-                    bgImg.src = bgUrl;
-                });
+            // 4. 共通ヘルパー drawCanvasImage(lib/canvasHelper.js) を使って文字＋ロゴを合成
+            const canvasOptions = {
+                logoUrl: productContext.logoUrl,
+                companyName: productContext.companyName
             };
 
             // 5. 決定したベース画像に対して、必要な枚数分(カルーセルなら5枚)の文言を合成していく
@@ -614,13 +422,13 @@ export default function Home() {
                     for (let i = 0; i < post.carousel_slides.length; i++) {
                         const slide = post.carousel_slides[i];
                         const currentBgUrl = baseImagesArray[i % baseImagesArray.length];
-                        const imgData = await drawCanvasImage(slide.overlay_copy, currentBgUrl, i);
+                        const imgData = await drawCanvasImage(slide.overlay_copy, currentBgUrl, i, canvasOptions);
                         if (imgData) imageUrls.push(imgData);
                     }
                 } else if (selectedFormat !== 'video_script') {
                     // 通常の1枚画像生成（カルーセル以外）は配列の1枚目を使用
                     const currentBgUrl = baseImagesArray[0];
-                    const imgData = await drawCanvasImage(post.overlay_copy, currentBgUrl, 0);
+                    const imgData = await drawCanvasImage(post.overlay_copy, currentBgUrl, 0, canvasOptions);
                     if (imgData) imageUrls.push(imgData);
                 }
             }
@@ -745,46 +553,77 @@ export default function Home() {
                     let imageUrls = [];
                     // Instagram用の画像を生成（カルーセルは3枚、それ以外は1枚）
                     if (post.image_idea && post.image_idea !== "なし" && selectedFormat !== 'video_script') {
-                        const imgCount = 3;
+                        const isCarousel = selectedFormat === 'carousel';
+                        const imgCount = isCarousel ? 3 : 1;
+
+                        // 同ブランドで複数投稿を生成しても単調にならないよう、post index(i)ごとに
+                        // ビジュアル指示(色トーン・被写体)を強制的にずらして多様性を出す
+                        const visualTone = VISUAL_VARIETY_DIRECTIVES[i % VISUAL_VARIETY_DIRECTIVES.length];
+                        const subjectAngle = SUBJECT_VARIETY_DIRECTIVES[i % SUBJECT_VARIETY_DIRECTIVES.length];
+                        const variedImageIdea = `${post.image_idea}\n【ビジュアルトーン指示】${visualTone}\n【構図・被写体指示】${subjectAngle}`;
+
                         setBatchStatus(`[${displayPlatform}] ${i + 1}件目の画面用画像を生成中...`);
                         await new Promise(r => setTimeout(r, 2000));
-                        
+
                         try {
                             const imgRes = await generateImage(
-                                selectedCategory, 
-                                targetLabel, 
-                                selectedGender, 
-                                post.image_idea, 
-                                cleanProductContext, 
-                                platformType, 
-                                null, 
+                                selectedCategory,
+                                targetLabel,
+                                selectedGender,
+                                variedImageIdea,
+                                cleanProductContext,
+                                platformType,
+                                null,
                                 imgCount
                             );
-                            if (imgRes && !imgRes.error) {
+                            if (imgRes && !imgRes.error && Array.isArray(imgRes)) {
+                                // バッチ生成でもオーバーレイテキストを合成（単発生成と同じ仕上がりに）
+                                const canvasOptions = {
+                                    logoUrl: productContext.logoUrl,
+                                    companyName: productContext.companyName
+                                };
+
                                 const publicUrls = [];
                                 for (let j = 0; j < imgRes.length; j++) {
-                                    const imgData = imgRes[j];
-                                    if (imgData && imgData.startsWith('data:image')) {
-                                        setBatchStatus(`[${displayPlatform}] ${i + 1}件目: 画像(${j + 1}/${imgRes.length})をクラウドへ保存中...`);
-                                        try {
-                                            const upRes = await fetch('/api/upload-image', {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ base64Data: imgData })
-                                            });
-                                            if (upRes.ok) {
-                                                const r = await upRes.json();
-                                                publicUrls.push(r.url);
-                                            } else {
-                                                console.error("Upload failed", await upRes.text());
-                                                publicUrls.push(imgData); // フォールバック: そのまま
-                                            }
-                                        } catch (upErr) {
-                                            console.error("Upload Error:", upErr);
-                                            publicUrls.push(imgData);
+                                    const rawImg = imgRes[j];
+                                    if (!rawImg || !rawImg.startsWith('data:image')) {
+                                        publicUrls.push(rawImg);
+                                        continue;
+                                    }
+
+                                    // カルーセルなら各スライドの overlay_copy、単発なら post.overlay_copy
+                                    let overlayText = post.overlay_copy || '';
+                                    if (isCarousel && post.carousel_slides && Array.isArray(post.carousel_slides)) {
+                                        const slide = post.carousel_slides[j];
+                                        if (slide && slide.overlay_copy) overlayText = slide.overlay_copy;
+                                    }
+
+                                    setBatchStatus(`[${displayPlatform}] ${i + 1}件目: 画像(${j + 1}/${imgRes.length})に文字合成中...`);
+                                    let composedImg = rawImg;
+                                    try {
+                                        const result = await drawCanvasImage(overlayText, rawImg, j, canvasOptions);
+                                        if (result) composedImg = result;
+                                    } catch (drawErr) {
+                                        console.error("Overlay draw failed, using raw image:", drawErr);
+                                    }
+
+                                    setBatchStatus(`[${displayPlatform}] ${i + 1}件目: 画像(${j + 1}/${imgRes.length})をクラウドへ保存中...`);
+                                    try {
+                                        const upRes = await fetch('/api/upload-image', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ base64Data: composedImg })
+                                        });
+                                        if (upRes.ok) {
+                                            const r = await upRes.json();
+                                            publicUrls.push(r.url);
+                                        } else {
+                                            console.error("Upload failed", await upRes.text());
+                                            publicUrls.push(composedImg); // フォールバック: そのまま
                                         }
-                                    } else {
-                                        publicUrls.push(imgData);
+                                    } catch (upErr) {
+                                        console.error("Upload Error:", upErr);
+                                        publicUrls.push(composedImg);
                                     }
                                 }
                                 imageUrls = publicUrls;
