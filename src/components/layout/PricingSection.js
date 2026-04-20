@@ -14,7 +14,7 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
             features: [
                 "1日3回まで生成可能",
                 "基本的なトレンドリサーチ",
-                "Instagram / X / Facebook 対応",
+                "Instagram 対応",
                 "広告なし",
                 "商用利用不可（個人利用・お試しのみ）"
             ],

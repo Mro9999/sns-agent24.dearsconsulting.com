@@ -119,8 +119,6 @@ export default function DashboardPage() {
                                 <div className="p-4 border-b border-white/5 flex justify-between items-center bg-black/20">
                                     <div className="flex items-center gap-2">
                                         {gen.platform === 'instagram' && <div className="text-pink-500 font-bold text-[10px] tracking-wider bg-pink-500/10 px-2 py-1 rounded border border-pink-500/20">INSTAGRAM</div>}
-                                        {gen.platform === 'twitter' && <div className="text-blue-400 font-bold text-[10px] tracking-wider bg-blue-400/10 px-2 py-1 rounded border border-blue-400/20">X (TWITTER)</div>}
-                                        {gen.platform === 'facebook' && <div className="text-blue-600 font-bold text-[10px] tracking-wider bg-blue-600/10 px-2 py-1 rounded border border-blue-600/20">FACEBOOK</div>}
                                     </div>
                                     <div className="flex items-center gap-1 text-gray-500 text-xs font-mono">
                                         <Calendar size={12} />

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Gem, Lock, Instagram, Twitter, Facebook, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History, Smartphone, ArrowRight, ArrowDown } from 'lucide-react';
+import { Gem, Lock, Instagram, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History, Smartphone, ArrowRight, ArrowDown } from 'lucide-react';
 import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
@@ -35,7 +35,7 @@ export default function Home() {
     const isPro = isProMax || serverIsPro === true || sessionRole === 'pro' || user?.publicMetadata?.role === 'pro';
 
     const [step, setStep] = useState(0); // 0: Platform, 1: Process, 2: Result
-    const [selectedPlatform, setSelectedPlatform] = useState(null);
+    const [selectedPlatform, setSelectedPlatform] = useState('instagram');
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedPurpose, setSelectedPurpose] = useState(null); // 新設: 投稿の目的
     const [selectedTarget, setSelectedTarget] = useState(null);
@@ -663,8 +663,8 @@ export default function Home() {
             return;
         }
 
-        const count = platformType === 'twitter' ? 21 : 7;
-        const displayPlatform = platformType === 'twitter' ? 'X' : 'Instagram';
+        const count = 7;
+        const displayPlatform = 'Instagram';
         const confirmMsg = `${displayPlatform}向けに${count}件の投稿を連続生成し、予約キューに保存します。\n完了まで数分かかりますが実行しますか？`;
         if (!confirm(confirmMsg)) return;
 
@@ -743,9 +743,9 @@ export default function Home() {
                     const post = resData;
 
                     let imageUrls = [];
-                    // API制限を考慮し、X(Twitter)のバッチ時は過度な画像生成を避けるか枚数を絞る
+                    // Instagram用の画像を生成（カルーセルは3枚、それ以外は1枚）
                     if (post.image_idea && post.image_idea !== "なし" && selectedFormat !== 'video_script') {
-                        const imgCount = platformType === 'twitter' ? 1 : 3;
+                        const imgCount = 3;
                         setBatchStatus(`[${displayPlatform}] ${i + 1}件目の画面用画像を生成中...`);
                         await new Promise(r => setTimeout(r, 2000));
                         
@@ -1042,38 +1042,18 @@ export default function Home() {
                             ) : null}
 
                             <h2 className={`text-xl md:text-2xl font-bold mb-8 text-center drop-shadow-sm ${!mounted || !isLoaded ? 'opacity-0' : isSignedIn ? 'text-gray-900' : 'text-slate-600'}`}>
-                                投稿するプラットフォームを選択
+                                投稿するプラットフォーム
                             </h2>
 
-                            <div className={`grid grid-cols-2 lg:grid-cols-3 gap-4 mb-16 w-full px-4 md:px-12 transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+                            <div className={`flex justify-center mb-16 w-full px-4 md:px-12 transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                                 {/* Instagram */}
                                 <button
                                     onClick={() => setSelectedPlatform('instagram')}
                                     disabled={!mounted || !isLoaded || !isSignedIn}
-                                    className={`flex flex-col items-center justify-center py-8 px-4 rounded-[2rem] border transition-all duration-300 group ${selectedPlatform === 'instagram' ? 'bg-slate-900 border-slate-900 text-white shadow-[0_10px_35px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-md border-white/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-slate-500 hover:shadow-[0_8px_25px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:border-slate-200'}`}
+                                    className="flex flex-col items-center justify-center py-8 px-12 rounded-[2rem] border transition-all duration-300 group bg-slate-900 border-slate-900 text-white shadow-[0_10px_35px_rgba(0,0,0,0.15)]"
                                 >
-                                    <Instagram size={36} className={`mb-4 transition-colors ${selectedPlatform === 'instagram' ? 'text-white' : 'text-slate-400 group-hover:text-slate-700'}`} strokeWidth={1.5} />
-                                    <span className={`font-bold tracking-wide transition-colors text-sm ${selectedPlatform === 'instagram' ? 'text-white' : 'text-slate-700'}`}>Instagram</span>
-                                </button>
-
-                                {/* X (Twitter) */}
-                                <button
-                                    onClick={() => setSelectedPlatform('twitter')}
-                                    disabled={!mounted || !isLoaded || !isSignedIn}
-                                    className={`flex flex-col items-center justify-center py-8 px-4 rounded-[2rem] border transition-all duration-300 group ${selectedPlatform === 'twitter' ? 'bg-slate-900 border-slate-900 text-white shadow-[0_10px_35px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-md border-white/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-slate-500 hover:shadow-[0_8px_25px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:border-slate-200'}`}
-                                >
-                                    <Twitter size={36} className={`mb-4 transition-colors ${selectedPlatform === 'twitter' ? 'text-white' : 'text-slate-400 group-hover:text-slate-700'}`} strokeWidth={1.5} />
-                                    <span className={`font-bold tracking-wide transition-colors text-sm ${selectedPlatform === 'twitter' ? 'text-white' : 'text-slate-700'}`}>X (Twitter)</span>
-                                </button>
-
-                                {/* Facebook */}
-                                <button
-                                    onClick={() => setSelectedPlatform('facebook')}
-                                    disabled={!mounted || !isLoaded || !isSignedIn}
-                                    className={`col-span-2 lg:col-span-1 flex flex-col items-center justify-center py-8 px-4 rounded-[2rem] border transition-all duration-300 group ${selectedPlatform === 'facebook' ? 'bg-slate-900 border-slate-900 text-white shadow-[0_10px_35px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-md border-white/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-slate-500 hover:shadow-[0_8px_25px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:border-slate-200'}`}
-                                >
-                                    <Facebook size={36} className={`mb-4 transition-colors ${selectedPlatform === 'facebook' ? 'text-white' : 'text-slate-400 group-hover:text-slate-700'}`} strokeWidth={1.5} />
-                                    <span className={`font-bold tracking-wide transition-colors text-sm ${selectedPlatform === 'facebook' ? 'text-white' : 'text-slate-700'}`}>Facebook</span>
+                                    <Instagram size={36} className="mb-4 text-white" strokeWidth={1.5} />
+                                    <span className="font-bold tracking-wide text-white text-sm">Instagram</span>
                                 </button>
                             </div>
 
@@ -1203,30 +1183,7 @@ export default function Home() {
                                                 <><Lock className="w-5 h-5 text-purple-300" /> Instagram 全自動構築を解放する</>
                                             )}
                                         </button>
-                                        
-                                        <button
-                                            onClick={() => {
-                                                if (!isProMax) {
-                                                    handleCheckout('month', 'promax');
-                                                    return;
-                                                }
-                                                handleBatchGenerate('twitter');
-                                            }}
-                                            disabled={loading}
-                                            className="w-full relative px-6 py-4 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 text-white text-sm md:text-base font-bold rounded-xl transition-all shadow-md disabled:opacity-50 overflow-hidden flex items-center justify-center gap-2 group/btn"
-                                        >
-                                            <span className="absolute inset-0 w-full h-full bg-white opacity-0 group-hover/btn:opacity-5 transition-opacity"></span>
-                                            {isProMax ? (
-                                                <><span className="text-slate-200 text-lg">𝕏</span> X (Twitter) 1週間分 自動構築</>
-                                            ) : (
-                                                <><Lock className="w-5 h-5 text-slate-400" /> X (Twitter) 全自動構築を解放する</>
-                                            )}
-                                        </button>
                                     </div>
-                                    
-                                    <p className="text-xs text-slate-500 mt-6 text-center tracking-wide font-medium">
-                                        ※FacebookへはInstagramとの標準連携を推奨
-                                    </p>
 
                                     {batchStatus && (
                                         <div className="w-full mt-8 px-5 py-5 bg-black/60 shadow-inner backdrop-blur-xl rounded-2xl border border-cyan-500/40 relative overflow-hidden">
@@ -1746,44 +1703,23 @@ export default function Home() {
                                 <div className="max-w-lg mx-auto">
                                     <button
                                         onClick={() => {
-                                            // アプリ用のカスタムURLスキーム
-                                            const urls = {
-                                                instagram: 'instagram://camera',
-                                                twitter: 'twitter://post',
-                                                facebook: 'fb://composer'
-                                            };
-                                            // Webブラウザ用のフォールバックURL
-                                            const webUrls = {
-                                                instagram: 'https://www.instagram.com/',
-                                                twitter: 'https://twitter.com/compose/tweet',
-                                                facebook: 'https://www.facebook.com/'
-                                            };
-                                            
-                                            const platform = selectedPlatform || 'instagram';
-                                            
-                                            // ユーザーエージェントからモバイルを判定
                                             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                                            
                                             if (isMobile) {
                                                 // スマホの場合はまずアプリ起動を試みる
-                                                window.location.href = urls[platform];
+                                                window.location.href = 'instagram://camera';
                                                 // 起動しなかった場合のための保険（数秒後にWeb版を開く）
                                                 setTimeout(() => {
-                                                    window.open(webUrls[platform], '_blank');
+                                                    window.open('https://www.instagram.com/', '_blank');
                                                 }, 2000);
                                             } else {
                                                 // PCの場合は最初からWeb版を開く
-                                                window.open(webUrls[platform], '_blank');
+                                                window.open('https://www.instagram.com/', '_blank');
                                             }
                                         }}
                                         className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-md font-bold text-gray-900 flex flex-row items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(147,51,234,0.4)] hover:shadow-[0_0_30px_rgba(147,51,234,0.6)] transform hover:-translate-y-1"
                                     >
-                                        {selectedPlatform === 'instagram' && <Instagram size={20} />}
-                                        {selectedPlatform === 'twitter' && <Twitter size={20} />}
-                                        {selectedPlatform === 'facebook' && <Facebook size={20} />}
-                                        {selectedPlatform === 'instagram' ? 'Instagramを開いて投稿する' :
-                                         selectedPlatform === 'twitter' ? 'X (Twitter)を開いて投稿する' :
-                                         selectedPlatform === 'facebook' ? 'Facebookを開いて投稿する' : 'SNSアプリを開いて投稿する'}
+                                        <Instagram size={20} />
+                                        Instagramを開いて投稿する
                                     </button>
                                     <p className="text-[11px] text-center text-indigo-300/60 mt-3">
                                         ※スマホでアプリがインストールされている場合は直接起動します
