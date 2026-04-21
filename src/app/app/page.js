@@ -578,6 +578,9 @@ export default function Home() {
                             );
                             if (imgRes && !imgRes.error && Array.isArray(imgRes)) {
                                 // バッチ生成でもオーバーレイテキストを合成（単発生成と同じ仕上がりに）
+                                // 注: generateImage は既に Supabase にアップロード済みのHTTPS URLを返す。
+                                // drawCanvasImage は HTTPS URL / data URL の両方を crossOrigin=anonymous で読み込めるので
+                                // そのまま合成→合成後のdata URLを再アップロードする流れで文字入り画像を保存する。
                                 const canvasOptions = {
                                     logoUrl: productContext.logoUrl,
                                     companyName: productContext.companyName
@@ -586,8 +589,7 @@ export default function Home() {
                                 const publicUrls = [];
                                 for (let j = 0; j < imgRes.length; j++) {
                                     const rawImg = imgRes[j];
-                                    if (!rawImg || !rawImg.startsWith('data:image')) {
-                                        publicUrls.push(rawImg);
+                                    if (!rawImg) {
                                         continue;
                                     }
 
@@ -599,31 +601,36 @@ export default function Home() {
                                     }
 
                                     setBatchStatus(`[${displayPlatform}] ${i + 1}件目: 画像(${j + 1}/${imgRes.length})に文字合成中...`);
-                                    let composedImg = rawImg;
+                                    let composedImg = null;
                                     try {
-                                        const result = await drawCanvasImage(overlayText, rawImg, j, canvasOptions);
-                                        if (result) composedImg = result;
+                                        composedImg = await drawCanvasImage(overlayText, rawImg, j, canvasOptions);
                                     } catch (drawErr) {
-                                        console.error("Overlay draw failed, using raw image:", drawErr);
+                                        console.error("Overlay draw failed:", drawErr);
                                     }
 
-                                    setBatchStatus(`[${displayPlatform}] ${i + 1}件目: 画像(${j + 1}/${imgRes.length})をクラウドへ保存中...`);
-                                    try {
-                                        const upRes = await fetch('/api/upload-image', {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ base64Data: composedImg })
-                                        });
-                                        if (upRes.ok) {
-                                            const r = await upRes.json();
-                                            publicUrls.push(r.url);
-                                        } else {
-                                            console.error("Upload failed", await upRes.text());
-                                            publicUrls.push(composedImg); // フォールバック: そのまま
+                                    // 合成が成功したら合成済みを再アップロード、失敗したら元のURLをそのまま使う
+                                    if (composedImg && composedImg.startsWith('data:image')) {
+                                        setBatchStatus(`[${displayPlatform}] ${i + 1}件目: 画像(${j + 1}/${imgRes.length})をクラウドへ保存中...`);
+                                        try {
+                                            const upRes = await fetch('/api/upload-image', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ base64Data: composedImg })
+                                            });
+                                            if (upRes.ok) {
+                                                const r = await upRes.json();
+                                                publicUrls.push(r.url);
+                                            } else {
+                                                console.error("Upload failed", await upRes.text());
+                                                publicUrls.push(rawImg); // フォールバック: 元のAI画像URL
+                                            }
+                                        } catch (upErr) {
+                                            console.error("Upload Error:", upErr);
+                                            publicUrls.push(rawImg);
                                         }
-                                    } catch (upErr) {
-                                        console.error("Upload Error:", upErr);
-                                        publicUrls.push(composedImg);
+                                    } else {
+                                        // 合成失敗: 元の AI 画像URL をそのまま使う
+                                        publicUrls.push(rawImg);
                                     }
                                 }
                                 imageUrls = publicUrls;
