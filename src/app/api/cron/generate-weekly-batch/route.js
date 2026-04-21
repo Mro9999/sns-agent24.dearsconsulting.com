@@ -125,15 +125,18 @@ async function generateForUser(settings) {
         throw new Error('トレンドリサーチ失敗');
     }
 
-    const results = [];
     const count = 7;
 
+    // 7件のgeneratePostを並列実行（Vercel Hobby 300s制限内に収める）
+    // 順次だと15〜30s × 7 = 最大210sで timeoutの危険があるため、全部同時に走らせる。
+    // Gemini API 側のレート制限に引っかかる可能性はあるが、7並列なら通常セーフ。
+    const postPromises = [];
     for (let i = 0; i < count; i++) {
-        try {
-            const angle = VARIETY_ANGLES[i % VARIETY_ANGLES.length];
-            const purposeSeed = `${purpose_id || '指定なし'}。\n【重要指示：今回の投稿テーマ切り口】：『${angle}』を軸として、毎回異なる角度・視点で語ってください。`;
+        const angle = VARIETY_ANGLES[i % VARIETY_ANGLES.length];
+        const purposeSeed = `${purpose_id || '指定なし'}。\n【重要指示：今回の投稿テーマ切り口】：『${angle}』を軸として、毎回異なる角度・視点で語ってください。`;
 
-            const post = await generatePost(
+        postPromises.push(
+            generatePost(
                 research,
                 platformType,
                 category,
@@ -147,37 +150,43 @@ async function generateForUser(settings) {
                 selectedFormat === 'carousel' ? 'carousel' : 'single',
                 userProfile,
                 purposeSeed
-            );
+            )
+            .then(post => ({ post, index: i }))
+            .catch(err => {
+                console.error(`[generate-weekly-batch] ${user_id} ${i + 1}件目の生成でエラー:`, err);
+                return null;
+            })
+        );
+    }
 
-            if (!post) continue;
+    const postOutcomes = await Promise.all(postPromises);
+    const results = [];
 
-            // 画像は後で /approve ページから生成する（cron 高速化のため）
-            // image_idea は post 本体に保持されていて、承認時にそれを元に画像生成する
-            let finalCaption = post.caption || post.overlay_copy || '';
-            if (post.hashtags && Array.isArray(post.hashtags)) {
-                finalCaption += '\n\n' + post.hashtags.map(t => t.startsWith('#') ? t : `#${t}`).join(' ');
-            }
+    for (const outcome of postOutcomes) {
+        if (!outcome || !outcome.post) continue;
+        const { post, index: i } = outcome;
 
-            // 予約時刻: 明日以降、1日1件、12:00 JST
-            const schedDate = new Date();
-            schedDate.setDate(schedDate.getDate() + 1 + i);
-            schedDate.setHours(12, 0, 0, 0);
-
-            results.push({
-                user_id,
-                platform: platformType,
-                caption: finalCaption,
-                image_urls: [], // あとで承認画面で生成
-                scheduled_at: schedDate.toISOString(),
-                status: 'pending_approval',
-                overlay_copy: post.overlay_copy || null,
-                carousel_slides: post.carousel_slides || null,
-                image_idea: post.image_idea || null  // 後の画像生成で使う
-            });
-        } catch (loopErr) {
-            console.error(`[generate-weekly-batch] ${user_id} ${i + 1}件目でエラー:`, loopErr);
-            continue;
+        let finalCaption = post.caption || post.overlay_copy || '';
+        if (post.hashtags && Array.isArray(post.hashtags)) {
+            finalCaption += '\n\n' + post.hashtags.map(t => t.startsWith('#') ? t : `#${t}`).join(' ');
         }
+
+        // 予約時刻: 明日以降、1日1件、12:00 JST
+        const schedDate = new Date();
+        schedDate.setDate(schedDate.getDate() + 1 + i);
+        schedDate.setHours(12, 0, 0, 0);
+
+        results.push({
+            user_id,
+            platform: platformType,
+            caption: finalCaption,
+            image_urls: [],
+            scheduled_at: schedDate.toISOString(),
+            status: 'pending_approval',
+            overlay_copy: post.overlay_copy || null,
+            carousel_slides: post.carousel_slides || null,
+            image_idea: post.image_idea || null
+        });
     }
 
     if (results.length === 0) return 0;
