@@ -42,6 +42,10 @@ ADD COLUMN IF NOT EXISTS carousel_slides jsonb;
 ALTER TABLE public.scheduled_posts
 ADD COLUMN IF NOT EXISTS product_context jsonb;
 
+-- image_idea: 承認画面で後から画像を生成するための指示文
+ALTER TABLE public.scheduled_posts
+ADD COLUMN IF NOT EXISTS image_idea text;
+
 -- 6. インデックス（承認待ち取得の高速化）
 CREATE INDEX IF NOT EXISTS idx_scheduled_posts_pending
 ON public.scheduled_posts (user_id, status, scheduled_at);

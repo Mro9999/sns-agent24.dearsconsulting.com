@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { researchTrends, generatePost, generateImage } from '@/lib/apiService';
-import { VISUAL_VARIETY_DIRECTIVES, SUBJECT_VARIETY_DIRECTIVES } from '@/lib/canvasHelper';
+import { researchTrends, generatePost } from '@/lib/apiService';
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -9,7 +8,9 @@ const supabase = createClient(
 );
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 300; // 5分以内で完了させる想定（Vercel Hobbyは最大5分）
+export const maxDuration = 300; // Vercel Hobby の最大5分
+// 注: 画像生成はこのcronでは行わない（Vercel Hobbyのタイムアウト対策）
+// 画像は /approve ページを開いた時に /api/generate-post-image で各投稿ごとに生成される
 
 // 週次の自動コンテンツ生成Cron
 // 毎週日曜日 20:00 JST (= 11:00 UTC) に実行される
@@ -150,36 +151,8 @@ async function generateForUser(settings) {
 
             if (!post) continue;
 
-            let imageUrls = [];
-            if (post.image_idea && post.image_idea !== 'なし' && selectedFormat !== 'video_script') {
-                const isCarousel = selectedFormat === 'carousel';
-                const imgCount = isCarousel ? 3 : 1;
-
-                // 多様性注入
-                const visualTone = VISUAL_VARIETY_DIRECTIVES[i % VISUAL_VARIETY_DIRECTIVES.length];
-                const subjectAngle = SUBJECT_VARIETY_DIRECTIVES[i % SUBJECT_VARIETY_DIRECTIVES.length];
-                const variedImageIdea = `${post.image_idea}\n【ビジュアルトーン指示】${visualTone}\n【構図・被写体指示】${subjectAngle}`;
-
-                try {
-                    const imgRes = await generateImage(
-                        category,
-                        targetLabel,
-                        gender,
-                        variedImageIdea,
-                        cleanProductContext,
-                        platformType,
-                        null,
-                        imgCount
-                    );
-                    if (imgRes && !imgRes.error && Array.isArray(imgRes)) {
-                        // 注: ここではオーバーレイ合成しない（ブラウザ側で承認時に合成）
-                        imageUrls = imgRes.filter(Boolean);
-                    }
-                } catch (imgErr) {
-                    console.error(`[generate-weekly-batch] ${user_id} 画像生成失敗(${i + 1}件目):`, imgErr);
-                }
-            }
-
+            // 画像は後で /approve ページから生成する（cron 高速化のため）
+            // image_idea は post 本体に保持されていて、承認時にそれを元に画像生成する
             let finalCaption = post.caption || post.overlay_copy || '';
             if (post.hashtags && Array.isArray(post.hashtags)) {
                 finalCaption += '\n\n' + post.hashtags.map(t => t.startsWith('#') ? t : `#${t}`).join(' ');
@@ -190,21 +163,17 @@ async function generateForUser(settings) {
             schedDate.setDate(schedDate.getDate() + 1 + i);
             schedDate.setHours(12, 0, 0, 0);
 
-            // 承認用にoverlay_copy / carousel_slides もDBに保持しておく
             results.push({
                 user_id,
                 platform: platformType,
                 caption: finalCaption,
-                image_urls: imageUrls,
+                image_urls: [], // あとで承認画面で生成
                 scheduled_at: schedDate.toISOString(),
                 status: 'pending_approval',
                 overlay_copy: post.overlay_copy || null,
                 carousel_slides: post.carousel_slides || null,
-                raw_post: post  // 完全なpost情報も保持（承認時のオーバーレイレンダリング用）
+                image_idea: post.image_idea || null  // 後の画像生成で使う
             });
-
-            // API rate limit対策
-            await new Promise(r => setTimeout(r, 6000));
         } catch (loopErr) {
             console.error(`[generate-weekly-batch] ${user_id} ${i + 1}件目でエラー:`, loopErr);
             continue;
@@ -224,6 +193,7 @@ async function generateForUser(settings) {
         status: r.status,
         overlay_copy: r.overlay_copy,
         carousel_slides: r.carousel_slides,
+        image_idea: r.image_idea,
         product_context: cleanProductContext
     }));
 

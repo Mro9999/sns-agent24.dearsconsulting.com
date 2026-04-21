@@ -22,13 +22,45 @@ export default function ApprovePage() {
             const res = await fetch('/api/batch-approve');
             if (!res.ok) throw new Error('取得失敗');
             const json = await res.json();
-            setPosts(json.posts || []);
+            const fetched = json.posts || [];
+            setPosts(fetched);
+            // 画像未生成のものがあれば順次生成してstateに反映
+            await generateMissingImages(fetched);
         } catch (e) {
             console.error(e);
             setStatusMsg(`読み込みエラー: ${e.message}`);
         } finally {
             setLoading(false);
         }
+    };
+
+    // 画像未生成の投稿について、1件ずつ順番に /api/generate-post-image を叩いて埋める
+    const generateMissingImages = async (list) => {
+        const needsImage = list.filter(p => !Array.isArray(p.image_urls) || p.image_urls.length === 0);
+        if (needsImage.length === 0) return;
+        setStatusMsg(`${needsImage.length}件の画像を順次生成中...`);
+        for (let idx = 0; idx < needsImage.length; idx++) {
+            const p = needsImage[idx];
+            try {
+                setStatusMsg(`画像生成中 (${idx + 1}/${needsImage.length}) - ${p.caption?.slice(0, 20) || ''}...`);
+                const res = await fetch('/api/generate-post-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ postId: p.id, variationIndex: idx })
+                });
+                if (!res.ok) {
+                    console.warn(`画像生成失敗 (${p.id}):`, await res.text());
+                    continue;
+                }
+                const data = await res.json();
+                if (Array.isArray(data.image_urls) && data.image_urls.length > 0) {
+                    setPosts(prev => prev.map(x => x.id === p.id ? { ...x, image_urls: data.image_urls } : x));
+                }
+            } catch (err) {
+                console.error('image gen loop:', err);
+            }
+        }
+        setStatusMsg('画像生成完了。確認して承認してください。');
     };
 
     useEffect(() => {
