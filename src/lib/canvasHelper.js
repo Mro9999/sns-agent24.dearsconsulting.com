@@ -74,42 +74,84 @@ export async function drawCanvasImage(textToOverlay, bgUrl, index = 0, options =
             // 描画するテキスト
             const text = textToOverlay || `${companyName ? companyName + '\\n' : ''}最新のトレンド情報をチェック！`;
 
-            // 動的フォントサイズ
-            let fontSize = text.length > 30 ? 60 : 80;
-            ctx.font = `bold ${fontSize}px "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif`;
-
             const maxWidth = canvas.width - 160;
             const actualText = text.replace(/\\n/g, '\n').replace(/\\\\n/g, '\n').replace(/。/g, '');
-            const segmentLines = actualText.split('\n');
-            const lines = [];
-
             const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
 
-            segmentLines.forEach(segment => {
-                if (!segment.trim()) {
-                    lines.push('');
-                    return;
-                }
+            // 指定したフォントサイズで改行処理したlinesを返す
+            // 句読点（「、」など）の直後で改行することを優先し、不自然な途中改行を防ぐ
+            const wrapLines = (fontSize) => {
+                ctx.font = `bold ${fontSize}px "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif`;
+                const segmentLines = actualText.split('\n');
+                const result = [];
 
-                let currentLine = '';
-                const words = Array.from(segmenter.segment(segment)).map(s => s.segment);
+                segmentLines.forEach(segment => {
+                    if (!segment.trim()) {
+                        result.push('');
+                        return;
+                    }
 
-                words.forEach((word) => {
-                    const testLine = currentLine + word;
-                    const metrics = ctx.measureText(testLine);
-                    const testWidth = metrics.width;
+                    let currentLine = '';
+                    let lastPunctIndex = -1; // currentLine中の最後に出た句読点位置(その直後で改行すると自然)
+                    const words = Array.from(segmenter.segment(segment)).map(s => s.segment);
 
-                    if (testWidth > maxWidth && currentLine !== '') {
-                        lines.push(currentLine.trim());
-                        currentLine = word;
-                    } else {
-                        currentLine = testLine;
+                    words.forEach((word) => {
+                        const testLine = currentLine + word;
+                        const testWidth = ctx.measureText(testLine).width;
+
+                        if (testWidth > maxWidth && currentLine !== '') {
+                            // 幅を超えた：現在行の途中に句読点があれば、そこで分割(後半を次行に持ち越し)
+                            if (lastPunctIndex > 0 && lastPunctIndex < currentLine.length) {
+                                const head = currentLine.slice(0, lastPunctIndex);
+                                const tail = currentLine.slice(lastPunctIndex);
+                                result.push(head.trim());
+                                currentLine = tail + word;
+                            } else {
+                                result.push(currentLine.trim());
+                                currentLine = word;
+                            }
+                            lastPunctIndex = /[、。！？]$/.test(currentLine) ? currentLine.length : -1;
+                        } else {
+                            currentLine = testLine;
+                            // 「、」「。」「！」「？」の直後位置を記録
+                            if (/[、。！？]$/.test(word)) {
+                                lastPunctIndex = currentLine.length;
+                            }
+                        }
+                    });
+                    if (currentLine.trim()) {
+                        result.push(currentLine.trim());
                     }
                 });
-                if (currentLine.trim()) {
-                    lines.push(currentLine.trim());
-                }
-            });
+
+                return result;
+            };
+
+            // 孤児(最後の行が短すぎて浮く)を検出
+            const hasOrphan = (lines) => {
+                if (lines.length < 2) return false;
+                const last = lines[lines.length - 1];
+                // 3文字以下なら「孤児」扱い（「ない」「です」など）
+                return last.replace(/\s/g, '').length <= 3;
+            };
+
+            // 動的フォントサイズ決定: デフォルトから始めて、孤児が出るなら少しずつ縮小
+            let fontSize = text.length > 30 ? 60 : 80;
+            const MIN_FONT_SIZE = 44;
+            let lines = wrapLines(fontSize);
+
+            // 孤児が出る間、フォントサイズを下げて再試行
+            while (hasOrphan(lines) && fontSize > MIN_FONT_SIZE) {
+                fontSize -= 4;
+                lines = wrapLines(fontSize);
+            }
+
+            // それでも孤児が残る場合は、最後の行を前の行へマージ（多少幅を超えても可読性を優先）
+            if (hasOrphan(lines)) {
+                const last = lines.pop();
+                const prev = lines.pop();
+                lines.push((prev + last).trim());
+            }
 
             ctx.save();
             ctx.fillStyle = '#ffffff';
