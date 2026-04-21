@@ -409,9 +409,9 @@ export default function Home() {
                 await new Promise(resolve => setTimeout(resolve, 300)); // UI更新の待機
             }
 
-            // 4. 共通ヘルパー drawCanvasImage(lib/canvasHelper.js) を使って文字＋ロゴを合成
+            // 4. 共通ヘルパー drawCanvasImage(lib/canvasHelper.js) を使って文字を合成
+            // ロゴは意図的に渡さない（運用方針でInstagram投稿にはロゴを入れないため）
             const canvasOptions = {
-                logoUrl: productContext.logoUrl,
                 companyName: productContext.companyName
             };
 
@@ -581,8 +581,8 @@ export default function Home() {
                                 // 注: generateImage は既に Supabase にアップロード済みのHTTPS URLを返す。
                                 // drawCanvasImage は HTTPS URL / data URL の両方を crossOrigin=anonymous で読み込めるので
                                 // そのまま合成→合成後のdata URLを再アップロードする流れで文字入り画像を保存する。
+                                // ロゴは意図的に渡さない（運用方針）
                                 const canvasOptions = {
-                                    logoUrl: productContext.logoUrl,
                                     companyName: productContext.companyName
                                 };
 

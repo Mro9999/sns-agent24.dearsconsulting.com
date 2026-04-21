@@ -43,9 +43,9 @@ export default function ApprovePage() {
     // 画像にオーバーレイ文字を合成し、承認プレビュー用のdata URL配列を返す
     const composePreviewsFor = async (post, imageUrls) => {
         if (!Array.isArray(imageUrls) || imageUrls.length === 0) return [];
+        // ロゴは意図的に渡さない（運用方針でInstagram投稿にロゴを入れない）
         const canvasOptions = {
-            companyName: post.product_context?.companyName,
-            logoUrl: post.product_context?.logoUrl
+            companyName: post.product_context?.companyName
         };
         const composed = [];
         for (let j = 0; j < imageUrls.length; j++) {
