@@ -177,10 +177,12 @@ async function generateForUser(settings) {
             continue;
         }
 
-        // 予約時刻: 明日以降、1日1件、12:00 JST
+        // 予約時刻: 明日以降、1日1件、12:00 JST (= 03:00 UTC)
+        // Vercelサーバーは UTC で動くため setHours(12) だと 12:00 UTC = 21:00 JST になってしまう
+        // setUTCHours(3) で明示的に 03:00 UTC = 12:00 JST を指定する
         const schedDate = new Date();
-        schedDate.setDate(schedDate.getDate() + 1 + i);
-        schedDate.setHours(12, 0, 0, 0);
+        schedDate.setUTCDate(schedDate.getUTCDate() + 1 + i);
+        schedDate.setUTCHours(3, 0, 0, 0);
 
         results.push({
             user_id,

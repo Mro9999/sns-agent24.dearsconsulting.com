@@ -127,30 +127,53 @@ export async function drawCanvasImage(textToOverlay, bgUrl, index = 0, options =
                 return result;
             };
 
-            // 孤児(最後の行が短すぎて浮く)を検出
-            const hasOrphan = (lines) => {
-                if (lines.length < 2) return false;
-                const last = lines[lines.length - 1];
-                // 3文字以下なら「孤児」扱い（「ない」「です」など）
-                return last.replace(/\s/g, '').length <= 3;
+            // 改行が不自然かどうかを検出
+            // 1) 最後の行が極端に短い（「ない」など孤児）
+            // 2) 任意の行が「最長行の40%未満」なら、途中改行がぎこちない可能性が高いと判定
+            const hasAwkwardBreak = (lines) => {
+                const nonEmpty = lines.filter(l => l.replace(/\s/g, '').length > 0);
+                if (nonEmpty.length < 2) return false;
+
+                // 最後の行が短すぎる（5文字以下）
+                const last = nonEmpty[nonEmpty.length - 1].replace(/\s/g, '');
+                if (last.length <= 5) return true;
+
+                // 他の行と比べて極端に短い行がある（最長行の40%未満）
+                const lengths = nonEmpty.map(l => l.length);
+                const maxLen = Math.max(...lengths);
+                if (maxLen > 6) {
+                    const hasShort = lengths.some(l => l < maxLen * 0.4);
+                    if (hasShort) return true;
+                }
+                return false;
             };
 
-            // 動的フォントサイズ決定: デフォルトから始めて、孤児が出るなら少しずつ縮小
-            let fontSize = text.length > 30 ? 60 : 80;
-            const MIN_FONT_SIZE = 44;
+            // 動的フォントサイズ: 文字数に応じて段階的に初期値を決定
+            // 長い文は最初から小さく始める（「100年続くブランド」などで切れにくく）
+            let fontSize;
+            if (text.length > 40) fontSize = 50;
+            else if (text.length > 28) fontSize = 58;
+            else if (text.length > 18) fontSize = 68;
+            else fontSize = 80;
+
+            const MIN_FONT_SIZE = 40;
             let lines = wrapLines(fontSize);
 
-            // 孤児が出る間、フォントサイズを下げて再試行
-            while (hasOrphan(lines) && fontSize > MIN_FONT_SIZE) {
+            // 不自然な改行が検出される間、フォントサイズを下げて再試行
+            while (hasAwkwardBreak(lines) && fontSize > MIN_FONT_SIZE) {
                 fontSize -= 4;
                 lines = wrapLines(fontSize);
             }
 
-            // それでも孤児が残る場合は、最後の行を前の行へマージ（多少幅を超えても可読性を優先）
-            if (hasOrphan(lines)) {
-                const last = lines.pop();
-                const prev = lines.pop();
-                lines.push((prev + last).trim());
+            // それでも極端に短い末行があれば、前の行へマージ（多少幅超過してでも可読性優先）
+            const nonEmpty = lines.filter(l => l.replace(/\s/g, '').length > 0);
+            if (nonEmpty.length >= 2) {
+                const last = nonEmpty[nonEmpty.length - 1].replace(/\s/g, '');
+                if (last.length <= 4) {
+                    const lastLine = lines.pop();
+                    const prevLine = lines.pop();
+                    lines.push((prevLine + lastLine).trim());
+                }
             }
 
             ctx.save();
