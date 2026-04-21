@@ -36,16 +36,53 @@ export default function ApprovePage() {
 
     // どのpostが画像生成中かを追跡(カードにスケルトン表示するため)
     const [generatingIds, setGeneratingIds] = useState(new Set());
+    // 承認時に使用する、文字合成済みの preview data URL
+    // { [postId]: ['data:image/...', 'data:image/...'] }
+    const [composedPreviews, setComposedPreviews] = useState({});
+
+    // 画像にオーバーレイ文字を合成し、承認プレビュー用のdata URL配列を返す
+    const composePreviewsFor = async (post, imageUrls) => {
+        if (!Array.isArray(imageUrls) || imageUrls.length === 0) return [];
+        const canvasOptions = {
+            companyName: post.product_context?.companyName,
+            logoUrl: post.product_context?.logoUrl
+        };
+        const composed = [];
+        for (let j = 0; j < imageUrls.length; j++) {
+            const raw = imageUrls[j];
+            let overlayText = post.overlay_copy || '';
+            if (Array.isArray(post.carousel_slides) && post.carousel_slides[j]?.overlay_copy) {
+                overlayText = post.carousel_slides[j].overlay_copy;
+            }
+            try {
+                const result = await drawCanvasImage(overlayText, raw, j, canvasOptions);
+                composed.push(result || raw);
+            } catch (e) {
+                console.error('compose preview failed:', e);
+                composed.push(raw);
+            }
+        }
+        return composed;
+    };
 
     // 画像未生成の投稿について、1件ずつ順番に /api/generate-post-image を叩いて埋める
     const generateMissingImages = async (list) => {
         const needsImage = list.filter(p => !Array.isArray(p.image_urls) || p.image_urls.length === 0);
+
+        // 既に画像があるpostも先にプレビュー合成しておく(再訪問時など)
+        for (const p of list) {
+            if (Array.isArray(p.image_urls) && p.image_urls.length > 0 && !composedPreviews[p.id]) {
+                composePreviewsFor(p, p.image_urls).then(composed => {
+                    setComposedPreviews(prev => ({ ...prev, [p.id]: composed }));
+                });
+            }
+        }
+
         if (needsImage.length === 0) return;
 
         // 先に全て「生成中」としてマーク(スケルトン表示用)
         setGeneratingIds(new Set(needsImage.map(p => p.id)));
 
-        const totalSec = needsImage.length * 20; // だいたい1件あたり20秒の目安
         for (let idx = 0; idx < needsImage.length; idx++) {
             const p = needsImage[idx];
             const remain = needsImage.length - idx;
@@ -63,12 +100,14 @@ export default function ApprovePage() {
                     const data = await res.json();
                     if (Array.isArray(data.image_urls) && data.image_urls.length > 0) {
                         setPosts(prev => prev.map(x => x.id === p.id ? { ...x, image_urls: data.image_urls } : x));
+                        // 生成完了後すぐに文字合成プレビューも作る
+                        const composed = await composePreviewsFor(p, data.image_urls);
+                        setComposedPreviews(prev => ({ ...prev, [p.id]: composed }));
                     }
                 }
             } catch (err) {
                 console.error('image gen loop:', err);
             }
-            // このpostは生成完了
             setGeneratingIds(prev => {
                 const s = new Set(prev);
                 s.delete(p.id);
@@ -82,42 +121,38 @@ export default function ApprovePage() {
         if (isLoaded && user) fetchPending();
     }, [isLoaded, user]);
 
-    // 画像にオーバーレイを合成してアップロードし直す
+    // 承認時: プレビューで表示中の合成済み画像(data URL)をSupabaseに再アップロード
     const composeAndUpload = async (post) => {
-        if (!Array.isArray(post.image_urls) || post.image_urls.length === 0) {
-            return post.image_urls || [];
+        // プレビュー用に既に合成済みならそれを使う、無ければ即合成する
+        let composed = composedPreviews[post.id];
+        if (!composed || composed.length === 0) {
+            composed = await composePreviewsFor(post, post.image_urls || []);
         }
-        const canvasOptions = {
-            companyName: post.product_context?.companyName,
-            logoUrl: post.product_context?.logoUrl
-        };
-        const newUrls = [];
-        for (let j = 0; j < post.image_urls.length; j++) {
-            const raw = post.image_urls[j];
-            let overlayText = post.overlay_copy || '';
-            if (Array.isArray(post.carousel_slides) && post.carousel_slides[j]?.overlay_copy) {
-                overlayText = post.carousel_slides[j].overlay_copy;
-            }
-            try {
-                const composed = await drawCanvasImage(overlayText, raw, j, canvasOptions);
-                if (composed && composed.startsWith('data:image')) {
+        if (!composed || composed.length === 0) return post.image_urls || [];
+
+        const uploadedUrls = [];
+        for (let j = 0; j < composed.length; j++) {
+            const dataUrl = composed[j];
+            if (dataUrl && dataUrl.startsWith('data:image')) {
+                try {
                     const upRes = await fetch('/api/upload-image', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ base64Data: composed })
+                        body: JSON.stringify({ base64Data: dataUrl })
                     });
                     if (upRes.ok) {
                         const r = await upRes.json();
-                        newUrls.push(r.url);
+                        uploadedUrls.push(r.url);
                         continue;
                     }
+                } catch (e) {
+                    console.error('upload failed:', e);
                 }
-            } catch (e) {
-                console.error('overlay failed:', e);
             }
-            newUrls.push(raw);
+            // fallback: 元のrawURL
+            uploadedUrls.push(post.image_urls?.[j] || dataUrl);
         }
-        return newUrls;
+        return uploadedUrls;
     };
 
     const handleApprove = async (post) => {
@@ -261,7 +296,9 @@ export default function ApprovePage() {
                             const isProcessing = processingIds.has(post.id);
                             const isGeneratingImage = generatingIds.has(post.id);
                             const scheduledDate = post.scheduled_at ? new Date(post.scheduled_at) : null;
-                            const firstImg = post.image_urls?.[0];
+                            // プレビューは文字合成済みを優先表示、無ければraw、それも無ければnull
+                            const composed = composedPreviews[post.id];
+                            const firstImg = (composed && composed[0]) || post.image_urls?.[0];
                             return (
                                 <div key={post.id} className="bg-gray-900/60 border border-gray-800 rounded-lg overflow-hidden">
                                     <div className="grid md:grid-cols-[240px_1fr] gap-4 p-4">
