@@ -6,6 +6,7 @@ const isPublicRoute = createRouteMatcher([
     '/api/webhooks(.*)',
     '/api/admin/queue',
     '/api/cron(.*)'
+    // 注: /api/cron(.*) で generate-weekly-batch / auto-approve / weekly-ideas すべて通る
 ]);
 
 export default clerkMiddleware((auth, req) => {

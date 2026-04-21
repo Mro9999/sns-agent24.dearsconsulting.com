@@ -25,13 +25,24 @@ export async function GET(req) {
             return NextResponse.json({ error: 'Platform parameter is required' }, { status: 400 });
         }
 
+        const nowIso = new Date().toISOString();
+
+        // 期限到来した pending_approval を自動的に queued へ昇格
+        // （承認フォルバック: ユーザーが期限までに承認しなかったものは自動投稿する）
+        await supabase
+            .from('scheduled_posts')
+            .update({ status: 'queued' })
+            .eq('status', 'pending_approval')
+            .eq('platform', platform)
+            .lte('scheduled_at', nowIso);
+
         // 予約時刻が現在時刻以前の、最も古い未投稿データを1件取得
         const { data: posts, error: fetchError } = await supabase
             .from('scheduled_posts')
             .select('*')
             .eq('status', 'queued')
             .eq('platform', platform)
-            .lte('scheduled_at', new Date().toISOString())
+            .lte('scheduled_at', nowIso)
             .order('scheduled_at', { ascending: true })
             .limit(1);
 

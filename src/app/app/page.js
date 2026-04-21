@@ -681,6 +681,30 @@ export default function Home() {
 
             if (!qRes.ok) throw new Error("保存用APIでエラーが発生しました");
 
+            // 週次自動バッチ生成用に、成功した生成設定を保存しておく
+            // （承認フロー・ユーザー毎の自動生成で使われる）
+            try {
+                await fetch('/api/user-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        category_id: selectedCategory?.id || null,
+                        purpose_id: selectedPurpose?.id || null,
+                        target_id: selectedTarget?.id || null,
+                        gender: selectedGender,
+                        business_style: selectedBusinessStyle,
+                        tone: selectedTone,
+                        language: selectedLanguage,
+                        format: selectedFormat,
+                        product_context: cleanProductContext,
+                        user_profile: userProfile,
+                        enabled: true
+                    })
+                });
+            } catch (settingsErr) {
+                console.warn('Failed to save batch settings:', settingsErr);
+            }
+
             // Make.com への一括転送処理
             setBatchStatus(`Make.com 自動化システムへ転送中...`);
             try {
@@ -773,6 +797,13 @@ export default function Home() {
                         </button>
                     ) : mounted && isPro ? (
                         <div className="flex items-center gap-3">
+                            <a
+                                href="/approve"
+                                className="bg-gradient-to-r from-purple-100 to-pink-100 hover:opacity-80 border border-purple-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
+                            >
+                                <Sparkles size={16} className="text-purple-500" />
+                                今週の投稿を承認
+                            </a>
                             <a
                                 href="/dashboard"
                                 className="bg-white/60 backdrop-blur-xl hover:bg-white/20 border border-rose-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
