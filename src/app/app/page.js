@@ -683,14 +683,22 @@ export default function Home() {
 
             // 週次自動バッチ生成用に、成功した生成設定を保存しておく
             // （承認フロー・ユーザー毎の自動生成で使われる）
+            // selectedCategory等は「ID文字列」としてstateに入っているケースがあるため、
+            // string / object 両対応でIDを取り出す
+            const pickId = (v) => {
+                if (v == null) return null;
+                if (typeof v === 'string') return v;
+                if (typeof v === 'object') return v.id || v.label || null;
+                return null;
+            };
             try {
                 await fetch('/api/user-settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        category_id: selectedCategory?.id || null,
-                        purpose_id: selectedPurpose?.id || null,
-                        target_id: selectedTarget?.id || null,
+                        category_id: pickId(selectedCategory),
+                        purpose_id: pickId(selectedPurpose),
+                        target_id: pickId(selectedTarget),
                         gender: selectedGender,
                         business_style: selectedBusinessStyle,
                         tone: selectedTone,
