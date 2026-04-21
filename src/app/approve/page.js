@@ -34,15 +34,24 @@ export default function ApprovePage() {
         }
     };
 
+    // どのpostが画像生成中かを追跡(カードにスケルトン表示するため)
+    const [generatingIds, setGeneratingIds] = useState(new Set());
+
     // 画像未生成の投稿について、1件ずつ順番に /api/generate-post-image を叩いて埋める
     const generateMissingImages = async (list) => {
         const needsImage = list.filter(p => !Array.isArray(p.image_urls) || p.image_urls.length === 0);
         if (needsImage.length === 0) return;
-        setStatusMsg(`${needsImage.length}件の画像を順次生成中...`);
+
+        // 先に全て「生成中」としてマーク(スケルトン表示用)
+        setGeneratingIds(new Set(needsImage.map(p => p.id)));
+
+        const totalSec = needsImage.length * 20; // だいたい1件あたり20秒の目安
         for (let idx = 0; idx < needsImage.length; idx++) {
             const p = needsImage[idx];
+            const remain = needsImage.length - idx;
+            const remainSec = Math.max(10, remain * 20);
+            setStatusMsg(`AI画像を生成しています: ${idx + 1} / ${needsImage.length} 件目 (残り約${remainSec}秒)`);
             try {
-                setStatusMsg(`画像生成中 (${idx + 1}/${needsImage.length}) - ${p.caption?.slice(0, 20) || ''}...`);
                 const res = await fetch('/api/generate-post-image', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -50,17 +59,23 @@ export default function ApprovePage() {
                 });
                 if (!res.ok) {
                     console.warn(`画像生成失敗 (${p.id}):`, await res.text());
-                    continue;
-                }
-                const data = await res.json();
-                if (Array.isArray(data.image_urls) && data.image_urls.length > 0) {
-                    setPosts(prev => prev.map(x => x.id === p.id ? { ...x, image_urls: data.image_urls } : x));
+                } else {
+                    const data = await res.json();
+                    if (Array.isArray(data.image_urls) && data.image_urls.length > 0) {
+                        setPosts(prev => prev.map(x => x.id === p.id ? { ...x, image_urls: data.image_urls } : x));
+                    }
                 }
             } catch (err) {
                 console.error('image gen loop:', err);
             }
+            // このpostは生成完了
+            setGeneratingIds(prev => {
+                const s = new Set(prev);
+                s.delete(p.id);
+                return s;
+            });
         }
-        setStatusMsg('画像生成完了。確認して承認してください。');
+        setStatusMsg('画像生成がすべて完了しました。内容をご確認のうえ承認してください。');
     };
 
     useEffect(() => {
@@ -201,8 +216,9 @@ export default function ApprovePage() {
                 </header>
 
                 {statusMsg && (
-                    <div className="mb-4 bg-purple-900/30 border border-purple-500/30 rounded-lg px-4 py-2 text-sm">
-                        {statusMsg}
+                    <div className="mb-4 bg-purple-900/30 border border-purple-500/30 rounded-lg px-4 py-3 text-sm flex items-center gap-3">
+                        {generatingIds.size > 0 && <Loader2 size={16} className="animate-spin text-purple-400 flex-shrink-0" />}
+                        <span className="text-purple-100">{statusMsg}</span>
                     </div>
                 )}
 
@@ -243,14 +259,20 @@ export default function ApprovePage() {
                     <div className="space-y-4">
                         {posts.map(post => {
                             const isProcessing = processingIds.has(post.id);
+                            const isGeneratingImage = generatingIds.has(post.id);
                             const scheduledDate = post.scheduled_at ? new Date(post.scheduled_at) : null;
                             const firstImg = post.image_urls?.[0];
                             return (
                                 <div key={post.id} className="bg-gray-900/60 border border-gray-800 rounded-lg overflow-hidden">
                                     <div className="grid md:grid-cols-[240px_1fr] gap-4 p-4">
-                                        <div className="bg-gray-950 rounded overflow-hidden aspect-square">
+                                        <div className="bg-gray-950 rounded overflow-hidden aspect-square relative">
                                             {firstImg ? (
                                                 <img src={firstImg} alt="preview" className="w-full h-full object-cover" />
+                                            ) : isGeneratingImage ? (
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-purple-900/40 to-pink-900/40 animate-pulse">
+                                                    <Loader2 className="animate-spin text-purple-400 mb-2" size={24} />
+                                                    <span className="text-xs text-gray-300">AI画像を生成中</span>
+                                                </div>
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">画像なし</div>
                                             )}

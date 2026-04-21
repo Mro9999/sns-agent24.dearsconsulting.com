@@ -171,6 +171,12 @@ async function generateForUser(settings) {
             finalCaption += '\n\n' + post.hashtags.map(t => t.startsWith('#') ? t : `#${t}`).join(' ');
         }
 
+        // 中身が空のポストはDBに入れない(稀にAIが空JSONを返すケースのガード)
+        if (!finalCaption.trim() && !post.image_idea && !post.overlay_copy) {
+            console.warn(`[generate-weekly-batch] ${user_id} ${i + 1}件目がほぼ空なのでスキップ`);
+            continue;
+        }
+
         // 予約時刻: 明日以降、1日1件、12:00 JST
         const schedDate = new Date();
         schedDate.setDate(schedDate.getDate() + 1 + i);
