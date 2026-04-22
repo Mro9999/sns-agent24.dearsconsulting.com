@@ -264,60 +264,126 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-5 relative">
-                        {/* Step 1 */}
-                        <div className="bg-white/70 backdrop-blur-xl border border-white shadow-sm rounded-2xl p-5 relative flex flex-col items-center text-center">
-                            <div className="absolute -top-3 -left-3 bg-gradient-to-br from-rose-500 to-[#D4A373] text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">1</div>
-                            <div className="w-12 h-12 bg-gradient-to-br from-rose-100 to-rose-200 rounded-full flex items-center justify-center mb-3">
-                                <Calendar size={22} className="text-rose-600" />
-                            </div>
-                            <h4 className="font-bold text-gray-900 mb-2 text-sm md:text-base">毎週日曜 20:00</h4>
-                            <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
-                                AIがあなたの事業プロフィールから<br />
-                                <span className="font-semibold text-gray-800">1週間分（7投稿）を自動生成</span>
-                            </p>
-                        </div>
+                    {/* 「週1回の準備プロセス」と「毎日の自動成果」の2ブロック構成
+                        プロセス(1-3)はグループ化し小さめ、結果(4)を大きく強調して
+                        「何を経て何が手に入るか」を視線の流れで伝える */}
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 md:gap-6 items-stretch">
 
-                        {/* Step 2 */}
-                        <div className="bg-white/70 backdrop-blur-xl border border-white shadow-sm rounded-2xl p-5 relative flex flex-col items-center text-center">
-                            <div className="absolute -top-3 -left-3 bg-gradient-to-br from-rose-500 to-[#D4A373] text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">2</div>
-                            <div className="w-12 h-12 bg-gradient-to-br from-amber-100 to-amber-200 rounded-full flex items-center justify-center mb-3">
-                                <Mail size={22} className="text-amber-600" />
+                        {/* 左ブロック：週1回の準備プロセス (Step 1-3) */}
+                        <div className="bg-gray-50/80 border border-gray-200 rounded-3xl p-5 md:p-6 relative">
+                            <div className="inline-flex items-center gap-1.5 bg-white text-gray-600 text-[10px] font-bold px-3 py-1 rounded-full border border-gray-200 mb-4 tracking-widest">
+                                週に1回の準備
                             </div>
-                            <h4 className="font-bold text-gray-900 mb-2 text-sm md:text-base">承認メール到着</h4>
-                            <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
-                                確認用リンクつきのメールが届く。<br />
-                                <span className="font-semibold text-gray-800">画像と文面のプレビューを確認</span>
-                            </p>
-                        </div>
-
-                        {/* Step 3 */}
-                        <div className="bg-white/70 backdrop-blur-xl border border-white shadow-sm rounded-2xl p-5 relative flex flex-col items-center text-center">
-                            <div className="absolute -top-3 -left-3 bg-gradient-to-br from-rose-500 to-[#D4A373] text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">3</div>
-                            <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mb-3">
-                                <MousePointer size={22} className="text-purple-600" />
-                            </div>
-                            <h4 className="font-bold text-gray-900 mb-2 text-sm md:text-base">ワンクリック承認</h4>
-                            <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
-                                気に入った投稿を承認。不要なものは却下。<br />
-                                <span className="font-semibold text-gray-800">所要時間はわずか数分</span>
-                            </p>
-                        </div>
-
-                        {/* Step 4 */}
-                        <div className="bg-gradient-to-b from-rose-500 to-[#D4A373] p-[1px] rounded-2xl relative">
-                            <div className="bg-white/90 backdrop-blur-xl border border-white/50 h-full rounded-2xl p-5 relative flex flex-col items-center text-center">
-                                <div className="absolute -top-3 -left-3 bg-gradient-to-br from-rose-500 to-[#D4A373] text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">4</div>
-                                <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-[#D4A373] rounded-full flex items-center justify-center mb-3 shadow-md">
-                                    <Rocket size={22} className="text-white" />
+                            <div className="space-y-3 md:space-y-4">
+                                {/* Step 1 */}
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0 flex flex-col items-center">
+                                        <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-[#D4A373] text-white rounded-full flex items-center justify-center font-black text-sm shadow-md">1</div>
+                                        <div className="w-0.5 h-6 bg-gradient-to-b from-rose-300 to-amber-300 mt-1"></div>
+                                    </div>
+                                    <div className="flex-1 pt-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <Calendar size={16} className="text-rose-500" />
+                                            <h4 className="font-bold text-gray-900 text-sm">毎週日曜 20:00</h4>
+                                        </div>
+                                        <p className="text-xs text-gray-600 leading-relaxed">
+                                            AIが事業プロフィールから<br />
+                                            <span className="font-semibold text-gray-800">1週間分（7投稿）を自動生成</span>
+                                        </p>
+                                    </div>
                                 </div>
-                                <h4 className="font-bold text-gray-900 mb-2 text-sm md:text-base">毎日12:00 自動投稿</h4>
-                                <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
-                                    承認された投稿を<br />
-                                    <span className="font-semibold text-gray-800">予約時刻通りにInstagramへ自動配信</span>
-                                </p>
+                                {/* Step 2 */}
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0 flex flex-col items-center">
+                                        <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-[#D4A373] text-white rounded-full flex items-center justify-center font-black text-sm shadow-md">2</div>
+                                        <div className="w-0.5 h-6 bg-gradient-to-b from-amber-300 to-purple-300 mt-1"></div>
+                                    </div>
+                                    <div className="flex-1 pt-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <Mail size={16} className="text-amber-500" />
+                                            <h4 className="font-bold text-gray-900 text-sm">承認メールが届く</h4>
+                                        </div>
+                                        <p className="text-xs text-gray-600 leading-relaxed">
+                                            確認用リンクつきのメールを受信。<br />
+                                            <span className="font-semibold text-gray-800">画像と文面のプレビューを確認</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                {/* Step 3 - ユーザーアクションを強調 */}
+                                <div className="flex items-start gap-3 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-3 -mx-1 shadow-sm">
+                                    <div className="flex-shrink-0">
+                                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-full flex items-center justify-center font-black text-sm shadow-md ring-4 ring-purple-100">3</div>
+                                    </div>
+                                    <div className="flex-1 pt-0.5">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <MousePointer size={16} className="text-purple-600" />
+                                            <h4 className="font-bold text-purple-900 text-sm">ワンクリック承認</h4>
+                                            <span className="bg-purple-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">あなたの唯一の作業</span>
+                                        </div>
+                                        <p className="text-xs text-gray-700 leading-relaxed">
+                                            内容を確認してOKなら承認。不要なら却下。<br />
+                                            <span className="font-bold text-purple-700">所要時間わずか数分</span>
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
+                        {/* 中央の矢印（デスクトップのみ） */}
+                        <div className="hidden md:flex items-center justify-center">
+                            <div className="flex flex-col items-center">
+                                <div className="text-[10px] font-bold text-gray-400 tracking-widest mb-1">RESULT</div>
+                                <div className="text-3xl text-rose-400">→</div>
+                            </div>
+                        </div>
+                        {/* モバイル用の下向き矢印 */}
+                        <div className="md:hidden flex justify-center py-2">
+                            <div className="flex flex-col items-center">
+                                <div className="text-[10px] font-bold text-gray-400 tracking-widest">RESULT</div>
+                                <div className="text-2xl text-rose-400">↓</div>
+                            </div>
+                        </div>
+
+                        {/* 右ブロック：毎日の自動成果 (Step 4) - 大きく強調 */}
+                        <div className="relative">
+                            {/* 後光のグロー */}
+                            <div className="absolute -inset-2 bg-gradient-to-br from-rose-400 via-pink-400 to-[#D4A373] rounded-3xl opacity-40 blur-xl"></div>
+
+                            <div className="relative bg-gradient-to-br from-rose-500 via-pink-500 to-[#D4A373] rounded-3xl p-[2px] shadow-2xl shadow-rose-500/30 h-full">
+                                <div className="bg-gradient-to-br from-white to-rose-50 rounded-3xl p-6 md:p-7 h-full flex flex-col justify-center relative overflow-hidden">
+                                    {/* 背景装飾 */}
+                                    <div className="absolute -top-6 -right-6 w-32 h-32 bg-gradient-to-br from-rose-200/50 to-transparent rounded-full blur-2xl"></div>
+
+                                    <div className="relative z-10">
+                                        <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-rose-500 to-[#D4A373] text-white text-[10px] font-black px-3 py-1 rounded-full mb-4 tracking-widest shadow-md">
+                                            <Rocket size={12} />
+                                            毎日の成果
+                                        </div>
+
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-14 h-14 bg-gradient-to-br from-rose-500 to-[#D4A373] rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/30">
+                                                <Rocket size={28} className="text-white" />
+                                            </div>
+                                            <div>
+                                                <div className="text-[10px] font-bold text-gray-500 tracking-wider">STEP 4</div>
+                                                <h4 className="font-black text-gray-900 text-lg md:text-xl leading-tight">毎日12:00<br className="md:hidden" /> Instagramへ自動投稿</h4>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-sm text-gray-700 leading-relaxed mb-4">
+                                            承認された投稿を、予約時刻通りに<br />
+                                            <span className="font-black text-rose-600">Instagramへ自動配信</span>
+                                        </p>
+
+                                        <div className="flex items-center gap-2 text-xs text-gray-600 bg-white/80 border border-rose-100 rounded-lg p-2.5">
+                                            <Sparkles size={14} className="text-rose-500 flex-shrink-0" />
+                                            <span><span className="font-bold text-gray-800">あなたは何もしなくてOK</span>。投稿が途切れず、集客が回り続けます。</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                     {/* 補足ポイント */}
