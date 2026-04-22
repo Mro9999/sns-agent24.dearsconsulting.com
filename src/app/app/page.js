@@ -973,63 +973,6 @@ export default function Home() {
                                 </span>
                             </button>
                         </div>
-                        {/* Pro Max ユーザー限定: 週次自動化を操作するコンパクトなアクション枠 */}
-                        {isProMax && (
-                            <div className="w-full flex flex-col items-center mt-20 pt-4 mb-4">
-                                <div className="w-full max-w-md bg-white/70 backdrop-blur-xl border border-white rounded-2xl shadow-sm px-6 py-5">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <Sparkles size={16} className="text-rose-500" />
-                                        <span className="text-xs font-bold tracking-widest text-gray-500">PRO MAX</span>
-                                    </div>
-                                    <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">週次自動投稿の管理</h4>
-                                    <p className="text-xs text-gray-500 leading-relaxed mb-4">
-                                        毎週日曜20:00に1週間分のAI投稿が自動生成されます。<br />
-                                        承認画面で内容を確認して、OKなら承認するだけ。
-                                    </p>
-                                    <div className="flex flex-col sm:flex-row gap-2">
-                                        <a
-                                            href="/approve"
-                                            className="flex-1 text-center px-4 py-2.5 rounded-full text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
-                                        >
-                                            <Sparkles size={14} /> 今週の投稿を承認
-                                        </a>
-                                        <button
-                                            onClick={() => handleBatchGenerate('instagram')}
-                                            disabled={loading}
-                                            className="flex-1 px-4 py-2.5 rounded-full text-sm font-bold border border-gray-300 text-gray-800 hover:bg-gray-50 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
-                                        >
-                                            <Instagram size={14} /> 今すぐ再生成する
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Pro ユーザー向け: Pro Max 個別相談へのコンパクトな誘導 */}
-                        {isPro && !isProMax && (
-                            <div className="w-full flex flex-col items-center mt-20 pt-4 mb-4">
-                                <div className="w-full max-w-md bg-gradient-to-br from-slate-50 to-rose-50/60 border border-rose-100 rounded-2xl px-6 py-5">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Rocket size={16} className="text-rose-500" />
-                                        <span className="text-xs font-bold tracking-widest text-rose-600">PRO MAX PLAN</span>
-                                    </div>
-                                    <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">週次1クリックで運用したい方へ</h4>
-                                    <p className="text-xs text-gray-600 leading-relaxed mb-4">
-                                        Pro Max Plan では、1週間分の投稿がAIで自動生成され、<br />
-                                        毎日決まった時刻に自動投稿されます。お客様の事業に合わせた<br />
-                                        オーダーメイド設定を行うため、<span className="font-semibold">個別相談からのご契約</span>となります。
-                                    </p>
-                                    <button
-                                        type="button"
-                                        onClick={() => setProMaxInquiryOpen(true)}
-                                        className="w-full px-4 py-2.5 rounded-full text-sm font-bold bg-gray-900 text-white hover:bg-gray-800 transition-colors inline-flex items-center justify-center gap-2"
-                                    >
-                                        <Sparkles size={14} /> 個別相談を申し込む
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
                         {/* Pro Max のバッチ生成中ステータス表示（再生成ボタンから呼ばれた場合に表示） */}
                         {isProMax && batchStatus && (
                             <div className="w-full max-w-md mx-auto mt-4 px-5 py-5 bg-black/60 shadow-inner backdrop-blur-xl rounded-2xl border border-cyan-500/40 relative overflow-hidden">
