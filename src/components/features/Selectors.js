@@ -601,7 +601,7 @@ export function ProductInput({ value = {}, onChange }) {
                         )}
                     </div>
                     <p className="text-xs text-slate-500 mt-4 leading-relaxed font-medium">
-                        ✨ <strong>自動で「綺麗な丸型（真円）」に切り抜かれ、軽量化されます（上限10MB）。</strong><br />
+                        <strong>自動で「綺麗な丸型（真円）」に切り抜かれ、軽量化されます（上限10MB）。</strong><br />
                         生成された画像の右下に自動でロゴとして合成されます。<br />
                         <span className="text-slate-400">※四角い画像を入れても自動で丸く加工されます。</span>
                     </p>

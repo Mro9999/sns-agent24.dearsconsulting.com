@@ -1063,7 +1063,7 @@ export default function Home() {
                                         >
                                             <span className="absolute inset-0 w-full h-full bg-white opacity-0 group-hover/btn:opacity-5 transition-opacity"></span>
                                             {isProMax ? (
-                                                <><span className="text-purple-200 text-lg">📷</span> Instagram 1週間分 自動構築</>
+                                                <><Instagram className="w-5 h-5 text-purple-200" /> Instagram 1週間分 自動構築</>
                                             ) : (
                                                 <><Lock className="w-5 h-5 text-purple-300" /> Instagram 全自動構築を解放する</>
                                             )}
@@ -1352,10 +1352,10 @@ export default function Home() {
                                                     <div>
                                                         <h5 className="text-[10px] font-bold text-slate-800 font-medium mb-1">【映像・音声】</h5>
                                                         <p className="text-sm font-medium text-gray-900 mb-2 max-w-full">
-                                                            <span className="text-blue-300">🎵 </span>{script.audio}
+                                                            <span className="text-blue-500 font-bold">[音声] </span>{script.audio}
                                                         </p>
                                                         <p className="text-xs text-slate-800 font-medium">
-                                                            <span className="text-slate-600">🎥 </span>{script.visual}
+                                                            <span className="text-slate-600 font-bold">[映像] </span>{script.visual}
                                                         </p>
                                                     </div>
                                                     <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-8000 p-3 rounded-lg border border-white shadow-lg/5">

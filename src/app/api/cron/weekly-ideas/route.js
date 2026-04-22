@@ -36,7 +36,7 @@ export async function GET(req) {
 - AIという言葉を使わず、有能なSNSマーケターからのレターのように書くこと。
 
 # 構成要素
-1. タイトル: 【SNS Agent24】今週のトレンド予測と投稿アイデア💡
+1. タイトル: 【SNS Agent24】今週のトレンド予測と投稿アイデア
 2. ご挨拶: 今週もビジネスとSNS運用お疲れ様です。
 3. 今週のトレンド動向 (200文字程度で、幅広いビジネスで有益な見解)
 4. 今週の投稿アイデア (タイトルと、どのような内容を書けばよいかの構成テンプレート)
@@ -102,7 +102,7 @@ export async function GET(req) {
             body: JSON.stringify({
                 personalizations: personalizations,
                 from: { email: 'notifications@dearsconsulting.com', name: 'SNS Agent24' },
-                subject: '【SNS Agent24】今週のトレンド予測と投稿アイデア💡',
+                subject: '【SNS Agent24】今週のトレンド予測と投稿アイデア',
                 content: [{ type: 'text/html', value: htmlContent }]
             })
         });

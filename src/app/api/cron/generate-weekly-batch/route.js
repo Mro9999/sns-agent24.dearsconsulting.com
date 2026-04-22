@@ -42,7 +42,7 @@ async function sendApprovalEmail(email, pendingCount) {
 <html lang="ja">
 <body style="font-family: system-ui, sans-serif; background: #0f0f14; color: #fff; padding: 32px 16px;">
   <div style="max-width: 560px; margin: 0 auto; background: #1a1a22; padding: 32px; border-radius: 12px;">
-    <h1 style="font-size: 22px; margin: 0 0 16px;">🤖 今週の投稿案ができました</h1>
+    <h1 style="font-size: 22px; margin: 0 0 16px;">今週の投稿案ができました</h1>
     <p style="color: #d0d0dd; line-height: 1.7;">
       SNS Agent 24 があなたの事業プロフィールに基づいて、Instagram 1週間分の投稿案（${pendingCount}件）を自動生成しました。<br>
       以下のリンクから内容をご確認いただき、承認してください。
@@ -72,7 +72,7 @@ async function sendApprovalEmail(email, pendingCount) {
         body: JSON.stringify({
             personalizations: [{ to: [{ email }] }],
             from: { email: 'notifications@dearsconsulting.com', name: 'SNS Agent 24' },
-            subject: '【SNS Agent 24】今週の投稿案を確認してください 📝',
+            subject: '【SNS Agent 24】今週の投稿案を確認してください',
             content: [{ type: 'text/html', value: html }]
         })
     });
