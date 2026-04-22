@@ -6,6 +6,7 @@ import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
 import { drawCanvasImage, VISUAL_VARIETY_DIRECTIVES, SUBJECT_VARIETY_DIRECTIVES } from '@/lib/canvasHelper';
+import ProMaxInquiryModal from '@/components/ProMaxInquiryModal';
 import ProfileSetupModal from '@/components/features/ProfileSetupModal';
 import { usePostHog } from 'posthog-js/react';
 
@@ -128,6 +129,8 @@ export default function Home() {
     const [loadingPhase, setLoadingPhase] = useState(0);
     const [result, setResult] = useState(null);
     const [checkoutError, setCheckoutError] = useState(null);
+    // Pro Max Plan 個別相談モーダル表示制御
+    const [proMaxInquiryOpen, setProMaxInquiryOpen] = useState(false);
     const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
     // アカウント作成から7日以内か判定し、無料生成枠の上限を返す
@@ -1067,11 +1070,11 @@ export default function Home() {
                                     </div>
                                     
                                     <div className="flex flex-col gap-4 w-full">
+                                        {/* Pro Max Planは個別相談制のため、未契約ユーザーは相談モーダルを開く */}
                                         <button
                                             onClick={() => {
                                                 if (!isProMax) {
-                                                    document.querySelector('.pro-modal-trigger')?.click();
-                                                    handleCheckout('month', 'promax');
+                                                    setProMaxInquiryOpen(true);
                                                     return;
                                                 }
                                                 handleBatchGenerate('instagram');
@@ -1083,9 +1086,15 @@ export default function Home() {
                                             {isProMax ? (
                                                 <><Instagram className="w-5 h-5 text-purple-200" /> Instagram 1週間分 自動構築</>
                                             ) : (
-                                                <><Lock className="w-5 h-5 text-purple-300" /> Instagram 全自動構築を解放する</>
+                                                <><Sparkles className="w-5 h-5 text-purple-300" /> Pro Max 個別相談を申し込む</>
                                             )}
                                         </button>
+                                        {!isProMax && (
+                                            <p className="text-[11px] text-slate-400 text-center leading-relaxed">
+                                                Pro Max Plan は個別相談制です。<br />
+                                                お客様の事業に合わせたカスタム設定を行います。
+                                            </p>
+                                        )}
                                     </div>
 
                                     {batchStatus && (
@@ -1667,10 +1676,18 @@ export default function Home() {
             </footer >
 
             {/* Profile Setup Modal */}
-            <ProfileSetupModal 
-                isOpen={isProfileModalOpen} 
-                onClose={() => setIsProfileModalOpen(false)} 
-                user={user} 
+            <ProfileSetupModal
+                isOpen={isProfileModalOpen}
+                onClose={() => setIsProfileModalOpen(false)}
+                user={user}
+            />
+
+            {/* Pro Max Plan 個別相談モーダル */}
+            <ProMaxInquiryModal
+                isOpen={proMaxInquiryOpen}
+                onClose={() => setProMaxInquiryOpen(false)}
+                defaultEmail={user?.emailAddresses?.[0]?.emailAddress || ''}
+                defaultName={user?.fullName || ''}
             />
         </div >
     );

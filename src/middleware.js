@@ -5,8 +5,10 @@ const isPublicRoute = createRouteMatcher([
     '/',
     '/api/webhooks(.*)',
     '/api/admin/queue',
-    '/api/cron(.*)'
+    '/api/cron(.*)',
     // 注: /api/cron(.*) で generate-weekly-batch / auto-approve / weekly-ideas すべて通る
+    '/api/pro-max-inquiry'
+    // Pro Max Plan の問い合わせフォームは未ログインユーザーからも受け付けるため公開ルート化
 ]);
 
 export default clerkMiddleware((auth, req) => {

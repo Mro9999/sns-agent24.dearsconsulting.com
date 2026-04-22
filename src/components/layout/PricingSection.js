@@ -2,9 +2,11 @@
 import React, { useState } from 'react';
 import { Check, Star, Zap, User, Building, Calendar, Mail, MousePointer, Rocket, Sparkles } from 'lucide-react';
 import styles from './PricingSection.module.css';
+import ProMaxInquiryModal from '@/components/ProMaxInquiryModal';
 
 export default function PricingSection({ onUpgrade, isPro, isProMax }) {
     const [billingCycle, setBillingCycle] = useState('month'); // 'month' or 'year'
+    const [inquiryOpen, setInquiryOpen] = useState(false);
 
     const plans = [
         {
@@ -46,11 +48,12 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
             name: "Pro Max Plan",
             price: billingCycle === 'year' ? "¥298,000" : "¥29,800",
             period: billingCycle === 'year' ? "/ year" : "/ month",
-            subtext: billingCycle === 'year' ? "（月あたり約 ¥24,833）" : null,
+            subtext: billingCycle === 'year' ? "（月あたり約 ¥24,833）" : "※個別相談制（カスタム設定が必要なため）",
             badge: "エンタープライズ",
             features: [
                 "Pro Planの全機能",
                 "週次AI全自動スケジュール構築",
+                "事業特性に合わせたオーダーメイド初期設定",
                 "生成結果を承認メールで確認",
                 "ワンクリック承認で1週間の投稿が確定",
                 "毎日決まった時刻にInstagram自動投稿",
@@ -58,9 +61,15 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
                 "専任担当によるオンボーディング",
                 "優先度最上位のプレミアムサポート"
             ],
-            buttonText: isProMax ? "ご契約内容の管理" : "Pro Maxにアップグレード",
+            buttonText: isProMax ? "ご契約内容の管理" : "個別相談を申し込む",
             buttonStyle: isProMax ? "current" : "primary",
-            action: () => onUpgrade ? onUpgrade(billingCycle, 'promax') : window.location.href = '/app',
+            action: () => {
+                if (isProMax && onUpgrade) {
+                    onUpgrade(billingCycle, 'promax');
+                } else {
+                    setInquiryOpen(true);
+                }
+            },
             isCurrentPlan: isProMax
         }
     ];
@@ -293,8 +302,25 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
                             </div>
                         </div>
                     </div>
+
+                    {/* 個別相談制の案内 */}
+                    <div className="mt-6 bg-slate-50 border border-slate-200 rounded-2xl p-5 md:p-6 text-center">
+                        <p className="text-sm text-gray-700 leading-relaxed">
+                            <span className="font-bold text-gray-900">Pro Max Plan は個別相談制です。</span><br />
+                            お客様の事業特性・ブランドガイドライン・ターゲット層に合わせたオーダーメイド設定を<br className="hidden md:inline" />
+                            専任担当が行った上で、ご契約・ご利用開始となります。
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setInquiryOpen(true)}
+                            className="mt-5 inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full text-sm font-bold hover:bg-gray-800 transition-colors"
+                        >
+                            <Sparkles size={16} /> 個別相談を申し込む
+                        </button>
+                    </div>
                 </div>
             </div>
+            <ProMaxInquiryModal isOpen={inquiryOpen} onClose={() => setInquiryOpen(false)} />
         </section>
     );
 }
