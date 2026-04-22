@@ -973,153 +973,80 @@ export default function Home() {
                                 </span>
                             </button>
                         </div>
-                        {/* PRO MAX 限定：全自動予約バッチ一括生成 UI */}
-                        {(isPro || isProMax) && (
-                            <div className="w-full flex flex-col items-center mt-36 pt-10 relative">
-                                {/* 区切りの装飾（視認性を極限まで高めたプレミアムバッジ） */}
-                                <div className="absolute top-0 left-0 right-0 flex items-center justify-center -translate-y-1/2">
-                                    <div className="w-full max-w-4xl h-[2px] bg-gradient-to-r from-transparent via-slate-800/40 to-transparent"></div>
-                                    <div className="absolute px-8 py-2.5 bg-gradient-to-r from-slate-800 to-black border border-slate-700/80 rounded-full shadow-[0_10px_25px_-5px_rgba(0,0,0,0.3)] flex items-center gap-3">
-                                        <Sparkles size={18} className="text-amber-400 animate-pulse" />
-                                        <span className="text-sm md:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-amber-300 to-yellow-500 tracking-[0.25em]">ADVANCED OPTIONS</span>
-                                        <Sparkles size={18} className="text-amber-400 animate-pulse" />
+                        {/* Pro Max ユーザー限定: 週次自動化を操作するコンパクトなアクション枠 */}
+                        {isProMax && (
+                            <div className="w-full flex flex-col items-center mt-20 pt-4 mb-4">
+                                <div className="w-full max-w-md bg-white/70 backdrop-blur-xl border border-white rounded-2xl shadow-sm px-6 py-5">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Sparkles size={16} className="text-rose-500" />
+                                        <span className="text-xs font-bold tracking-widest text-gray-500">PRO MAX</span>
                                     </div>
-                                </div>
-                                
-                                <p className="text-slate-500 text-xs mt-2 mb-8 text-center leading-relaxed font-medium">
-                                    日々の生成だけでなく、<span className="text-slate-700 font-bold">1週間分の完全自動化</span>を構築したい場合は<br className="hidden sm:block"/>
-                                    こちらの「Pro Max Plan」機能がおすすめです。
-                                </p>
-
-                                <div className="relative w-[320px] sm:w-[360px] group">
-                                    {/* 背面のプレミアムな光彩エフェクト (Satin Whiteの微発光) */}
-                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-slate-400/20 to-white/10 rounded-[1.5rem] blur-md opacity-40 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-                                    
-                                    <div className="relative p-7 bg-[#050505] border border-white/10 rounded-[1.5rem] shadow-2xl flex flex-col items-center">
-                                        {/* PRO MAX バッジ */}
-                                        <div className="absolute -top-4 px-6 py-2 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-900 text-xs md:text-sm font-black tracking-[0.2em] rounded-full shadow-[0_4px_15px_rgba(255,255,255,0.2)] border border-white/60">
-                                            Pro Max Plan
-                                        </div>
-                                        
-                                        <h4 className="text-white font-black mb-2 flex items-center justify-center gap-2 text-lg md:text-xl tracking-widest mt-5 drop-shadow-[0_2px_10px_rgba(255,255,255,0.3)]">
-                                            <Rocket className="w-6 h-6 text-slate-200" />
-                                            AI全自動スケジュール構築
-                                        </h4>
-                                        <p className="text-slate-400 text-xs font-semibold tracking-wider mb-6 text-center">
-                                            ※さらに高度な自動運用を求める企業様へ推奨
-                                        </p>
-                                    
-                                    {/* フロー図（ステップ説明） */}
-                                    <div className="w-full mb-8 mt-2 px-1">
-                                        <div className="flex flex-col gap-3 w-full">
-                                            {/* Step 1 */}
-                                            <div className="flex items-center gap-4 bg-white/5 border border-white/10 px-4 py-3.5 rounded-xl w-full">
-                                                <div className="w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30 text-sm font-black shrink-0 shadow-[0_0_10px_rgba(59,130,246,0.2)]">1</div>
-                                                <div className="flex flex-col text-left">
-                                                    <p className="text-sm text-slate-200 font-bold leading-tight mb-1">ターゲット・トレンド分析</p>
-                                                    <span className="text-[11px] text-slate-400 font-medium">見込み客の「今の悩みや興味」を抽出</span>
-                                                </div>
-                                            </div>
-                                            
-                                            {/* Step 2 */}
-                                            <div className="flex items-center gap-4 bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-purple-500/40 px-4 py-3.5 rounded-xl w-full shadow-[0_0_15px_rgba(168,85,247,0.15)] transform hover:scale-[1.02] transition-transform">
-                                                <div className="w-9 h-9 rounded-full bg-purple-500/30 text-purple-200 flex items-center justify-center border border-purple-400/50 text-sm font-black shrink-0 shadow-[0_0_10px_rgba(168,85,247,0.3)]">2</div>
-                                                <div className="flex flex-col text-left">
-                                                    <p className="text-sm text-white font-bold leading-tight drop-shadow-md mb-1">7日分をAIが一括作成</p>
-                                                    <span className="text-[11px] text-purple-200/80 font-medium tracking-wide">画像と最適な文章を即座に合成</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Step 3 */}
-                                            <div className="flex items-center gap-4 bg-emerald-900/20 border border-emerald-500/30 px-4 py-3.5 rounded-xl w-full shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-                                                <div className="w-9 h-9 rounded-full bg-emerald-500/30 text-emerald-300 flex items-center justify-center border border-emerald-400/50 text-sm font-black shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.3)]">3</div>
-                                                <div className="flex flex-col text-left">
-                                                    <p className="text-sm text-emerald-100 font-bold leading-tight mb-1">毎日自動でSNSへ投稿</p>
-                                                    <span className="text-[11px] text-emerald-300/80 font-medium">一切の操作不要。完全放置で集客</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* プラン比較（Free → Pro → Pro Max の順で手軽な料金から表示） */}
-                                    <div className="w-full mb-8 mt-2">
-                                        <p className="text-[10px] md:text-xs text-slate-400 font-bold tracking-widest mb-3 text-center">PLAN COMPARISON</p>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {/* Free Plan */}
-                                            <div className="bg-white/5 border border-white/10 rounded-lg py-3 px-2 text-center">
-                                                <p className="text-[10px] text-slate-400 font-semibold mb-1">Free</p>
-                                                <p className="text-white font-bold text-xs md:text-sm">¥0</p>
-                                                <p className="text-[9px] text-slate-500 mt-1">お試し用</p>
-                                            </div>
-                                            {/* Pro Plan */}
-                                            <div className="bg-white/5 border border-white/10 rounded-lg py-3 px-2 text-center">
-                                                <p className="text-[10px] text-slate-400 font-semibold mb-1">Pro</p>
-                                                <p className="text-white font-bold text-xs md:text-sm">¥2,980</p>
-                                                <p className="text-[9px] text-slate-500 mt-1">手動生成無制限</p>
-                                            </div>
-                                            {/* Pro Max Plan (強調表示) */}
-                                            <div className="bg-gradient-to-b from-purple-600/30 to-pink-600/30 border border-purple-400/50 rounded-lg py-3 px-2 text-center shadow-[0_0_15px_rgba(168,85,247,0.2)]">
-                                                <p className="text-[10px] text-purple-200 font-bold mb-1">Pro Max</p>
-                                                <p className="text-white font-bold text-xs md:text-sm">¥29,800</p>
-                                                <p className="text-[9px] text-purple-200/80 mt-1">週次自動構築</p>
-                                            </div>
-                                        </div>
-                                        <p className="text-[10px] text-slate-500 text-center mt-3">
-                                            すべての料金はいずれも月額（税込）。年払いなら2ヶ月分お得。
-                                        </p>
-                                    </div>
-                                    
-                                    <div className="flex flex-col gap-4 w-full">
-                                        {/* Pro Max Planは個別相談制のため、未契約ユーザーは相談モーダルを開く */}
-                                        <button
-                                            onClick={() => {
-                                                if (!isProMax) {
-                                                    setProMaxInquiryOpen(true);
-                                                    return;
-                                                }
-                                                handleBatchGenerate('instagram');
-                                            }}
-                                            disabled={loading}
-                                            className="w-full relative px-6 py-4 bg-gradient-to-r from-purple-900/50 to-pink-900/50 hover:from-purple-800/70 hover:to-pink-800/70 border border-purple-500/40 text-white text-sm md:text-base font-bold rounded-xl transition-all shadow-[0_0_25px_rgba(168,85,247,0.2)] hover:shadow-[0_0_35px_rgba(168,85,247,0.4)] disabled:opacity-50 overflow-hidden flex items-center justify-center gap-2 group/btn"
+                                    <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">週次自動投稿の管理</h4>
+                                    <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                                        毎週日曜20:00に1週間分のAI投稿が自動生成されます。<br />
+                                        承認画面で内容を確認して、OKなら承認するだけ。
+                                    </p>
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                        <a
+                                            href="/approve"
+                                            className="flex-1 text-center px-4 py-2.5 rounded-full text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
                                         >
-                                            <span className="absolute inset-0 w-full h-full bg-white opacity-0 group-hover/btn:opacity-5 transition-opacity"></span>
-                                            {isProMax ? (
-                                                <><Instagram className="w-5 h-5 text-purple-200" /> Instagram 1週間分 自動構築</>
-                                            ) : (
-                                                <><Sparkles className="w-5 h-5 text-purple-300" /> Pro Max 個別相談を申し込む</>
-                                            )}
+                                            <Sparkles size={14} /> 今週の投稿を承認
+                                        </a>
+                                        <button
+                                            onClick={() => handleBatchGenerate('instagram')}
+                                            disabled={loading}
+                                            className="flex-1 px-4 py-2.5 rounded-full text-sm font-bold border border-gray-300 text-gray-800 hover:bg-gray-50 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                                        >
+                                            <Instagram size={14} /> 今すぐ再生成する
                                         </button>
-                                        {!isProMax && (
-                                            <p className="text-[11px] text-slate-400 text-center leading-relaxed">
-                                                Pro Max Plan は個別相談制です。<br />
-                                                お客様の事業に合わせたカスタム設定を行います。
-                                            </p>
-                                        )}
                                     </div>
-
-                                    {batchStatus && (
-                                        <div className="w-full mt-8 px-5 py-5 bg-black/60 shadow-inner backdrop-blur-xl rounded-2xl border border-cyan-500/40 relative overflow-hidden">
-                                            {/* Top loading bar */}
-                                            <div 
-                                                className="absolute top-0 left-0 h-1 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500" 
-                                                style={{ width: `${loadingProgress}%`, transition: 'width 0.5s ease-out' }}
-                                            ></div>
-                                            {/* Scanning light effect */}
-                                            <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent animate-pulse-scan pointer-events-none"></div>
-
-                                            <div className="flex flex-col items-center justify-center gap-4 relative z-10">
-                                                <div className="relative w-10 h-10 flex items-center justify-center">
-                                                    <div className="absolute inset-0 rounded-full border-[3px] border-t-cyan-400 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
-                                                    <div className="absolute inset-1 rounded-full border-[3px] border-b-purple-400 border-r-transparent border-t-transparent border-l-transparent animate-[spin_1.5s_linear_infinite_reverse]"></div>
-                                                    <div className="w-3 h-3 bg-cyan-300 rounded-full animate-ping opacity-80"></div>
-                                                </div>
-                                                <p className="text-sm md:text-base text-cyan-50 text-center font-bold tracking-wide animate-pulse">
-                                                    {batchStatus}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Pro ユーザー向け: Pro Max 個別相談へのコンパクトな誘導 */}
+                        {isPro && !isProMax && (
+                            <div className="w-full flex flex-col items-center mt-20 pt-4 mb-4">
+                                <div className="w-full max-w-md bg-gradient-to-br from-slate-50 to-rose-50/60 border border-rose-100 rounded-2xl px-6 py-5">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Rocket size={16} className="text-rose-500" />
+                                        <span className="text-xs font-bold tracking-widest text-rose-600">PRO MAX PLAN</span>
+                                    </div>
+                                    <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">週次1クリックで運用したい方へ</h4>
+                                    <p className="text-xs text-gray-600 leading-relaxed mb-4">
+                                        Pro Max Plan では、1週間分の投稿がAIで自動生成され、<br />
+                                        毎日決まった時刻に自動投稿されます。お客様の事業に合わせた<br />
+                                        オーダーメイド設定を行うため、<span className="font-semibold">個別相談からのご契約</span>となります。
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setProMaxInquiryOpen(true)}
+                                        className="w-full px-4 py-2.5 rounded-full text-sm font-bold bg-gray-900 text-white hover:bg-gray-800 transition-colors inline-flex items-center justify-center gap-2"
+                                    >
+                                        <Sparkles size={14} /> 個別相談を申し込む
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Pro Max のバッチ生成中ステータス表示（再生成ボタンから呼ばれた場合に表示） */}
+                        {isProMax && batchStatus && (
+                            <div className="w-full max-w-md mx-auto mt-4 px-5 py-5 bg-black/60 shadow-inner backdrop-blur-xl rounded-2xl border border-cyan-500/40 relative overflow-hidden">
+                                <div
+                                    className="absolute top-0 left-0 h-1 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500"
+                                    style={{ width: `${loadingProgress}%`, transition: 'width 0.5s ease-out' }}
+                                ></div>
+                                <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent animate-pulse-scan pointer-events-none"></div>
+                                <div className="flex flex-col items-center justify-center gap-4 relative z-10">
+                                    <div className="relative w-10 h-10 flex items-center justify-center">
+                                        <div className="absolute inset-0 rounded-full border-[3px] border-t-cyan-400 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+                                        <div className="absolute inset-1 rounded-full border-[3px] border-b-purple-400 border-r-transparent border-t-transparent border-l-transparent animate-[spin_1.5s_linear_infinite_reverse]"></div>
+                                        <div className="w-3 h-3 bg-cyan-300 rounded-full animate-ping opacity-80"></div>
+                                    </div>
+                                    <p className="text-sm md:text-base text-cyan-50 text-center font-bold tracking-wide animate-pulse">
+                                        {batchStatus}
+                                    </p>
                                 </div>
                             </div>
                         )}
