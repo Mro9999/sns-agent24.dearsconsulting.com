@@ -8,8 +8,59 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
     const [billingCycle, setBillingCycle] = useState('month'); // 'month' or 'year'
     const [inquiryOpen, setInquiryOpen] = useState(false);
 
+    // 現在のユーザーのティア（free / pro / promax）を判定し、
+    // 各プランが「現在のプラン / 下位プラン / 上位プラン」のいずれかを算出する
+    const currentTier = isProMax ? 'promax' : isPro ? 'pro' : 'free';
+    const tierRank = { free: 0, pro: 1, promax: 2 };
+    const relationTo = (planTier) => {
+        if (tierRank[planTier] === tierRank[currentTier]) return 'current';
+        if (tierRank[planTier] < tierRank[currentTier]) return 'lower';
+        return 'upper';
+    };
+
+    // プランごとの表示情報を一元化
+    // relation === 'current': 現在のプラン（赤バッジ＋赤枠）
+    // relation === 'lower': 下位プラン（グレーアウト、ボタン無効）
+    // relation === 'upper': アップグレード候補（通常ボタン）
+    const buildPlanCard = (planTier, base) => {
+        const relation = relationTo(planTier);
+        const isCurrentPlan = relation === 'current';
+        const isLower = relation === 'lower';
+
+        let buttonText;
+        let buttonStyle;
+        let disabled = false;
+        let showPromoBadge = false;
+
+        if (isCurrentPlan) {
+            buttonText = (planTier === 'free') ? 'ご利用中' : 'ご契約内容の管理';
+            buttonStyle = (planTier === 'free') ? 'current' : 'current';
+            disabled = (planTier === 'free'); // Freeは管理するものが無いので非活性
+        } else if (isLower) {
+            buttonText = '現在のプランより下位';
+            buttonStyle = 'secondary';
+            disabled = true;
+        } else {
+            // 上位プランへのアップグレード
+            buttonText = base.upgradeText;
+            buttonStyle = 'primary';
+        }
+
+        return {
+            ...base,
+            planTier,
+            relation,
+            isCurrentPlan,
+            disabled,
+            buttonText,
+            buttonStyle,
+            // プロモバッジ（人気 No.1 等）はアップグレード候補の時のみ表示する
+            badge: !isCurrentPlan && !isLower ? base.badge : null
+        };
+    };
+
     const plans = [
-        {
+        buildPlanCard('free', {
             name: "Free Plan",
             price: "¥0",
             period: "/ month",
@@ -20,12 +71,9 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
                 "広告なし",
                 "商用利用不可（個人利用・お試しのみ）"
             ],
-            buttonText: isPro ? "フリープラン" : "現在のプラン",
-            buttonStyle: isPro ? "secondary" : "current",
-            disabled: true,
-            isCurrentPlan: !isPro
-        },
-        {
+            action: null
+        }),
+        buildPlanCard('pro', {
             name: "Pro Plan",
             price: billingCycle === 'year' ? "¥29,800" : "¥2,980",
             period: billingCycle === 'year' ? "/ year" : "/ month",
@@ -39,12 +87,10 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
                 "新機能への早期アクセス",
                 "商用利用完全OK"
             ],
-            buttonText: (isPro && !isProMax) ? "ご契約内容の管理" : isProMax ? "現在のプラン" : "Proにアップグレード",
-            buttonStyle: (isPro && !isProMax) ? "current" : isProMax ? "secondary" : "primary",
-            action: () => onUpgrade ? onUpgrade(billingCycle, 'pro') : window.location.href = '/app',
-            isCurrentPlan: isPro && !isProMax
-        },
-        {
+            upgradeText: "Proにアップグレード",
+            action: () => onUpgrade ? onUpgrade(billingCycle, 'pro') : window.location.href = '/app'
+        }),
+        buildPlanCard('promax', {
             name: "Pro Max Plan",
             price: billingCycle === 'year' ? "¥298,000" : "¥29,800",
             period: billingCycle === 'year' ? "/ year" : "/ month",
@@ -61,17 +107,15 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
                 "専任担当によるオンボーディング",
                 "優先度最上位のプレミアムサポート"
             ],
-            buttonText: isProMax ? "ご契約内容の管理" : "個別相談を申し込む",
-            buttonStyle: isProMax ? "current" : "primary",
+            upgradeText: "個別相談を申し込む",
             action: () => {
                 if (isProMax && onUpgrade) {
                     onUpgrade(billingCycle, 'promax');
                 } else {
                     setInquiryOpen(true);
                 }
-            },
-            isCurrentPlan: isProMax
-        }
+            }
+        })
     ];
 
     return (
@@ -217,7 +261,10 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
 
                 <div className={styles.grid}>
                     {plans.map((plan, index) => (
-                        <div key={index} className={`${styles.card} ${plan.name === 'Pro Max Plan' ? styles.proCard : ''} ${plan.isCurrentPlan ? styles.currentPlanCard : ''}`}>
+                        <div
+                            key={index}
+                            className={`${styles.card} ${plan.name === 'Pro Max Plan' && !plan.isCurrentPlan ? styles.proCard : ''} ${plan.isCurrentPlan ? styles.currentPlanCard : ''} ${plan.relation === 'lower' ? styles.lowerPlanCard : ''}`}
+                        >
                             {plan.isCurrentPlan && <div className={styles.currentBadge}>現在のプラン</div>}
                             {!plan.isCurrentPlan && plan.badge && <div className={styles.badge}>{plan.badge}</div>}
                             <h3 className={styles.planName}>{plan.name}</h3>

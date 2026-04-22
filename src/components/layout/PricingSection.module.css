@@ -116,6 +116,18 @@
     box-shadow: 0 0 20px rgba(0, 112, 243, 0.2);
 }
 
+/* 下位プラン: すでに契約しているユーザーから見て「ダウングレードになる」プラン */
+/* グレーアウト調にして「選べない/現在のプランではない」を視覚的に示す */
+.lowerPlanCard {
+    opacity: 0.55;
+    filter: saturate(0.5);
+    background: rgba(240, 240, 240, 0.6);
+}
+
+.lowerPlanCard:hover {
+    opacity: 0.75;
+}
+
 .badge {
     position: absolute;
     top: -12px;
