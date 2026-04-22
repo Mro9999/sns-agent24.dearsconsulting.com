@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Check, Star, Zap, User, Building, Calendar, Mail, MousePointer, Rocket, Sparkles } from 'lucide-react';
+import { Check, Star, Zap, User, Building, Calendar, Mail, MousePointer, Rocket, Sparkles, X, AlertTriangle, TrendingDown, Crown } from 'lucide-react';
 import styles from './PricingSection.module.css';
 import ProMaxInquiryModal from '@/components/ProMaxInquiryModal';
 
@@ -84,85 +84,118 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
                         いつでも解約可能です。
                     </p>
 
-                    <div className="mt-8 mb-6 w-full max-w-4xl mx-auto px-2">
-                        <h3 className="text-center text-lg md:text-xl font-bold mb-6 text-gray-900 tracking-wide">
+                    <div className="mt-8 mb-6 w-full max-w-5xl mx-auto px-2">
+                        <h3 className="text-center text-lg md:text-xl font-bold mb-8 text-gray-900 tracking-wide">
                             なぜ <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-[#D4A373] font-extrabold">SNS Agent24</span> が選ばれるのか？
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                            {/* 自作（DIY） */}
-                            <div className="bg-white/60 backdrop-blur-xl border-white shadow-sm rounded-2xl p-5 relative flex flex-col items-center">
-                                <h4 className="text-gray-700 font-semibold font-bold mb-4 flex items-center justify-center gap-2">
-                                    <User size={20} /> 自社で運用する場合
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 items-stretch">
+
+                            {/* ① 自社運用（課題アリ: グレーで沈めて「×」感を出す） */}
+                            <div className="relative bg-gray-100/70 border border-gray-200 rounded-2xl p-5 flex flex-col opacity-90">
+                                <div className="absolute -top-3 left-5 bg-gray-400 text-white text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wider">
+                                    課題あり
+                                </div>
+                                <h4 className="text-gray-600 font-bold mb-4 flex items-center gap-2 pt-2">
+                                    <User size={18} className="text-gray-500" /> 自社で運用する場合
                                 </h4>
-                                <div className="space-y-3 w-full text-sm">
-                                    <div className="flex justify-between items-center bg-white/50 border border-white/80 px-3 py-2.5 rounded-xl border border-white">
-                                        <span className="text-gray-700 font-semibold">月額費用</span>
-                                        <span className="text-gray-900 font-bold">¥0</span>
+                                <div className="space-y-2 w-full text-sm flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                                            <Check size={12} className="text-gray-500" />
+                                        </span>
+                                        <span className="text-gray-600">月額費用 <span className="font-bold text-gray-700">¥0</span></span>
                                     </div>
-                                    <div className="flex justify-between items-center bg-white/50 border border-white/80 px-3 py-2.5 rounded-xl border border-white">
-                                        <span className="text-gray-700 font-semibold">作業時間</span>
-                                        <span className="text-rose-600 font-bold">月間30時間〜</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-5 h-5 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">
+                                            <X size={12} className="text-rose-500" />
+                                        </span>
+                                        <span className="text-gray-600">作業時間 <span className="font-bold text-rose-600">月30時間〜</span></span>
                                     </div>
-                                    <div className="flex justify-between items-center bg-white/50 border border-white/80 px-3 py-2.5 rounded-xl border border-white">
-                                        <span className="text-gray-700 font-semibold">クオリティ</span>
-                                        <span className="text-gray-800 font-bold">属人的で不安定</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-5 h-5 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">
+                                            <X size={12} className="text-rose-500" />
+                                        </span>
+                                        <span className="text-gray-600">品質 <span className="font-bold text-gray-700">属人的で不安定</span></span>
                                     </div>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-5 h-8 flex items-center justify-center text-center leading-relaxed">
-                                    日々の通常業務を圧迫し<br />継続が困難になりがち
+                                <p className="text-[11px] text-gray-500 mt-4 pt-4 border-t border-gray-200 leading-relaxed">
+                                    通常業務を圧迫し、継続が困難になりがち
                                 </p>
                             </div>
 
-                            {/* 運用代行 */}
-                            <div className="bg-white/60 backdrop-blur-xl border-white shadow-sm rounded-2xl p-5 relative flex flex-col items-center">
-                                <h4 className="text-gray-700 font-semibold font-bold mb-4 flex items-center justify-center gap-2">
-                                    <Building size={20} /> 一般的な運用代行
+                            {/* ② 運用代行（高コスト: ニュートラル白で「△」） */}
+                            <div className="relative bg-white border border-gray-200 rounded-2xl p-5 flex flex-col shadow-sm">
+                                <div className="absolute -top-3 left-5 bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wider">
+                                    高コスト
+                                </div>
+                                <h4 className="text-gray-700 font-bold mb-4 flex items-center gap-2 pt-2">
+                                    <Building size={18} className="text-gray-600" /> 一般的な運用代行
                                 </h4>
-                                <div className="space-y-3 w-full text-sm">
-                                    <div className="flex justify-between items-center bg-white/50 border border-white/80 px-3 py-2.5 rounded-xl border border-white">
-                                        <span className="text-gray-700 font-semibold">月額費用</span>
-                                        <span className="text-rose-600 font-bold">月20〜50万円</span>
+                                <div className="space-y-2 w-full text-sm flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-5 h-5 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">
+                                            <X size={12} className="text-rose-500" />
+                                        </span>
+                                        <span className="text-gray-700">月額費用 <span className="font-bold text-rose-600">月20〜50万円</span></span>
                                     </div>
-                                    <div className="flex justify-between items-center bg-white/50 border border-white/80 px-3 py-2.5 rounded-xl border border-white">
-                                        <span className="text-gray-700 font-semibold">作業時間</span>
-                                        <span className="text-gray-900 font-bold">月間 数時間</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                                            <Check size={12} className="text-green-600" />
+                                        </span>
+                                        <span className="text-gray-700">作業時間 <span className="font-bold text-gray-800">月 数時間</span></span>
                                     </div>
-                                    <div className="flex justify-between items-center bg-white/50 border border-white/80 px-3 py-2.5 rounded-xl border border-white">
-                                        <span className="text-gray-700 font-semibold">クオリティ</span>
-                                        <span className="text-gray-800 font-bold">プロ水準</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                                            <Check size={12} className="text-green-600" />
+                                        </span>
+                                        <span className="text-gray-700">品質 <span className="font-bold text-gray-800">プロ水準</span></span>
                                     </div>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-5 h-8 flex items-center justify-center text-center leading-relaxed">
-                                    丸投げできるが、高額な<br />固定費が利益を圧迫する
+                                <p className="text-[11px] text-gray-500 mt-4 pt-4 border-t border-gray-100 leading-relaxed">
+                                    丸投げできるが、高額な固定費が利益を圧迫
                                 </p>
                             </div>
 
-                            {/* SNS Agent24 */}
-                            <div className="bg-gradient-to-b from-rose-500 to-[#D4A373] p-[1px] rounded-2xl relative">
-                                <div className="absolute -top-3 -right-3 w-6 h-6 bg-rose-500 rounded-full animate-ping opacity-75"></div>
-                                <div className="absolute -top-3 -right-3 w-6 h-6 bg-rose-500 rounded-full shadow-lg"></div>
-
-                                <div className="bg-white/60 backdrop-blur-xl border border-white/50 h-full rounded-2xl p-5 relative flex flex-col items-center">
-                                    <h4 className="text-white text-lg md:text-2xl font-bold mb-4 flex items-center justify-center gap-2 drop-shadow-md">
-                                        <Zap size={24} className="text-yellow-300" fill="currentColor" /> SNS Agent24
-                                    </h4>
-                                    <div className="space-y-3 w-full text-sm">
-                                        <div className="flex justify-between items-center bg-white/40 px-3 py-2.5 rounded-xl border border-white/30 backdrop-blur-sm">
-                                            <span className="text-gray-900 font-semibold">月額費用</span>
-                                            <span className="text-rose-600 text-lg font-extrabold">{billingCycle === 'year' ? '月2,483円' : '月2,980円'}</span>
+                            {/* ③ SNS Agent24（最適解: 強いグラデーション＋拡大＋推奨バッジ） */}
+                            <div className="relative md:-my-4 md:scale-[1.04]">
+                                {/* 光彩 */}
+                                <div className="absolute -inset-2 bg-gradient-to-br from-rose-400 via-pink-400 to-[#D4A373] rounded-3xl opacity-40 blur-xl"></div>
+                                {/* カード本体 */}
+                                <div className="relative bg-gradient-to-br from-rose-500 via-rose-400 to-[#D4A373] rounded-2xl p-[2px] shadow-2xl shadow-rose-500/30">
+                                    <div className="bg-gradient-to-br from-white to-rose-50 rounded-2xl p-5 flex flex-col h-full">
+                                        {/* BESTバッジ */}
+                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-500 to-[#D4A373] text-white text-[10px] font-black px-3 py-1 rounded-full tracking-[0.2em] shadow-md flex items-center gap-1">
+                                            <Crown size={12} className="text-yellow-300" fill="currentColor" />
+                                            BEST CHOICE
                                         </div>
-                                        <div className="flex justify-between items-center bg-white/40 px-3 py-2.5 rounded-xl border border-white/30 backdrop-blur-sm">
-                                            <span className="text-gray-900 font-semibold">作業時間</span>
-                                            <span className="text-green-600 font-bold">月間 約1〜2時間</span>
+                                        <h4 className="text-lg md:text-xl font-black mb-4 flex items-center gap-2 pt-2 text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-[#D4A373]">
+                                            <Zap size={22} className="text-rose-500" fill="currentColor" />
+                                            SNS Agent24
+                                        </h4>
+                                        <div className="space-y-2 w-full text-sm flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                                    <Check size={12} className="text-white" strokeWidth={3} />
+                                                </span>
+                                                <span className="text-gray-800">月額費用 <span className="font-black text-rose-600 text-base">{billingCycle === 'year' ? '月2,483円' : '月2,980円'}</span></span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                                    <Check size={12} className="text-white" strokeWidth={3} />
+                                                </span>
+                                                <span className="text-gray-800">作業時間 <span className="font-black text-green-600">月1〜2時間</span></span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                                    <Check size={12} className="text-white" strokeWidth={3} />
+                                                </span>
+                                                <span className="text-gray-800">品質 <span className="font-black text-gray-900">最新AI最高水準</span></span>
+                                            </div>
                                         </div>
-                                        <div className="flex justify-between items-center bg-white/40 px-3 py-2.5 rounded-xl border border-white/30 backdrop-blur-sm">
-                                            <span className="text-gray-900 font-semibold text-center leading-tight">クオリティ</span>
-                                            <span className="text-rose-600 font-bold text-base">最新AIによる最高水準</span>
-                                        </div>
+                                        <p className="text-[11px] text-gray-700 font-medium mt-4 pt-4 border-t border-rose-200 leading-relaxed">
+                                            プロ同等の品質を維持しながら<br />時間と資金をコア業務へ集中
+                                        </p>
                                     </div>
-                                    <p className="text-xs text-white/90 font-medium mt-5 h-8 flex items-center justify-center text-center leading-relaxed drop-shadow-sm">
-                                        プロ同等の品質を維持しながら<br />時間と資金をコア業務へ集中
-                                    </p>
                                 </div>
                             </div>
                         </div>
