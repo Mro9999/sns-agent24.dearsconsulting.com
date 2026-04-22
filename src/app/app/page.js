@@ -1035,17 +1035,32 @@ export default function Home() {
                                         </div>
                                     </div>
 
-                                    {/* 価格表示 */}
-                                    <div className="w-full flex items-center justify-between border-y border-white/10 py-5 mb-8 px-2 bg-white/5 rounded-lg mt-2">
-                                        <div className="text-center w-1/2">
-                                            <p className="text-[10px] md:text-xs text-slate-400 font-bold tracking-widest mb-1">MONTHLY (月額)</p>
-                                            <p className="text-white font-black text-base md:text-lg tracking-wider">¥29,800</p>
+                                    {/* プラン比較（Free → Pro → Pro Max の順で手軽な料金から表示） */}
+                                    <div className="w-full mb-8 mt-2">
+                                        <p className="text-[10px] md:text-xs text-slate-400 font-bold tracking-widest mb-3 text-center">PLAN COMPARISON</p>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {/* Free Plan */}
+                                            <div className="bg-white/5 border border-white/10 rounded-lg py-3 px-2 text-center">
+                                                <p className="text-[10px] text-slate-400 font-semibold mb-1">Free</p>
+                                                <p className="text-white font-bold text-xs md:text-sm">¥0</p>
+                                                <p className="text-[9px] text-slate-500 mt-1">お試し用</p>
+                                            </div>
+                                            {/* Pro Plan */}
+                                            <div className="bg-white/5 border border-white/10 rounded-lg py-3 px-2 text-center">
+                                                <p className="text-[10px] text-slate-400 font-semibold mb-1">Pro</p>
+                                                <p className="text-white font-bold text-xs md:text-sm">¥2,980</p>
+                                                <p className="text-[9px] text-slate-500 mt-1">手動生成無制限</p>
+                                            </div>
+                                            {/* Pro Max Plan (強調表示) */}
+                                            <div className="bg-gradient-to-b from-purple-600/30 to-pink-600/30 border border-purple-400/50 rounded-lg py-3 px-2 text-center shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+                                                <p className="text-[10px] text-purple-200 font-bold mb-1">Pro Max</p>
+                                                <p className="text-white font-bold text-xs md:text-sm">¥29,800</p>
+                                                <p className="text-[9px] text-purple-200/80 mt-1">週次自動構築</p>
+                                            </div>
                                         </div>
-                                        <div className="w-px h-10 bg-white/20"></div>
-                                        <div className="text-center w-1/2">
-                                            <p className="text-[10px] md:text-xs text-slate-400 font-bold tracking-widest mb-1">ANNUAL (年間一括)</p>
-                                            <p className="text-white font-black text-base md:text-lg tracking-wider">¥298,000</p>
-                                        </div>
+                                        <p className="text-[10px] text-slate-500 text-center mt-3">
+                                            すべての料金はいずれも月額（税込）。年払いなら2ヶ月分お得。
+                                        </p>
                                     </div>
                                     
                                     <div className="flex flex-col gap-4 w-full">
