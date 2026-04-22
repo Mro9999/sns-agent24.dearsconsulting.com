@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Check, Star, Zap, User, Building } from 'lucide-react';
+import { Check, Star, Zap, User, Building, Calendar, Mail, MousePointer, Rocket, Sparkles } from 'lucide-react';
 import styles from './PricingSection.module.css';
 
 export default function PricingSection({ onUpgrade, isPro, isProMax }) {
@@ -50,8 +50,11 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
             badge: "エンタープライズ",
             features: [
                 "Pro Planの全機能",
-                "1週間分の全自動スケジュール構築",
-                "外部システム連携（Webhook等）",
+                "🤖 週次AI全自動スケジュール構築",
+                "📧 生成結果を承認メールで確認",
+                "✨ ワンクリック承認で1週間の投稿が確定",
+                "🚀 毎日決まった時刻にInstagram自動投稿",
+                "⏰ 承認忘れ時も自動で投稿継続",
                 "専任担当によるオンボーディング",
                 "優先度最上位のプレミアムサポート"
             ],
@@ -201,6 +204,95 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
                             </button>
                         </div>
                     ))}
+                </div>
+
+                {/* Pro Max Planのシグネチャ機能である「AI全自動スケジュール構築」の流れを視覚的に説明
+                    サービス初見のユーザーにも「ここまで手が届くのか」を瞬時に伝えるセクション */}
+                <div className="mt-20 w-full max-w-5xl mx-auto px-2">
+                    <div className="text-center mb-10">
+                        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-500 to-[#D4A373] text-white text-xs font-bold px-4 py-1.5 rounded-full mb-4">
+                            <Sparkles size={14} /> Pro Max 専用機能
+                        </div>
+                        <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+                            AI全自動スケジュール構築の流れ
+                        </h3>
+                        <p className="text-gray-600 text-sm md:text-base leading-relaxed">
+                            SNSの運用はAIに任せて、あなたはコア業務へ。<br className="hidden md:inline" />
+                            <span className="font-semibold text-gray-800">「週に1回、メールを開いてOKボタンを押すだけ」</span>で1週間分の投稿が完成します。
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-5 relative">
+                        {/* Step 1 */}
+                        <div className="bg-white/70 backdrop-blur-xl border border-white shadow-sm rounded-2xl p-5 relative flex flex-col items-center text-center">
+                            <div className="absolute -top-3 -left-3 bg-gradient-to-br from-rose-500 to-[#D4A373] text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">1</div>
+                            <div className="w-12 h-12 bg-gradient-to-br from-rose-100 to-rose-200 rounded-full flex items-center justify-center mb-3">
+                                <Calendar size={22} className="text-rose-600" />
+                            </div>
+                            <h4 className="font-bold text-gray-900 mb-2 text-sm md:text-base">毎週日曜 20:00</h4>
+                            <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
+                                AIがあなたの事業プロフィールから<br />
+                                <span className="font-semibold text-gray-800">1週間分（7投稿）を自動生成</span>
+                            </p>
+                        </div>
+
+                        {/* Step 2 */}
+                        <div className="bg-white/70 backdrop-blur-xl border border-white shadow-sm rounded-2xl p-5 relative flex flex-col items-center text-center">
+                            <div className="absolute -top-3 -left-3 bg-gradient-to-br from-rose-500 to-[#D4A373] text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">2</div>
+                            <div className="w-12 h-12 bg-gradient-to-br from-amber-100 to-amber-200 rounded-full flex items-center justify-center mb-3">
+                                <Mail size={22} className="text-amber-600" />
+                            </div>
+                            <h4 className="font-bold text-gray-900 mb-2 text-sm md:text-base">承認メール到着</h4>
+                            <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
+                                確認用リンクつきのメールが届く。<br />
+                                <span className="font-semibold text-gray-800">画像と文面のプレビューを確認</span>
+                            </p>
+                        </div>
+
+                        {/* Step 3 */}
+                        <div className="bg-white/70 backdrop-blur-xl border border-white shadow-sm rounded-2xl p-5 relative flex flex-col items-center text-center">
+                            <div className="absolute -top-3 -left-3 bg-gradient-to-br from-rose-500 to-[#D4A373] text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">3</div>
+                            <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mb-3">
+                                <MousePointer size={22} className="text-purple-600" />
+                            </div>
+                            <h4 className="font-bold text-gray-900 mb-2 text-sm md:text-base">ワンクリック承認</h4>
+                            <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
+                                気に入った投稿を承認。不要なものは却下。<br />
+                                <span className="font-semibold text-gray-800">所要時間はわずか数分</span>
+                            </p>
+                        </div>
+
+                        {/* Step 4 */}
+                        <div className="bg-gradient-to-b from-rose-500 to-[#D4A373] p-[1px] rounded-2xl relative">
+                            <div className="bg-white/90 backdrop-blur-xl border border-white/50 h-full rounded-2xl p-5 relative flex flex-col items-center text-center">
+                                <div className="absolute -top-3 -left-3 bg-gradient-to-br from-rose-500 to-[#D4A373] text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">4</div>
+                                <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-[#D4A373] rounded-full flex items-center justify-center mb-3 shadow-md">
+                                    <Rocket size={22} className="text-white" />
+                                </div>
+                                <h4 className="font-bold text-gray-900 mb-2 text-sm md:text-base">毎日12:00 自動投稿</h4>
+                                <p className="text-xs md:text-sm text-gray-600 leading-relaxed">
+                                    承認された投稿を<br />
+                                    <span className="font-semibold text-gray-800">予約時刻通りにInstagramへ自動配信</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 補足ポイント */}
+                    <div className="mt-8 bg-gradient-to-br from-rose-50 to-amber-50 border border-rose-100 rounded-2xl p-5 md:p-6">
+                        <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                <Zap size={16} className="text-rose-500" fill="currentColor" />
+                            </div>
+                            <div className="text-sm text-gray-700 leading-relaxed">
+                                <p className="font-bold text-gray-900 mb-2">完全放置でもOK。承認忘れフォロー機能つき</p>
+                                <p>
+                                    万が一、承認期限（予約時刻）までに確認ができなかった場合も、<span className="font-semibold">投稿は自動的に承認扱いとなって配信されます</span>。
+                                    忙しい週でも、SNSの更新が途切れる心配はありません。却下したい投稿だけ期限内にチェックしておけば十分です。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
