@@ -870,19 +870,39 @@ export default function Home() {
                                 </p>
                             </div>
 
-                            {/* Feature Badges */}
-                            <div className="flex flex-wrap justify-center gap-3 w-full mb-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 fill-mode-both">
-                                <div className="flex items-center gap-2 bg-gradient-to-r from-cyan-950/40 to-cyan-900/10 border border-cyan-500/20 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-                                    <Search size={16} className="text-[#D4A373]" />
-                                    <span className="text-gray-700 text-xs md:text-sm font-semibold tracking-wide">最新トレンドリアルタイム解析</span>
+                            {/* Feature Badges - ポップで明るい3色グラデピル */}
+                            <div className="flex flex-wrap justify-center gap-3 md:gap-4 w-full mb-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 fill-mode-both">
+                                {/* ① 最新トレンド解析 - シアン系 */}
+                                <div className="group relative">
+                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full blur opacity-40 group-hover:opacity-80 transition duration-500"></div>
+                                    <div className="relative flex items-center gap-2.5 bg-white border border-cyan-100 pl-1.5 pr-5 py-1.5 rounded-full shadow-[0_4px_20px_rgba(6,182,212,0.15)]">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-md shadow-cyan-500/30">
+                                            <Search size={15} className="text-white" strokeWidth={2.5} />
+                                        </div>
+                                        <span className="text-gray-800 text-xs md:text-sm font-bold tracking-wide">最新トレンドリアルタイム解析</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2 bg-gradient-to-r from-purple-950/40 to-purple-900/10 border border-purple-500/20 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-                                    <Brain size={16} className="text-slate-500" />
-                                    <span className="text-gray-700 text-xs md:text-sm font-semibold tracking-wide">ターゲット深層心理プロファイリング</span>
+
+                                {/* ② ターゲット深層心理 - パープル系 */}
+                                <div className="group relative">
+                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-fuchsia-500 rounded-full blur opacity-40 group-hover:opacity-80 transition duration-500"></div>
+                                    <div className="relative flex items-center gap-2.5 bg-white border border-purple-100 pl-1.5 pr-5 py-1.5 rounded-full shadow-[0_4px_20px_rgba(168,85,247,0.15)]">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-500 flex items-center justify-center shadow-md shadow-purple-500/30">
+                                            <Brain size={15} className="text-white" strokeWidth={2.5} />
+                                        </div>
+                                        <span className="text-gray-800 text-xs md:text-sm font-bold tracking-wide">ターゲット深層心理プロファイリング</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2 bg-gradient-to-r from-pink-950/40 to-pink-900/10 border border-pink-500/20 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.1)]">
-                                    <Palette size={16} className="text-slate-500" />
-                                    <span className="text-gray-700 text-xs md:text-sm font-semibold tracking-wide">オリジナルSNSバナー完全自動合成</span>
+
+                                {/* ③ オリジナルバナー自動合成 - ローズ系 */}
+                                <div className="group relative">
+                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-rose-500 to-[#D4A373] rounded-full blur opacity-40 group-hover:opacity-80 transition duration-500"></div>
+                                    <div className="relative flex items-center gap-2.5 bg-white border border-rose-100 pl-1.5 pr-5 py-1.5 rounded-full shadow-[0_4px_20px_rgba(244,63,94,0.15)]">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-500 to-[#D4A373] flex items-center justify-center shadow-md shadow-rose-500/30">
+                                            <Palette size={15} className="text-white" strokeWidth={2.5} />
+                                        </div>
+                                        <span className="text-gray-800 text-xs md:text-sm font-bold tracking-wide">オリジナルSNSバナー完全自動合成</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
