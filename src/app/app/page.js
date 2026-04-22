@@ -931,14 +931,17 @@ export default function Home() {
                             </h2>
 
                             <div className={`flex justify-center mb-16 w-full px-4 md:px-12 transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-                                {/* Instagram */}
+                                {/* Instagram - 公式ブランドカラーのグラデーション (黄→オレンジ→ピンク→紫→青) */}
                                 <button
                                     onClick={() => setSelectedPlatform('instagram')}
                                     disabled={!mounted || !isLoaded || !isSignedIn}
-                                    className="flex flex-col items-center justify-center py-8 px-12 rounded-[2rem] border transition-all duration-300 group bg-slate-900 border-slate-900 text-white shadow-[0_10px_35px_rgba(0,0,0,0.15)]"
+                                    className="flex flex-col items-center justify-center py-8 px-12 rounded-[2rem] border-0 transition-all duration-300 group text-white shadow-[0_10px_35px_rgba(214,41,118,0.4)] hover:shadow-[0_15px_45px_rgba(150,47,191,0.5)] hover:-translate-y-0.5"
+                                    style={{
+                                        backgroundImage: 'linear-gradient(135deg, #FEDA75 0%, #FA7E1E 20%, #D62976 45%, #962FBF 75%, #4F5BD5 100%)'
+                                    }}
                                 >
-                                    <Instagram size={36} className="mb-4 text-white" strokeWidth={1.5} />
-                                    <span className="font-bold tracking-wide text-white text-sm">Instagram</span>
+                                    <Instagram size={36} className="mb-4 text-white drop-shadow-md" strokeWidth={1.5} />
+                                    <span className="font-bold tracking-wide text-white text-sm drop-shadow-md">Instagram</span>
                                 </button>
                             </div>
 
