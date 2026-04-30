@@ -8,10 +8,10 @@ import crypto from 'crypto';
 // Gemini SDK 初期化関数 (モジュール読み込み時のエラーを防ぐための遅延評価)
 // Vercelの本番環境で環境変数がロードされる前に呼ばれてクラッシュするのを防ぎます
 const getAI = () => {
-    if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
         console.error("Gemini API Key is missing!");
     }
-    return new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || '' });
+    return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 };
 
 // 絵文字をプログラムレベルで再帰的に完全削除するヘルパー関数
@@ -336,7 +336,7 @@ export async function generateImage(category, targetLabel, gender, imageContext,
             : `${basePrompt}, specifically featuring Japanese/Asian models.`;
 
         // Gemini 3.0 ImagenのURL (v1beta) - APIキーを埋め込み
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${process.env.GEMINI_API_KEY}`;
 
         const response = await withRetry(async () => {
             const res = await fetch(url, {

@@ -18,11 +18,11 @@ export async function GET(req) {
         console.log("Starting weekly cron job: Generating universal trends...");
 
         // 2. Gemini APIを使って「今週のビジネス系SNS全般のトレンドと汎用ネタ1案」を生成
-        if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+        if (!process.env.GEMINI_API_KEY) {
             throw new Error("Gemini API key is missing.");
         }
-        
-        const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
+
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
         
         const prompt = `
 あなたは世界トップクラスのSNSプランナーおよびトレンドアナリストです。
