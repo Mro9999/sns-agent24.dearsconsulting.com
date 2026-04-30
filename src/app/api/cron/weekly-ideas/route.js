@@ -44,7 +44,8 @@ export async function GET(req) {
         `;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            // メルマガ HTML 生成は単純な記述タスクなので flash で十分 (~1/10 価格)
+            model: 'gemini-2.5-flash',
             contents: prompt,
             config: {
                 temperature: 0.8

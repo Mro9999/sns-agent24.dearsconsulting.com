@@ -84,7 +84,10 @@ const withRetry = async (fn, maxRetries = 3, baseDelay = 3000) => {
 
 
 // モデル名
-const TEXT_MODEL = 'gemini-2.5-pro'; // 高機能・最新の文章・推論用モデル
+const TEXT_MODEL = 'gemini-2.5-pro'; // 高機能・最新の文章・推論用モデル (generatePost のメイン用)
+// researchTrends は Google Search Grounding が情報源なので flash で十分 + 暗黙キャッシュ閾値が 1,024 tok と低く効きやすい
+// (Pro は 4,096 tok 以上必要 → researchTrends 静的部 1,149 tok では Pro キャッシュ発動不可)
+const RESEARCH_MODEL = 'gemini-2.5-flash';
 const IMAGE_MODEL = 'imagen-4.0-generate-001'; // 最新の画像生成モデル
 
 /**
@@ -149,7 +152,7 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
         const ai = getAI();
         const response = await withRetry(async () => {
             return await ai.models.generateContent({
-                model: TEXT_MODEL,
+                model: RESEARCH_MODEL, // flash (Google Search Grounding 主導なので flash で十分 + キャッシュ条件を満たす)
                 contents: prompt,
                 config: {
                     temperature: 0.95, // 多様性を最大化
@@ -164,7 +167,7 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
             const cached = usage.cachedContentTokenCount || 0;
             const total = usage.promptTokenCount || 0;
             const hitRate = total > 0 ? Math.round((cached / total) * 100) : 0;
-            console.log(`[researchTrends] cache: ${cached}/${total} tok (${hitRate}% hit)`);
+            console.log(`[researchTrends:flash] cache: ${cached}/${total} tok (${hitRate}% hit)`);
         }
 
         return extractJSON(response.text);
@@ -484,7 +487,7 @@ export async function analyzeProductImage(base64Images) {
 
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: TEXT_MODEL,
+            model: RESEARCH_MODEL, // flash で十分 (単純な視覚記述タスク、Pro は過剰)
             contents: [
                 "Describe the visual style, colors, and key elements of these product/service images in English so they can be used as references for image generation.",
                 ...parts
