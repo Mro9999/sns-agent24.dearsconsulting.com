@@ -1034,6 +1034,31 @@ export default function Home() {
                                 </span>
                             </button>
                         </div>
+
+                        {/* Pro Max ユーザー限定: 週次自動投稿を手動でトリガー */}
+                        {isProMax && !batchStatus && (
+                            <div className="w-full flex flex-col items-center mt-12 mb-4">
+                                <div className="w-full max-w-md bg-white/70 backdrop-blur-xl border border-white rounded-2xl shadow-sm px-6 py-5">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Sparkles size={16} className="text-rose-500" />
+                                        <span className="text-xs font-bold tracking-widest text-gray-500">PRO MAX</span>
+                                    </div>
+                                    <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">1週間分まとめて生成</h4>
+                                    <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                                        毎週日曜20:00に自動生成されますが、今すぐ手動で再生成することも可能です。<br />
+                                        生成後は「今週の投稿を承認」から内容を確認してください。
+                                    </p>
+                                    <button
+                                        onClick={() => handleBatchGenerate('instagram')}
+                                        disabled={loading}
+                                        className="w-full px-4 py-2.5 rounded-full text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                                    >
+                                        <Instagram size={14} /> 1週間分（7投稿）を今すぐ生成
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Pro Max のバッチ生成中ステータス表示（再生成ボタンから呼ばれた場合に表示） */}
                         {isProMax && batchStatus && (
                             <div className="w-full max-w-md mx-auto mt-4 px-5 py-5 bg-black/60 shadow-inner backdrop-blur-xl rounded-2xl border border-cyan-500/40 relative overflow-hidden">
