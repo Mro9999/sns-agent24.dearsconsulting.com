@@ -74,7 +74,11 @@ export async function drawCanvasImage(textToOverlay, bgUrl, index = 0, options =
             // 描画するテキスト
             const text = textToOverlay || `${companyName ? companyName + '\\n' : ''}最新のトレンド情報をチェック！`;
 
-            const maxWidth = canvas.width - 160;
+            // ⚠️ Instagram のプロフィールグリッドは 4:5 縦長クロップで表示される (2024 リニューアル以降)。
+            // 1080x1080 の中央 864x1080 (= 1080*4/5) しか可視化されないため、
+            // 左右各 108px がカットされる。ここに textをはみ出させると "テキストが切れる" 見栄えになる。
+            // よってテキスト幅は最低でも 864px 以下、安全マージンを取って 800px (= canvas.width - 280) に制約する。
+            const maxWidth = canvas.width - 280;
             const actualText = text.replace(/\\n/g, '\n').replace(/\\\\n/g, '\n').replace(/。/g, '');
             const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
 
