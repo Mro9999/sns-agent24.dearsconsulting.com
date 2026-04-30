@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Gem, Lock, Instagram, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History, Smartphone, ArrowRight, ArrowDown } from 'lucide-react';
+import { Gem, Lock, Instagram, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History, Smartphone, ArrowRight, ArrowDown, CheckCircle2 } from 'lucide-react';
 import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
@@ -52,7 +52,8 @@ export default function Home() {
     // UIリッチ化用のステート
     const [loadingProgress, setLoadingProgress] = useState(0); // 0〜99の疑似進捗
     const [terminalLogs, setTerminalLogs] = useState([]); // サイバー風の解析ダミーログ
-    const [batchStatus, setBatchStatus] = useState(''); // バッチ生成のステータス表示用
+    const [batchStatus, setBatchStatus] = useState(''); // バッチ生成中の進捗表示用
+    const [batchCompleted, setBatchCompleted] = useState(null); // バッチ完了後の永続的な確認カード用 ({ count: number } or null)
     
     // パーソナライズされた動的ログの生成関数
     const getDynamicLogs = (category, targetLabel) => {
@@ -495,6 +496,7 @@ export default function Home() {
         setLoading(true);
         setLoadingProgress(1);
         setBatchStatus(`バッチ生成を開始します... (0/${count})`);
+        setBatchCompleted(null); // 前回の完了カードをクリアして「進行中」状態へ
 
         posthog?.capture('batch_generation_started', { platform: platformType, count });
 
@@ -792,12 +794,14 @@ export default function Home() {
             }
 
             setBatchStatus(`完了！ ${results.length}件を自動投稿キューへ予約しました。`);
-            
-            // アラートの代わりに3秒後に自動でローディング画面を閉じる
+
+            // 進行中のステータス表示は3秒で消すが、完了カードはユーザーが次のアクションを
+            // 取れるよう永続表示する (次回バッチ起動時 or ページ離脱でクリア)
             setTimeout(() => {
                 setLoading(false);
                 setLoadingProgress(0);
                 setBatchStatus(null);
+                setBatchCompleted({ count: results.length });
             }, 3000);
 
         } catch (error) {
@@ -1048,8 +1052,41 @@ export default function Home() {
                             </button>
                         </div>
 
-                        {/* Pro Max ユーザー限定: 週次自動投稿を手動でトリガー */}
-                        {isProMax && !batchStatus && (
+                        {/* Pro Max ユーザー限定: 完了カード（バッチ生成成功直後） */}
+                        {isProMax && !batchStatus && batchCompleted && (
+                            <div className="w-full flex flex-col items-center mt-12 mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                <div className="w-full max-w-md bg-gradient-to-br from-emerald-50 via-white to-emerald-50 border-2 border-emerald-300 rounded-2xl shadow-lg px-6 py-5">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <CheckCircle2 size={18} className="text-emerald-600" />
+                                        <span className="text-xs font-bold tracking-widest text-emerald-700">生成完了</span>
+                                    </div>
+                                    <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">
+                                        {batchCompleted.count}件の投稿が生成されました
+                                    </h4>
+                                    <p className="text-xs text-gray-600 leading-relaxed mb-4">
+                                        次は <strong>承認画面</strong> で内容を1件ずつ確認してください。<br />
+                                        承認した投稿は予約時刻（毎日 12:00 JST）に自動投稿されます。<br />
+                                        承認しない投稿はキューから却下できます。
+                                    </p>
+                                    <a
+                                        href="/approve"
+                                        className="w-full px-4 py-3 rounded-full text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 shadow-md"
+                                    >
+                                        <Sparkles size={14} /> 今週の投稿を承認する <ArrowRight size={14} />
+                                    </a>
+                                    <button
+                                        onClick={() => handleBatchGenerate('instagram')}
+                                        disabled={loading}
+                                        className="w-full mt-2 px-4 py-2 rounded-full text-xs text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                                    >
+                                        または、もう一度生成する
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Pro Max ユーザー限定: 週次自動投稿を手動でトリガー（未生成 or 完了表示なし状態） */}
+                        {isProMax && !batchStatus && !batchCompleted && (
                             <div className="w-full flex flex-col items-center mt-12 mb-4">
                                 <div className="w-full max-w-md bg-white/70 backdrop-blur-xl border border-white rounded-2xl shadow-sm px-6 py-5">
                                     <div className="flex items-center gap-2 mb-3">
