@@ -711,7 +711,12 @@ export default function Home() {
                         platform: platformType,
                         caption: finalCaption,
                         image_urls: imageUrls,
-                        scheduled_at: schedDate.toISOString()
+                        scheduled_at: schedDate.toISOString(),
+                        // /approve ページで内容確認に使うため、原文の overlay_copy / carousel_slides /
+                        // image_idea も保存しておく (cron バッチと同じスキーマに揃える)
+                        overlay_copy: post.overlay_copy || null,
+                        carousel_slides: post.carousel_slides || null,
+                        image_idea: post.image_idea || null
                     });
                 } catch (loopError) {
                     console.error(`[${displayPlatform}] ${i + 1}件目でエラー発生:`, loopError);
@@ -728,17 +733,21 @@ export default function Home() {
             }
 
             setBatchStatus(`DBのキューへ保存中... (${results.length}件)`);
-            
-            const qRes = await fetch('/api/admin/queue', {
+
+            // 手動バッチは Clerk 認証つきの /api/batch-save に流して
+            // user_id 紐付け & status='pending_approval' で保存する。
+            // (旧 /api/admin/queue POST は user_id 抜け & status='queued' で保存していて、
+            //  /approve ページに出てこない & 承認スキップで投稿される重大バグだった)
+            const qRes = await fetch('/api/batch-save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    secret: 'dears-queue-2024-secret',
-                    posts: results
-                })
+                body: JSON.stringify({ posts: results })
             });
 
-            if (!qRes.ok) throw new Error("保存用APIでエラーが発生しました");
+            if (!qRes.ok) {
+                const errBody = await qRes.text().catch(() => '');
+                throw new Error(`保存用APIでエラーが発生しました (${qRes.status}): ${errBody}`);
+            }
 
             // 週次自動バッチ生成用に、成功した生成設定を保存しておく
             // （承認フロー・ユーザー毎の自動生成で使われる）
