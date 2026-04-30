@@ -92,30 +92,17 @@ const IMAGE_MODEL = 'imagen-4.0-generate-001'; // 最新の画像生成モデル
  */
 export async function researchTrends(category, targetLabel, gender, businessStyle, platformId, location, siteContent, userProfile = {}) {
     try {
-        const prompt = `
+        // ⚡ プロンプト構造の重要原則 (Gemini 暗黙キャッシュ最適化):
+        //   - 静的指示は冒頭に集約 (キャッシュ可能なプレフィックス最大化)
+        //   - 動的な ${...} 補間は末尾近くに集約
+        //   - ランダムシードは最末尾 (キャッシュ阻害を最小化)
+        // 暗黙キャッシュは 1,024 token 以上の一致プレフィックスで自動発動 → 75% 割引
+        const STATIC_PREFIX = `
 あなたは世界トップクラスのマーケター兼トレンドアナリストです。
-
-ランダムシード: ${new Date().toISOString()}_${Math.random()}
-※最重要指令: あなたはこれまで何度も似たような分析を出力しがちです。今回は【絶対に過去のパターンを踏襲せず】、これまでとは全く異なる斬新で独自の切り口、隠れたインサイト、あるいは逆張りの視点を持って以下の分析を行ってください。
 
 # 言語制約（超重要）
 すべての出力（JSONの各値など）は、**必ず完全で自然な「日本語」のみ**を使用してください。
 英単語などの一般的な固有名詞等を除き、**ロシア語（例: готовые）、アラビア語、フランス語など、指定以外の言語が1文字でも混入することは固く禁じます。**
-
-# 条件（一般）
-- プラットフォーム: ${platformId}
-- 業種/カテゴリ: ${category?.label || category}
-- ターゲット層: ${targetLabel}
-- 性別: ${gender === 'male' ? '男性' : gender === 'female' ? '女性' : '不問'}
-- ビジネス形態: ${businessStyle === 'physical' ? '実店舗・サロン' : businessStyle === 'online' ? 'オンライン・EC' : 'サービス・レッスン'}
-${location ? `- 地域: ${location}` : ''}
-${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` : ''}
-
-# ユーザー固有コンテキスト（超重要）
-この分析は以下の「特定のビジネス」のために行われます。一般的な分析ではなく、このビジネスに深く刺さる独自のインサイトを導き出してください。
-- 実際の業種・ビジネス内容: ${userProfile.industry || '未設定'}
-- メインの顧客層（具体的なターゲット）: ${userProfile.targetAudience || '未設定'}
-- 自社の強み / 競合との差別化ポイント: ${userProfile.usp || '未設定'}
 
 # 分析要件
 以下の3方向から最新情報をリサーチし、キャプション案と生成画像に活かせる具体的な「統合インサイト」を導き出してください。
@@ -134,7 +121,31 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
         "model": "使用モデル名"
     }
 }
+
+※最重要指令: あなたはこれまで何度も似たような分析を出力しがちです。今回は【絶対に過去のパターンを踏襲せず】、これまでとは全く異なる斬新で独自の切り口、隠れたインサイト、あるいは逆張りの視点を持って以下の分析を行ってください。
 `;
+
+        const dynamicContext = `
+# 条件（一般）
+- プラットフォーム: ${platformId}
+- 業種/カテゴリ: ${category?.label || category}
+- ターゲット層: ${targetLabel}
+- 性別: ${gender === 'male' ? '男性' : gender === 'female' ? '女性' : '不問'}
+- ビジネス形態: ${businessStyle === 'physical' ? '実店舗・サロン' : businessStyle === 'online' ? 'オンライン・EC' : 'サービス・レッスン'}
+${location ? `- 地域: ${location}` : ''}
+${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` : ''}
+
+# ユーザー固有コンテキスト（超重要）
+この分析は以下の「特定のビジネス」のために行われます。一般的な分析ではなく、このビジネスに深く刺さる独自のインサイトを導き出してください。
+- 実際の業種・ビジネス内容: ${userProfile.industry || '未設定'}
+- メインの顧客層（具体的なターゲット）: ${userProfile.targetAudience || '未設定'}
+- 自社の強み / 競合との差別化ポイント: ${userProfile.usp || '未設定'}
+
+ランダムシード: ${new Date().toISOString()}_${Math.random()}
+`;
+
+        const prompt = STATIC_PREFIX + dynamicContext;
+
         const ai = getAI();
         const response = await withRetry(async () => {
             return await ai.models.generateContent({
@@ -146,6 +157,15 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
                 }
             });
         });
+
+        // 📊 暗黙キャッシュヒット率モニタリング (Vercel Logs で確認)
+        const usage = response.usageMetadata;
+        if (usage) {
+            const cached = usage.cachedContentTokenCount || 0;
+            const total = usage.promptTokenCount || 0;
+            const hitRate = total > 0 ? Math.round((cached / total) * 100) : 0;
+            console.log(`[researchTrends] cache: ${cached}/${total} tok (${hitRate}% hit)`);
+        }
 
         return extractJSON(response.text);
     } catch (error) {
@@ -245,11 +265,16 @@ export async function generatePost(research, platformId, category, targetLabel, 
 }`;
         }
 
-        const prompt = `
+        // ⚡ プロンプト構造の重要原則 (Gemini 暗黙キャッシュ最適化):
+        //   - 静的指示 (役割・禁止事項・出力形式) を冒頭に集約 → ~3000 token のキャッシュ可能プレフィックス
+        //   - 動的な ${...} 補間 (前提・コンテキスト・research) は末尾近くに集約
+        //   - ランダムシードは最末尾でキャッシュ阻害を回避
+        // formatInstruction は format ('single'/'carousel'/'video_script') ごとに固定文字列のため
+        // STATIC_PREFIX 内に含めて OK (3 つのキャッシュキーが format ごとに育つ)
+        const STATIC_PREFIX = `
 あなたは特定の店舗・ブランドに所属し、その魅力を発信する「天才的なSNS運用担当者（中の人）」です。以下の「3方向のトレンドリサーチ結果」とコンテキストに基づいて、読者の心を動かす極めて質の高いコンテンツ(${format}フォーマット)を生成してください。
 「私が考えたキャプションです」「AIとしての提案です」などの言葉は絶対に使わず、ビジネスオーナーや店舗スタッフが直接顧客に語りかける自然なテキストを完成品として出力してください。
 
-ランダムシード: ${Date.now()}_${Math.random()}
 ※最重要指令: 生成するたびに前回の出力パターンを完全に捨て去り、【毎回全く異なる切り口、異なる語り口、異なるストーリー展開、異なるオファーの出し方】をして、ユーザーを飽きさせないクリエイティブなテキストを書き下ろしてください。テンプレ化は厳禁です。
 
 # 【絶対厳守の禁止事項（絵文字の完全禁止）】
@@ -269,7 +294,15 @@ export async function generatePost(research, platformId, category, targetLabel, 
 - 良い例:「カット後、周りの反応が変わります」「月5万円の広告費を0円に」「予約が3倍になった理由」
 - 悪い例:「美学を、語り合いませんか」「本質を追求する」「あなたの物語」
 - 具体的な数字、悩み、行動、サービス名、ビフォーアフターなどを積極的に盛り込んでください。
+${formatInstruction}
 
+# 【最重要】発信者と読者（誰から誰へのメッセージか）
+- 発信者 (You): 自店舗・自社ブランドの現場スタッフ、またはオーナー（中の人）です。
+- 読者 (Reader): その商品やサービスに興味を持ちうる、来店・購入見込みのある一般ユーザーや顧客です。
+※警告: **絶対に「同業者に向けたビジネス哲学」や「SNS運用者向けのマーケティング論や集客ノウハウ」「他社のSNS運用を代行するサービスのアピール」を語らないでください。** あなたの唯一の使命は、「自分たちのお店やサービス（＝入力されたURLや業種の店舗）に読者を惹きつけ、来店・購入やファン化させるためのBtoC（またはBtoB）の魅力発信・宣伝メッセージ」を書くことです。画像に乗せるテキスト（overlay_copy）も、彼ら（見込み客）の興味を惹く強烈なキャッチコピーにしてください。
+`;
+
+        const dynamicContext = `
 # 前提
 - プラットフォーム: ${platformId}
 - 業種: ${category?.label}
@@ -277,10 +310,9 @@ export async function generatePost(research, platformId, category, targetLabel, 
 - トーン&マナー: ${tone?.label || tone}
 - 言語仕様: ${languageInstruction}
 
-# 【最重要】発信者と読者（誰から誰へのメッセージか）
-- 発信者 (You): 「${category?.label}」を運営する自店舗・自社ブランドの現場スタッフ、またはオーナー（中の人）です。
-- 読者 (Reader): その商品やサービスに興味を持ちうる、来店・購入見込みのある「${targetLabel} (${gender})」の一般ユーザーや顧客です。
-※警告: **絶対に「同業者に向けたビジネス哲学」や「SNS運用者向けのマーケティング論や集客ノウハウ」「他社のSNS運用を代行するサービスのアピール」を語らないでください。** あなたの唯一の使命は、「自分たちのお店やサービス（＝入力されたURLや業種の店舗）に読者を惹きつけ、来店・購入やファン化させるためのBtoC（またはBtoB）の魅力発信・宣伝メッセージ」を書くことです。画像に乗せるテキスト（overlay_copy）も、彼ら（見込み客）の興味を惹く強烈なキャッチコピーにしてください。
+# 発信者と読者（具体）
+- 発信者: 「${category?.label}」を運営する自店舗・自社ブランド
+- 読者: 「${targetLabel} (${gender})」の見込み客
 
 # 【最重要】投稿の目的（Purpose）
 あなたの今回の執筆のゴールは以下の通りです。このゴールが達成される（ユーザーが行動を起こす）ようにキャプション構成や訴求内容をフルカスタマイズしてください。
@@ -303,8 +335,11 @@ ${siteContent ? `- サイト情報: ${siteContent.substring(0, 1000)}` : ''}
 ${textContext?.companyName ? `\n※重要事項1: 内容の中立性を保ちつつ、不自然にならないように「${textContext.companyName}」という名前を適度に織り込んでください。` : ''}
 ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後のCTAで、「${textContext.snsUrl || textContext.websiteUrl}」など、読者に行動を促す動線（プロフィールリンクやURLへの誘導）を自然な形で必ず配置してください。` : ''}
 
-${formatInstruction}
+ランダムシード: ${Date.now()}_${Math.random()}
 `;
+
+        const prompt = STATIC_PREFIX + dynamicContext;
+
         const ai = getAI();
         const response = await withRetry(async () => {
             return await ai.models.generateContent({
@@ -316,6 +351,15 @@ ${formatInstruction}
                 }
             });
         });
+
+        // 📊 暗黙キャッシュヒット率モニタリング
+        const usage = response.usageMetadata;
+        if (usage) {
+            const cached = usage.cachedContentTokenCount || 0;
+            const total = usage.promptTokenCount || 0;
+            const hitRate = total > 0 ? Math.round((cached / total) * 100) : 0;
+            console.log(`[generatePost:${format}] cache: ${cached}/${total} tok (${hitRate}% hit)`);
+        }
 
         return extractJSON(response.text);
     } catch (error) {
