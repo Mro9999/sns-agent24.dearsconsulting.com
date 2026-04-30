@@ -6,6 +6,7 @@ import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
 import { drawCanvasImage, VISUAL_VARIETY_DIRECTIVES, SUBJECT_VARIETY_DIRECTIVES } from '@/lib/canvasHelper';
+import { buildPlatformCaption } from '@/lib/captionUtils';
 import ProMaxInquiryModal from '@/components/ProMaxInquiryModal';
 import ProfileSetupModal from '@/components/features/ProfileSetupModal';
 import { usePostHog } from 'posthog-js/react';
@@ -682,10 +683,10 @@ export default function Home() {
                         } catch(e) { console.error("Batch image err", e); }
                     }
 
-                    let finalCaption = (post.caption || post.overlay_copy || '');
-                    if (post.hashtags && Array.isArray(post.hashtags)) {
-                        finalCaption += '\n\n' + post.hashtags.map(t => t.startsWith('#') ? t : `#${t}`).join(' ');
-                    }
+                    // 投稿本文＋ハッシュタグを Instagram の 2,200 文字上限内に収めて結合
+                    // (Make.com 経由で "The caption was too long. (36004)" 防止)
+                    const captionBody = (post.caption || post.overlay_copy || '');
+                    const finalCaption = buildPlatformCaption(captionBody, post.hashtags, platformType);
 
                     // 投稿予約時刻を割り当て（翌日12:00 JSTから1日ずつ）
                     const schedDate = new Date();

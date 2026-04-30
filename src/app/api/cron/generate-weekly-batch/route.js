@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { researchTrends, generatePost } from '@/lib/apiService';
+import { buildPlatformCaption, PLATFORM_CAPTION_LIMITS } from '@/lib/captionUtils';
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -207,9 +208,12 @@ async function generateForUser(settings) {
         if (!outcome || !outcome.post) continue;
         const { post, index: i } = outcome;
 
-        let finalCaption = post.caption || post.overlay_copy || '';
-        if (post.hashtags && Array.isArray(post.hashtags)) {
-            finalCaption += '\n\n' + post.hashtags.map(t => t.startsWith('#') ? t : `#${t}`).join(' ');
+        // 投稿本文＋ハッシュタグを Instagram の 2,200 文字上限内に収めて結合
+        // (Make.com の Instagram 自動投稿で "The caption was too long. (36004)" を回避)
+        const captionBody = post.caption || post.overlay_copy || '';
+        const finalCaption = buildPlatformCaption(captionBody, post.hashtags, platformType);
+        if (finalCaption.length > PLATFORM_CAPTION_LIMITS[platformType]) {
+            console.warn(`[generate-weekly-batch] ${user_id} ${i + 1}件目 caption ${finalCaption.length}文字で上限超え (想定外)`);
         }
 
         // 中身が空のポストはDBに入れない(稀にAIが空JSONを返すケースのガード)
