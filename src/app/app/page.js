@@ -353,6 +353,11 @@ export default function Home() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }, 100);
 
+        // 失敗時に「どのステップで」エラーが出たかを管理者通知に含めるため
+        // 直近のステップ名を track する。"TypeError: Load failed" のように
+        // ブラウザ側でスタックが空になるケースでも切り分けが可能になる。
+        let currentStep = 'init';
+
         try {
             // APIに巨大な画像データ(Base64)が含まれたまま送るとVercelの制限(Server Action)でエラーになる原因を防ぐため、裏側へ送信するデータからは画像を除外する
             const cleanProductContext = { ...productContext };
@@ -362,6 +367,7 @@ export default function Home() {
 
             let siteContent = null;
             if (cleanProductContext?.websiteUrl) {
+                currentStep = 'scrapeWebsite';
                 siteContent = await scrapeWebsite(cleanProductContext.websiteUrl);
             }
 
@@ -376,11 +382,13 @@ export default function Home() {
             };
 
             // 1. リサーチ
+            currentStep = 'researchTrends';
             const research = await researchTrends(selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedPlatform, cleanProductContext?.location, siteContent, userProfile);
             setLoadingPhase(1); // 1: "ターゲットの深層心理に基づいてキャプションを構築中..."
             await new Promise(resolve => setTimeout(resolve, 300)); // ReactのUI再レンダリングを確実に行わせるための待機（ローディングアニメの真実味を出す）
 
             // 2. キャプション生成 (言語指定・フォーマット指定・ユーザープロフィールを追加)
+            currentStep = 'generatePost';
             const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, cleanProductContext, siteContent, selectedFormat, userProfile, selectedPurpose);
             setLoadingPhase(2); // 2: "デザインを作成中..."
             await new Promise(resolve => setTimeout(resolve, 300)); // ReactのUI再レンダリングを確実に行わせるための待機
@@ -401,6 +409,7 @@ export default function Home() {
                 const imgContext = post.image_idea || research.insight_summary;
                 // カルーセルの場合は3枚生成して視覚的バリエーションを確保（5枚だとAPI負荷が大きいため3枚をローテーション）
                 const imgCount = selectedFormat === 'carousel' ? 3 : 1;
+                currentStep = 'generateImage';
                 const generated = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, imgCount);
 
                 if (generated && generated.length > 0) {
@@ -412,6 +421,7 @@ export default function Home() {
                 setLoadingPhase(3); // 3: "画像を生成・合成中..."
                 await new Promise(resolve => setTimeout(resolve, 300)); // UI更新の待機
             }
+            currentStep = 'drawCanvasImage';
 
             // 4. 共通ヘルパー drawCanvasImage(lib/canvasHelper.js) を使って文字を合成
             // ロゴは意図的に渡さない（運用方針でInstagram投稿にはロゴを入れないため）
@@ -437,6 +447,7 @@ export default function Home() {
                 }
             }
 
+            currentStep = 'saveHistory';
             // 履歴の自動保存 (非同期で裏側で実行し、UIをブロックしない)
             fetch('/api/generations', {
                 method: 'POST',
@@ -463,7 +474,8 @@ export default function Home() {
         } catch (e) {
             console.error(e);
             alert("エラーが発生しました: " + e.message);
-            reportErrorToAdmin(e, "handleGenerate - 投稿自動生成プロセス全体");
+            // 失敗ステップ名を context に含めて管理者に通知 → スタックが空でも切り分け可能
+            reportErrorToAdmin(e, `handleGenerate - failed at step: ${currentStep}`);
         } finally {
             setLoading(false);
         }

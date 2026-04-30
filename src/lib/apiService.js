@@ -5,6 +5,11 @@ import { auth } from '@clerk/nextjs/server';
 import { supabaseAdmin } from './supabaseAdmin';
 import crypto from 'crypto';
 
+// 注: "use server" ファイルでは async 関数以外を export できないため、
+// maxDuration はここに置けない (Next.js の制約)。Server Action のタイムアウトは
+// Vercel Hobby のデフォルト 60秒 で動作する。flash 切替 (d80b048) で
+// API 呼び出しが高速化したので、現状はデフォルトで十分。
+
 // Gemini SDK 初期化関数 (モジュール読み込み時のエラーを防ぐための遅延評価)
 // Vercelの本番環境で環境変数がロードされる前に呼ばれてクラッシュするのを防ぎます
 const getAI = () => {
