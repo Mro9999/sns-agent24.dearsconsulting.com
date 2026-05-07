@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { Check, X, Loader2, Calendar, Sparkles, ArrowLeft, RefreshCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { drawCanvasImage } from '@/lib/canvasHelper';
+// drawCanvasImage は /api/generate-post-image のサーバー側合成へ移行したため、ここでは未使用
 
 // 週次自動生成されたpending_approvalな投稿を確認・承認・却下するページ
 // 承認時は現在のブラウザ上でCanvasオーバーレイ合成を実行し、合成済画像を再アップロード
@@ -40,29 +40,13 @@ export default function ApprovePage() {
     // { [postId]: ['data:image/...', 'data:image/...'] }
     const [composedPreviews, setComposedPreviews] = useState({});
 
-    // 画像にオーバーレイ文字を合成し、承認プレビュー用のdata URL配列を返す
+    // 画像のオーバーレイ合成は /api/generate-post-image でサーバー側 (Satori) で完了するため、
+    // クライアント側ではそのまま表示用に URL を返すだけ (pass-through)。
+    // 旧設計: ここで client-side canvas (drawCanvasImage) を使っていたが CORS / キャッシュ等で
+    // 無音失敗するケースがあり、テキストなし画像が DB に保存される事故があった。
     const composePreviewsFor = async (post, imageUrls) => {
-        if (!Array.isArray(imageUrls) || imageUrls.length === 0) return [];
-        // ロゴは意図的に渡さない（運用方針でInstagram投稿にロゴを入れない）
-        const canvasOptions = {
-            companyName: post.product_context?.companyName
-        };
-        const composed = [];
-        for (let j = 0; j < imageUrls.length; j++) {
-            const raw = imageUrls[j];
-            let overlayText = post.overlay_copy || '';
-            if (Array.isArray(post.carousel_slides) && post.carousel_slides[j]?.overlay_copy) {
-                overlayText = post.carousel_slides[j].overlay_copy;
-            }
-            try {
-                const result = await drawCanvasImage(overlayText, raw, j, canvasOptions);
-                composed.push(result || raw);
-            } catch (e) {
-                console.error('compose preview failed:', e);
-                composed.push(raw);
-            }
-        }
-        return composed;
+        if (!Array.isArray(imageUrls)) return [];
+        return imageUrls;
     };
 
     // 画像未生成の投稿について、1件ずつ順番に /api/generate-post-image を叩いて埋める
@@ -121,38 +105,10 @@ export default function ApprovePage() {
         if (isLoaded && user) fetchPending();
     }, [isLoaded, user]);
 
-    // 承認時: プレビューで表示中の合成済み画像(data URL)をSupabaseに再アップロード
+    // 承認時: 画像URLはサーバー側 (/api/generate-post-image) で既に合成済みなので
+    // そのまま返すだけ。アップロード処理も不要 (Supabase Storage 上に既にある)。
     const composeAndUpload = async (post) => {
-        // プレビュー用に既に合成済みならそれを使う、無ければ即合成する
-        let composed = composedPreviews[post.id];
-        if (!composed || composed.length === 0) {
-            composed = await composePreviewsFor(post, post.image_urls || []);
-        }
-        if (!composed || composed.length === 0) return post.image_urls || [];
-
-        const uploadedUrls = [];
-        for (let j = 0; j < composed.length; j++) {
-            const dataUrl = composed[j];
-            if (dataUrl && dataUrl.startsWith('data:image')) {
-                try {
-                    const upRes = await fetch('/api/upload-image', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ base64Data: dataUrl })
-                    });
-                    if (upRes.ok) {
-                        const r = await upRes.json();
-                        uploadedUrls.push(r.url);
-                        continue;
-                    }
-                } catch (e) {
-                    console.error('upload failed:', e);
-                }
-            }
-            // fallback: 元のrawURL
-            uploadedUrls.push(post.image_urls?.[j] || dataUrl);
-        }
-        return uploadedUrls;
+        return post.image_urls || [];
     };
 
     const handleApprove = async (post) => {

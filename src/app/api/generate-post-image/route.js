@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 import { generateImage } from '@/lib/apiService';
 import { VISUAL_VARIETY_DIRECTIVES, SUBJECT_VARIETY_DIRECTIVES } from '@/lib/canvasHelper';
+import { composeOverlayImage } from '@/lib/serverOverlayHelper';
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -10,7 +12,10 @@ const supabase = createClient(
 );
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+// 画像生成 (Imagen) + 各スライドの overlay 合成 (Satori) で時間がかかるため maxDuration を伸ばす
+export const maxDuration = 120;
+
+const COMPOSED_BUCKET = 'generated-images';
 
 // 承認画面から呼び出される、1投稿分の画像生成API
 // body: { postId: string, variationIndex: number }
@@ -73,17 +78,47 @@ export async function POST(req) {
             throw new Error('Image generation failed');
         }
 
-        const cleanUrls = imgRes.filter(Boolean);
+        const rawUrls = imgRes.filter(Boolean);
+
+        // ⚡ サーバーサイド オーバーレイ合成
+        // 旧設計: /approve ページで client-side canvas を使い合成 → CORS 等で無音失敗するケースあり
+        // 新設計: Satori (@vercel/og) でサーバー側合成 → 信頼性向上、composedURL を直接 DB に保存
+        // 各スライドの overlay_copy は post.carousel_slides[i].overlay_copy / post.overlay_copy
+        const composedUrls = [];
+        for (let i = 0; i < rawUrls.length; i++) {
+            const rawUrl = rawUrls[i];
+            let overlayText = post.overlay_copy || '';
+            if (isCarousel && Array.isArray(post.carousel_slides) && post.carousel_slides[i]?.overlay_copy) {
+                overlayText = post.carousel_slides[i].overlay_copy;
+            }
+
+            try {
+                const jpegBuffer = await composeOverlayImage(rawUrl, overlayText, i, {
+                    companyName: productContext.companyName
+                });
+                const fileName = `${userId}/${Date.now()}_composed_${crypto.randomBytes(8).toString('hex')}.jpg`;
+                const { error: upBkErr } = await supabase.storage
+                    .from(COMPOSED_BUCKET)
+                    .upload(fileName, jpegBuffer, { contentType: 'image/jpeg', upsert: false });
+                if (upBkErr) throw upBkErr;
+                const { data: pub } = supabase.storage.from(COMPOSED_BUCKET).getPublicUrl(fileName);
+                composedUrls.push(pub.publicUrl);
+            } catch (composeErr) {
+                console.error(`[generate-post-image] overlay compose failed for slide ${i}:`, composeErr);
+                // 合成失敗時は raw URL をフォールバックとして使用 (テキストなし画像)
+                composedUrls.push(rawUrl);
+            }
+        }
 
         // DBに保存
         const { error: upErr } = await supabase
             .from('scheduled_posts')
-            .update({ image_urls: cleanUrls })
+            .update({ image_urls: composedUrls })
             .eq('id', postId);
 
         if (upErr) throw upErr;
 
-        return NextResponse.json({ success: true, image_urls: cleanUrls });
+        return NextResponse.json({ success: true, image_urls: composedUrls });
     } catch (error) {
         console.error('[generate-post-image] error:', error);
         return NextResponse.json({ error: error.message || 'Unknown error' }, { status: 500 });
