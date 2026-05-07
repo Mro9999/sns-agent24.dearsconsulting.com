@@ -65,12 +65,13 @@ export async function GET(req) {
         // Make.comが読み取りやすい形でレスポンスを返す
         // - image_urls: 旧形式の string[] (後方互換)
         // - files: Make.com Instagram for Business "Create a carousel post" モジュールが
-        //          期待する [{url, media_type}] のオブジェクト配列形式
+        //          期待する [{image_url, media_type}] のオブジェクト配列形式
         //          media_type は 'IMAGE' / 'VIDEO' / 'REELS' のいずれか (大文字必須)
+        //          フィールド名は 'image_url' (just 'url' でも 'photo_url' でもなく)
         const rawUrls = Array.isArray(post.image_urls) ? post.image_urls : [];
         const files = rawUrls
             .filter(u => typeof u === 'string' && u.length > 0)
-            .map(url => ({ url, media_type: 'IMAGE' }));
+            .map(url => ({ image_url: url, media_type: 'IMAGE' }));
 
         return NextResponse.json({
             id: post.id,
