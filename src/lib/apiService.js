@@ -399,7 +399,23 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後�
 export async function generateImage(category, targetLabel, gender, imageContext, textContext, platformId, visualDescription, count = 1) {
     try {
         // "Japanese" (日本人) を被写体として強力に指定し、かつ「文字を絶対に入れない」ようにネガティブプロンプト的に指示
-        const basePrompt = `High quality, commercial photography, engaging social media post for ${platformId}, featuring Japanese ${targetLabel} ${gender}. Category: ${category?.label || category}. ${imageContext}. IMPORTANT: Absolutely NO text, NO words, NO letters, NO characters, NO typography, NO watermark in the generated image. Pure visual content only.`;
+        // Imagen 4 は日本語テキストを生成できず、強制的に描こうとすると文字化けした「日本語に見える模様」を
+        // 背景に描き込んでしまう (実観測あり)。anti-text 指示は徹底的に強化する。
+        const basePrompt = `High quality, commercial photography, engaging social media post for ${platformId}, featuring Japanese ${targetLabel} ${gender}. Category: ${category?.label || category}. ${imageContext}.
+
+CRITICAL TEXT-FREE CONSTRAINT (HIGHEST PRIORITY):
+The generated image MUST be completely TEXT-FREE. Absolutely zero of the following anywhere in the image:
+- No Japanese kanji, hiragana, katakana, or any Japanese characters
+- No English letters, words, or alphabets
+- No numbers or digits visible as text
+- No typography of any language or script
+- No signs, signage, billboards with text
+- No book covers with visible titles, no book pages with visible writing
+- No screens, monitors, or phones displaying text or UI text
+- No papers, documents, notebooks with visible writing
+- No labels, captions, watermarks, logos with text
+- No fake or garbled text patterns that resemble Japanese
+If a book or document appears, it must be CLOSED or shown from an angle where any text is invisible. Pure visual photography only — show people, objects, scenes, atmosphere through composition and color, NEVER through written text.`;
         const finalPrompt = visualDescription
             ? `${basePrompt}, incorporating product style: ${visualDescription}, specifically featuring Japanese/Asian models.`
             : `${basePrompt}, specifically featuring Japanese/Asian models.`;

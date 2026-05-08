@@ -60,36 +60,22 @@ export async function POST(req) {
 
         // 🎨 各スライド固有の image prompt を構築 (caption と画像のテーマ整合性向上)
         // 旧設計: 1つの image_idea で sampleCount: imgCount → 全スライドが同テーマ
-        // 新設計: スライド毎に overlay_copy / text を含む prompt を作って 1枚ずつ生成
-        //         → カルーセル各スライドが個別の主題に沿った画像になる
+        // 新設計: スライド毎に visualTone / subjectAngle を回転させて 1枚ずつ生成
+        //
+        // 重要: スライドの overlay_copy / text (日本語) は Imagen prompt に渡さない。
+        // 渡すと Imagen 4 が「画像内に描くべき日本語」と解釈し、文字化けした擬似日本語を
+        // 背景に描き込んでしまう (実観測あり)。per-slide 差別化は visual/subject 多様性のみで担保。
         const imagePromises = [];
         for (let i = 0; i < imgCount; i++) {
             // スライド毎にビジュアル指示を回転させて多様性を担保
             const visualTone = VISUAL_VARIETY_DIRECTIVES[(variationIndex + i) % VISUAL_VARIETY_DIRECTIVES.length];
             const subjectAngle = SUBJECT_VARIETY_DIRECTIVES[(variationIndex + i) % SUBJECT_VARIETY_DIRECTIVES.length];
 
-            let slideContext = '';
-            if (isCarousel && post.carousel_slides && post.carousel_slides[i]) {
-                const slide = post.carousel_slides[i];
-                const overlayCopy = slide.overlay_copy || '';
-                const slideBody = slide.text || '';
-                if (overlayCopy || slideBody) {
-                    slideContext = `
+            const slidePositionContext = imgCount > 1
+                ? `\n\n[Carousel slide ${i + 1} of ${imgCount} — choose a unique angle/composition distinct from other slides]`
+                : '';
 
-【このスライド (${i + 1}/${imgCount}) 固有の主題】
-- 画面に表示される見出し: 「${overlayCopy}」
-- 補足テキスト: 「${slideBody}」
-- この画像は **このスライド固有の主題** を視覚的に補強する構図・被写体にしてください (投稿全体のテーマだけではなく、このスライドの見出しに直結した画像)`;
-                }
-            } else if (post.overlay_copy) {
-                slideContext = `
-
-【主題】
-- 画面に表示される見出し: 「${post.overlay_copy}」
-- この画像はこの見出しを視覚的に補強する構図・被写体にしてください`;
-            }
-
-            const slideImageIdea = `${post.image_idea}${slideContext}
+            const slideImageIdea = `${post.image_idea}${slidePositionContext}
 
 【ビジュアルトーン指示】${visualTone}
 【構図・被写体指示】${subjectAngle}`;
