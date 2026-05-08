@@ -54,31 +54,71 @@ export async function POST(req) {
         const isCarousel = Array.isArray(post.carousel_slides) && post.carousel_slides.length > 0;
         const imgCount = isCarousel ? 3 : 1;
 
-        // 多様性指示をpost毎にずらす
-        const visualTone = VISUAL_VARIETY_DIRECTIVES[variationIndex % VISUAL_VARIETY_DIRECTIVES.length];
-        const subjectAngle = SUBJECT_VARIETY_DIRECTIVES[variationIndex % SUBJECT_VARIETY_DIRECTIVES.length];
-        const variedImageIdea = `${post.image_idea}\n【ビジュアルトーン指示】${visualTone}\n【構図・被写体指示】${subjectAngle}`;
-
         // カテゴリ/ターゲットは簡易オブジェクトに
         const category = { id: 'other', label: productContext.category || 'ビジネス' };
         const targetLabel = productContext.target || '一般';
 
-        const imgRes = await generateImage(
-            category,
-            targetLabel,
-            'other',
-            variedImageIdea,
-            productContext,
-            post.platform,
-            null,
-            imgCount
-        );
+        // 🎨 各スライド固有の image prompt を構築 (caption と画像のテーマ整合性向上)
+        // 旧設計: 1つの image_idea で sampleCount: imgCount → 全スライドが同テーマ
+        // 新設計: スライド毎に overlay_copy / text を含む prompt を作って 1枚ずつ生成
+        //         → カルーセル各スライドが個別の主題に沿った画像になる
+        const imagePromises = [];
+        for (let i = 0; i < imgCount; i++) {
+            // スライド毎にビジュアル指示を回転させて多様性を担保
+            const visualTone = VISUAL_VARIETY_DIRECTIVES[(variationIndex + i) % VISUAL_VARIETY_DIRECTIVES.length];
+            const subjectAngle = SUBJECT_VARIETY_DIRECTIVES[(variationIndex + i) % SUBJECT_VARIETY_DIRECTIVES.length];
 
-        if (!imgRes || imgRes.error || !Array.isArray(imgRes)) {
-            throw new Error('Image generation failed');
+            let slideContext = '';
+            if (isCarousel && post.carousel_slides && post.carousel_slides[i]) {
+                const slide = post.carousel_slides[i];
+                const overlayCopy = slide.overlay_copy || '';
+                const slideBody = slide.text || '';
+                if (overlayCopy || slideBody) {
+                    slideContext = `
+
+【このスライド (${i + 1}/${imgCount}) 固有の主題】
+- 画面に表示される見出し: 「${overlayCopy}」
+- 補足テキスト: 「${slideBody}」
+- この画像は **このスライド固有の主題** を視覚的に補強する構図・被写体にしてください (投稿全体のテーマだけではなく、このスライドの見出しに直結した画像)`;
+                }
+            } else if (post.overlay_copy) {
+                slideContext = `
+
+【主題】
+- 画面に表示される見出し: 「${post.overlay_copy}」
+- この画像はこの見出しを視覚的に補強する構図・被写体にしてください`;
+            }
+
+            const slideImageIdea = `${post.image_idea}${slideContext}
+
+【ビジュアルトーン指示】${visualTone}
+【構図・被写体指示】${subjectAngle}`;
+
+            imagePromises.push(
+                generateImage(
+                    category,
+                    targetLabel,
+                    'other',
+                    slideImageIdea,
+                    productContext,
+                    post.platform,
+                    null,
+                    1 // スライド毎に 1 枚ずつ
+                )
+                    .then(arr => (Array.isArray(arr) ? arr[0] : null))
+                    .catch(err => {
+                        console.error(`[generate-post-image] slide ${i} image gen failed:`, err);
+                        return null;
+                    })
+            );
         }
 
-        const rawUrls = imgRes.filter(Boolean);
+        const slideResults = await Promise.all(imagePromises);
+        const rawUrls = slideResults.filter(Boolean);
+
+        if (rawUrls.length === 0) {
+            throw new Error('Image generation failed for all slides');
+        }
 
         // ⚡ サーバーサイド オーバーレイ合成
         // 旧設計: /approve ページで client-side canvas を使い合成 → CORS 等で無音失敗するケースあり
