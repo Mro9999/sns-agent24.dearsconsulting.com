@@ -43,6 +43,11 @@ function getSlideEffect(index) {
 // (旧設計: 文字数に応じて 50/58/68/80px と変動 → スライド毎に文字サイズがバラつき視覚的に違和感)
 const FIXED_FONT_SIZE = 56;
 const TEXT_AREA_WIDTH = 800; // 1080 - 左右140px ずつのマージン (Instagram 4:5 グリッドクロップ対策)
+// 1行の最大文字数 (全角換算)。Satori 実測で 56px 全角は ~58-60px advance のため、
+// 余裕を持たせて 12 文字/行 (= 720px ≤ 800px) を上限とする。
+// 旧 13.79 (理論値 800/56-0.5) は「売上データが教えてくれない、」(14文字) を overflow させ、
+// 句読点だけが次行頭に飛ばされる原因になっていた。
+const MAX_CHARS_PER_LINE = 12;
 
 // ASCII 半角=0.5, それ以外 (主に日本語全角)=1.0 として視覚的長さを近似
 function visualLength(str) {
@@ -56,11 +61,8 @@ function visualLength(str) {
 // 日本語を意識した改行: 句読点「、。！？」の直後を優先して改行する。
 // Satori (CSS) は中国語/日本語の word boundary を理解せず any-char break するため、
 // 事前に \n を挿入してから whiteSpace: 'pre-wrap' で表示する。
-function wrapJapaneseText(text, fontSize) {
+function wrapJapaneseText(text) {
     if (!text) return '';
-    // 1行あたりの最大「視覚長」: 800px / fontSize ≒ 文字数 (全角換算)
-    // 安全マージンとして 0.5 文字分減らす
-    const maxVisualPerLine = (TEXT_AREA_WIDTH / fontSize) - 0.5;
 
     const cleanText = String(text).replace(/\\n/g, '\n').replace(/。/g, '');
     const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
@@ -80,7 +82,11 @@ function wrapJapaneseText(text, fontSize) {
             const testLine = currentLine + word;
             const testLen = visualLength(testLine);
 
-            if (testLen > maxVisualPerLine && currentLine.length > 0) {
+            // 句読点だけのオーバーフローは前行末に強制吸収して孤立を防ぐ。
+            // 例: "教えてくれない" のあとに 「、」 だけで overflow → 「、」 を前行末に付ける
+            const isOnlyPunct = /^[、。！？「」『』]+$/.test(word);
+
+            if (testLen > MAX_CHARS_PER_LINE && currentLine.length > 0 && !isOnlyPunct) {
                 // 行幅オーバー: 直近の句読点位置で分割を試みる
                 if (lastPunctIndexInLine > 0 && lastPunctIndexInLine < currentLine.length) {
                     const head = currentLine.slice(0, lastPunctIndexInLine);
@@ -94,6 +100,7 @@ function wrapJapaneseText(text, fontSize) {
                 }
                 lastPunctIndexInLine = /[、。！？]$/.test(currentLine) ? currentLine.length : -1;
             } else {
+                // overflow しない or 句読点単体オーバーフロー → 強制連結
                 currentLine = testLine;
                 if (/[、。！？]$/.test(word)) {
                     lastPunctIndexInLine = currentLine.length;
@@ -123,7 +130,7 @@ export async function composeOverlayImage(bgImageUrl, overlayText, index = 0, op
     const lineHeight = Math.round(fontSize * 1.5);
     const effect = getSlideEffect(index);
     // 日本語を意識した改行を事前計算 (句読点優先で \n 挿入)
-    const wrappedText = wrapJapaneseText(text, fontSize);
+    const wrappedText = wrapJapaneseText(text);
 
     // Satori 用 JSX (React.createElement で記述; JSX変換コストを避ける)
     const jsx = React.createElement(
