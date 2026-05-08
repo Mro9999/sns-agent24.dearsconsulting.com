@@ -252,57 +252,73 @@ export default function ApprovePage() {
                             const isProcessing = processingIds.has(post.id);
                             const isGeneratingImage = generatingIds.has(post.id);
                             const scheduledDate = post.scheduled_at ? new Date(post.scheduled_at) : null;
-                            // プレビューは文字合成済みを優先表示、無ければraw、それも無ければnull
-                            const composed = composedPreviews[post.id];
-                            const firstImg = (composed && composed[0]) || post.image_urls?.[0];
+                            // 画像はサーバー側 (Satori) で合成済みなので post.image_urls をそのまま表示
+                            const allImages = Array.isArray(post.image_urls) ? post.image_urls : [];
+                            const isCarousel = allImages.length > 1;
                             return (
                                 <div key={post.id} className="bg-gray-900/60 border border-gray-800 rounded-lg overflow-hidden">
-                                    <div className="grid md:grid-cols-[240px_1fr] gap-4 p-4">
-                                        <div className="bg-gray-950 rounded overflow-hidden aspect-square relative">
-                                            {firstImg ? (
-                                                <img src={firstImg} alt="preview" className="w-full h-full object-cover" />
-                                            ) : isGeneratingImage ? (
-                                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-purple-900/40 to-pink-900/40 animate-pulse">
-                                                    <Loader2 className="animate-spin text-purple-400 mb-2" size={24} />
-                                                    <span className="text-xs text-gray-300">AI画像を生成中</span>
-                                                </div>
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">画像なし</div>
+                                    <div className="p-4 space-y-4">
+                                        {/* メタ情報 */}
+                                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                                            <Calendar size={14} />
+                                            {scheduledDate
+                                                ? scheduledDate.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' })
+                                                : '予約時刻未設定'}
+                                            {isCarousel && (
+                                                <span className="ml-2 bg-purple-900/50 px-2 py-0.5 rounded">
+                                                    カルーセル {allImages.length}枚
+                                                </span>
                                             )}
                                         </div>
-                                        <div className="flex flex-col">
-                                            <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
-                                                <Calendar size={14} />
-                                                {scheduledDate
-                                                    ? scheduledDate.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' })
-                                                    : '予約時刻未設定'}
-                                                {post.image_urls?.length > 1 && (
-                                                    <span className="ml-2 bg-purple-900/50 px-2 py-0.5 rounded">
-                                                        カルーセル {post.image_urls.length}枚
-                                                    </span>
-                                                )}
+
+                                        {/* 画像プレビュー: カルーセルは横並び全件、単発は1枚 */}
+                                        {allImages.length > 0 ? (
+                                            <div className={isCarousel
+                                                ? "grid grid-cols-3 gap-2"
+                                                : "max-w-xs"}>
+                                                {allImages.map((url, idx) => (
+                                                    <div key={idx} className="bg-gray-950 rounded overflow-hidden aspect-square relative">
+                                                        <img src={url} alt={`slide ${idx + 1}`} className="w-full h-full object-cover" />
+                                                        {isCarousel && (
+                                                            <span className="absolute top-1 left-1 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
+                                                                {idx + 1}/{allImages.length}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ))}
                                             </div>
-                                            <div className="text-sm whitespace-pre-wrap line-clamp-6 text-gray-200 flex-1">
-                                                {post.caption || '(キャプション無し)'}
+                                        ) : isGeneratingImage ? (
+                                            <div className="bg-gradient-to-br from-purple-900/40 to-pink-900/40 animate-pulse rounded aspect-square max-w-xs flex flex-col items-center justify-center">
+                                                <Loader2 className="animate-spin text-purple-400 mb-2" size={24} />
+                                                <span className="text-xs text-gray-300">AI画像を生成中</span>
                                             </div>
-                                            <div className="flex gap-2 mt-4">
-                                                <button
-                                                    onClick={() => handleApprove(post)}
-                                                    disabled={isProcessing}
-                                                    className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 px-3 py-2 rounded font-bold disabled:opacity-50"
-                                                >
-                                                    {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                                                    承認
-                                                </button>
-                                                <button
-                                                    onClick={() => handleReject(post)}
-                                                    disabled={isProcessing}
-                                                    className="flex-1 flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded disabled:opacity-50"
-                                                >
-                                                    <X size={16} />
-                                                    却下
-                                                </button>
-                                            </div>
+                                        ) : (
+                                            <div className="bg-gray-950 rounded aspect-square max-w-xs flex items-center justify-center text-gray-600 text-xs">画像なし</div>
+                                        )}
+
+                                        {/* キャプション */}
+                                        <div className="text-sm whitespace-pre-wrap text-gray-200">
+                                            {post.caption || '(キャプション無し)'}
+                                        </div>
+
+                                        {/* 承認/却下ボタン */}
+                                        <div className="flex gap-2 pt-2">
+                                            <button
+                                                onClick={() => handleApprove(post)}
+                                                disabled={isProcessing}
+                                                className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 px-3 py-2 rounded font-bold disabled:opacity-50"
+                                            >
+                                                {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                                                承認
+                                            </button>
+                                            <button
+                                                onClick={() => handleReject(post)}
+                                                disabled={isProcessing}
+                                                className="flex-1 flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded disabled:opacity-50"
+                                            >
+                                                <X size={16} />
+                                                却下
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
