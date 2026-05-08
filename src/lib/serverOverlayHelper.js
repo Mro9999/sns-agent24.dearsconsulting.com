@@ -61,8 +61,12 @@ function visualLength(str) {
 // 日本語を意識した改行: 句読点「、。！？」の直後を優先して改行する。
 // Satori (CSS) は中国語/日本語の word boundary を理解せず any-char break するため、
 // 事前に \n を挿入してから whiteSpace: 'pre-wrap' で表示する。
-function wrapJapaneseText(text) {
-    if (!text) return '';
+// 日本語を意識した改行: 句読点「、。！？」の直後を優先して改行する。
+// 各行を独立した文字列として配列で返す (呼び出し側で個別の <div> として描画)。
+// (旧設計: \n 区切り単一文字列を返して whiteSpace: pre-wrap で表示 → Satori が
+//  実レンダリング幅で自動再ラップして、設計したとおりに表示されない事象があった)
+function wrapJapaneseTextLines(text) {
+    if (!text) return [];
 
     const cleanText = String(text).replace(/\\n/g, '\n').replace(/。/g, '');
     const segmenter = new Intl.Segmenter('ja', { granularity: 'word' });
@@ -76,31 +80,27 @@ function wrapJapaneseText(text) {
 
         const words = Array.from(segmenter.segment(segment)).map(s => s.segment);
         let currentLine = '';
-        let lastPunctIndexInLine = -1; // currentLine 中の最後の句読点位置 (その直後で改行できる)
+        let lastPunctIndexInLine = -1;
 
         for (const word of words) {
             const testLine = currentLine + word;
             const testLen = visualLength(testLine);
 
             // 句読点だけのオーバーフローは前行末に強制吸収して孤立を防ぐ。
-            // 例: "教えてくれない" のあとに 「、」 だけで overflow → 「、」 を前行末に付ける
             const isOnlyPunct = /^[、。！？「」『』]+$/.test(word);
 
             if (testLen > MAX_CHARS_PER_LINE && currentLine.length > 0 && !isOnlyPunct) {
-                // 行幅オーバー: 直近の句読点位置で分割を試みる
                 if (lastPunctIndexInLine > 0 && lastPunctIndexInLine < currentLine.length) {
                     const head = currentLine.slice(0, lastPunctIndexInLine);
                     const tail = currentLine.slice(lastPunctIndexInLine);
                     result.push(head);
                     currentLine = tail + word;
                 } else {
-                    // 句読点が見つからなければそのまま行末で改行
                     result.push(currentLine);
                     currentLine = word;
                 }
                 lastPunctIndexInLine = /[、。！？]$/.test(currentLine) ? currentLine.length : -1;
             } else {
-                // overflow しない or 句読点単体オーバーフロー → 強制連結
                 currentLine = testLine;
                 if (/[、。！？]$/.test(word)) {
                     lastPunctIndexInLine = currentLine.length;
@@ -110,7 +110,7 @@ function wrapJapaneseText(text) {
         if (currentLine.trim()) result.push(currentLine);
     });
 
-    return result.join('\n');
+    return result;
 }
 
 /**
@@ -129,8 +129,8 @@ export async function composeOverlayImage(bgImageUrl, overlayText, index = 0, op
     const fontSize = FIXED_FONT_SIZE;
     const lineHeight = Math.round(fontSize * 1.5);
     const effect = getSlideEffect(index);
-    // 日本語を意識した改行を事前計算 (句読点優先で \n 挿入)
-    const wrappedText = wrapJapaneseText(text);
+    // 日本語を意識した改行を事前計算 (句読点優先で各行に分割)
+    const lines = wrapJapaneseTextLines(text);
 
     // Satori 用 JSX (React.createElement で記述; JSX変換コストを避ける)
     const jsx = React.createElement(
@@ -174,6 +174,8 @@ export async function composeOverlayImage(bgImageUrl, overlayText, index = 0, op
             }
         }),
         // テキスト本体 (中央配置、白、影付き)
+        // 各行を独立した <div> として描画し flex column で縦に積む
+        // → Satori の auto-wrap が走らないので事前計算した改行が確実に効く
         React.createElement(
             'div',
             {
@@ -184,6 +186,7 @@ export async function composeOverlayImage(bgImageUrl, overlayText, index = 0, op
                     width: 800,
                     height: 1080,
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: '#ffffff',
@@ -191,12 +194,14 @@ export async function composeOverlayImage(bgImageUrl, overlayText, index = 0, op
                     lineHeight: `${lineHeight}px`,
                     fontWeight: 700,
                     textAlign: 'center',
-                    textShadow: '4px 4px 30px rgba(0,0,0,0.95)',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'keep-all' // pre-wrap + keep-all で事前計算した改行を尊重し、追加の任意位置改行を抑制
+                    textShadow: '4px 4px 30px rgba(0,0,0,0.95)'
                 }
             },
-            wrappedText
+            ...lines.map((line, i) => React.createElement(
+                'div',
+                { key: i, style: { whiteSpace: 'nowrap' } },
+                line
+            ))
         )
     );
 
