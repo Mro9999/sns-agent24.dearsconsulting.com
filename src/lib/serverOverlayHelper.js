@@ -43,11 +43,12 @@ function getSlideEffect(index) {
 // (旧設計: 文字数に応じて 50/58/68/80px と変動 → スライド毎に文字サイズがバラつき視覚的に違和感)
 const FIXED_FONT_SIZE = 56;
 const TEXT_AREA_WIDTH = 800; // 1080 - 左右140px ずつのマージン (Instagram 4:5 グリッドクロップ対策)
-// 1行の最大文字数 (全角換算)。Satori 実測で 56px 全角は ~58-60px advance のため、
-// 余裕を持たせて 12 文字/行 (= 720px ≤ 800px) を上限とする。
-// 旧 13.79 (理論値 800/56-0.5) は「売上データが教えてくれない、」(14文字) を overflow させ、
-// 句読点だけが次行頭に飛ばされる原因になっていた。
-const MAX_CHARS_PER_LINE = 12;
+// 1行の最大文字数 (全角換算)。
+// MAX=12 は厳しすぎて、segmenter の word boundary で意図しない位置 (「教えてくれない」を
+// 「教えてくれ」「ない」で切る等) で切れる事象が発生した。13 まで緩和し、
+// 句読点単体の overflow は +1 文字許容 (= 14 chars max) とする。
+// 14 chars * 56px ≈ 784px ≤ 800px で Satori の auto-wrap も発動しない範囲。
+const MAX_CHARS_PER_LINE = 13;
 
 // ASCII 半角=0.5, それ以外 (主に日本語全角)=1.0 として視覚的長さを近似
 function visualLength(str) {
@@ -110,7 +111,26 @@ function wrapJapaneseTextLines(text) {
         if (currentLine.trim()) result.push(currentLine);
     });
 
-    return result;
+    // 後処理: 短すぎる行 (≤ 4 文字) は前後の行と結合して孤立を防ぐ。
+    // 例: ["あなたのサービスの『物語』", "は、", "お客様に届いていますか？"] →
+    //     ["あなたのサービスの『物語』は、", "お客様に届いていますか？"]
+    // 結果として 1〜2 文字程度のオーバーフローは visualLength の許容範囲とする
+    // (whiteSpace: nowrap 付き個別 div 描画なのでオーバーしてもキレイには出る)
+    const merged = [];
+    for (let i = 0; i < result.length; i++) {
+        const line = result[i];
+        const lineLen = visualLength(line);
+        if (lineLen <= 4 && merged.length > 0) {
+            // 前行に結合
+            merged[merged.length - 1] = merged[merged.length - 1] + line;
+        } else if (lineLen <= 4 && i + 1 < result.length) {
+            // 次行に結合 (先頭にくる場合)
+            result[i + 1] = line + result[i + 1];
+        } else {
+            merged.push(line);
+        }
+    }
+    return merged;
 }
 
 /**
