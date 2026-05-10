@@ -5,7 +5,8 @@ import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
-import { drawCanvasImage, VISUAL_VARIETY_DIRECTIVES, SUBJECT_VARIETY_DIRECTIVES } from '@/lib/canvasHelper';
+// VISUAL_VARIETY_DIRECTIVES / SUBJECT_VARIETY_DIRECTIVES は手動バッチでは未使用 (サーバー側 /api/generate-post-image が利用)
+import { drawCanvasImage } from '@/lib/canvasHelper';
 import { buildPlatformCaption } from '@/lib/captionUtils';
 import ProMaxInquiryModal from '@/components/ProMaxInquiryModal';
 import ProfileSetupModal from '@/components/features/ProfileSetupModal';
@@ -614,93 +615,12 @@ export default function Home() {
                     // APIレスポンス自体がpostオブジェクト
                     const post = resData;
 
-                    let imageUrls = [];
-                    // Instagram用の画像を生成（カルーセルは3枚、それ以外は1枚）
-                    if (post.image_idea && post.image_idea !== "なし" && selectedFormat !== 'video_script') {
-                        const isCarousel = selectedFormat === 'carousel';
-                        const imgCount = isCarousel ? 3 : 1;
-
-                        // 同ブランドで複数投稿を生成しても単調にならないよう、post index(i)ごとに
-                        // ビジュアル指示(色トーン・被写体)を強制的にずらして多様性を出す
-                        const visualTone = VISUAL_VARIETY_DIRECTIVES[i % VISUAL_VARIETY_DIRECTIVES.length];
-                        const subjectAngle = SUBJECT_VARIETY_DIRECTIVES[i % SUBJECT_VARIETY_DIRECTIVES.length];
-                        const variedImageIdea = `${post.image_idea}\n【ビジュアルトーン指示】${visualTone}\n【構図・被写体指示】${subjectAngle}`;
-
-                        setBatchStatus(`[${displayPlatform}] ${i + 1}件目の画面用画像を生成中...`);
-                        await new Promise(r => setTimeout(r, 2000));
-
-                        try {
-                            const imgRes = await generateImage(
-                                selectedCategory,
-                                targetLabel,
-                                selectedGender,
-                                variedImageIdea,
-                                cleanProductContext,
-                                platformType,
-                                null,
-                                imgCount
-                            );
-                            if (imgRes && !imgRes.error && Array.isArray(imgRes)) {
-                                // バッチ生成でもオーバーレイテキストを合成（単発生成と同じ仕上がりに）
-                                // 注: generateImage は既に Supabase にアップロード済みのHTTPS URLを返す。
-                                // drawCanvasImage は HTTPS URL / data URL の両方を crossOrigin=anonymous で読み込めるので
-                                // そのまま合成→合成後のdata URLを再アップロードする流れで文字入り画像を保存する。
-                                // ロゴは意図的に渡さない（運用方針）
-                                const canvasOptions = {
-                                    companyName: productContext.companyName
-                                };
-
-                                const publicUrls = [];
-                                for (let j = 0; j < imgRes.length; j++) {
-                                    const rawImg = imgRes[j];
-                                    if (!rawImg) {
-                                        continue;
-                                    }
-
-                                    // カルーセルなら各スライドの overlay_copy、単発なら post.overlay_copy
-                                    let overlayText = post.overlay_copy || '';
-                                    if (isCarousel && post.carousel_slides && Array.isArray(post.carousel_slides)) {
-                                        const slide = post.carousel_slides[j];
-                                        if (slide && slide.overlay_copy) overlayText = slide.overlay_copy;
-                                    }
-
-                                    setBatchStatus(`[${displayPlatform}] ${i + 1}件目: 画像(${j + 1}/${imgRes.length})に文字合成中...`);
-                                    let composedImg = null;
-                                    try {
-                                        composedImg = await drawCanvasImage(overlayText, rawImg, j, canvasOptions);
-                                    } catch (drawErr) {
-                                        console.error("Overlay draw failed:", drawErr);
-                                    }
-
-                                    // 合成が成功したら合成済みを再アップロード、失敗したら元のURLをそのまま使う
-                                    if (composedImg && composedImg.startsWith('data:image')) {
-                                        setBatchStatus(`[${displayPlatform}] ${i + 1}件目: 画像(${j + 1}/${imgRes.length})をクラウドへ保存中...`);
-                                        try {
-                                            const upRes = await fetch('/api/upload-image', {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ base64Data: composedImg })
-                                            });
-                                            if (upRes.ok) {
-                                                const r = await upRes.json();
-                                                publicUrls.push(r.url);
-                                            } else {
-                                                console.error("Upload failed", await upRes.text());
-                                                publicUrls.push(rawImg); // フォールバック: 元のAI画像URL
-                                            }
-                                        } catch (upErr) {
-                                            console.error("Upload Error:", upErr);
-                                            publicUrls.push(rawImg);
-                                        }
-                                    } else {
-                                        // 合成失敗: 元の AI 画像URL をそのまま使う
-                                        publicUrls.push(rawImg);
-                                    }
-                                }
-                                imageUrls = publicUrls;
-                            }
-                        } catch(e) { console.error("Batch image err", e); }
-                    }
+                    // ⚡ 画像生成 + オーバーレイ合成はサーバー側で実行する設計に統一
+                    // (以前は client-side で generateImage + drawCanvasImage していたが、CORS / ブラウザキャッシュで
+                    //  オーバーレイ無音失敗の事故が発生したため廃止。/approve ページ初回ロード時に
+                    //  /api/generate-post-image が呼ばれて Imagen 生成 + Satori 合成 + Supabase 保存を一括で行う)
+                    // ここでは image_urls=[] で DB 保存し、画像生成は /approve 側にお任せ。
+                    const imageUrls = [];
 
                     // 投稿本文＋ハッシュタグを Instagram の 2,200 文字上限内に収めて結合
                     // (Make.com 経由で "The caption was too long. (36004)" 防止)
@@ -730,7 +650,9 @@ export default function Home() {
                     continue;
                 }
 
-                await new Promise(r => setTimeout(r, 6000)); // Rate limit対策 (Google API)
+                // Rate limit対策 (Google API)。画像生成をサーバー側に移行したため待機を 6s→2s に短縮。
+                // (画像生成側の rate-limit は /api/generate-post-image の withRetry で別途吸収される)
+                await new Promise(r => setTimeout(r, 2000));
             }
 
             if (results.length === 0) {
@@ -1075,12 +997,12 @@ export default function Home() {
                                         <span className="text-xs font-bold tracking-widest text-emerald-700">生成完了</span>
                                     </div>
                                     <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">
-                                        {batchCompleted.count}件の投稿が生成されました
+                                        {batchCompleted.count}件のキャプションが生成されました
                                     </h4>
                                     <p className="text-xs text-gray-600 leading-relaxed mb-4">
-                                        次は <strong>承認画面</strong> で内容を1件ずつ確認してください。<br />
-                                        承認した投稿は予約時刻（毎日 12:00 JST）に自動投稿されます。<br />
-                                        承認しない投稿はキューから却下できます。
+                                        次は <strong>承認画面</strong> を開いてください。<br />
+                                        承認画面で<strong>AI画像の生成と文字合成が自動で実行</strong>されます (1件あたり ~30秒)。<br />
+                                        画像生成完了後、内容を確認して承認 → 予約時刻 (毎日 12:00 JST) に自動投稿されます。
                                     </p>
                                     <a
                                         href="/approve"
