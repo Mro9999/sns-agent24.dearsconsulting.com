@@ -227,18 +227,26 @@ export async function generatePost(research, platformId, category, targetLabel, 
     "caption": "一切の絵文字や顔文字を使用せず、ターゲットに深く響く知的で洗練されたプロフェッショナルな投稿文（最後にCTAやURLを含む）",
     "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
     "carousel_slides": [
-        { "overlay_copy": "1枚目(表紙): 読者の具体的な悩みや願望に刺さる一言。抽象論禁止。適宜 '\\n' で改行", "text": "表紙の補足となる短い文章" },
-        { "overlay_copy": "2枚目: 具体的な事実・数字・事例を含む見出し", "text": "2枚目での詳細な解説文" },
-        { "overlay_copy": "3枚目: 読者が『自分のことだ』と感じる具体的な見出し", "text": "3枚目での詳細な解説文" },
-        { "overlay_copy": "4枚目: 解決策・提供価値を具体的に示す見出し", "text": "4枚目での詳細な解説文" },
-        { "overlay_copy": "5枚目: 具体的な次の行動を促すCTA（例:『まずは無料相談から』等）", "text": "保存やフォロー、リンククリックを促す文章" }
+        { "overlay_copy": "1枚目(表紙): 読者の具体的な悩みや願望に刺さる一言。抽象論禁止。適宜 '\\n' で改行", "text": "表紙の補足となる短い文章", "image_hint_en": "Detailed English visual description (30-50 words) for slide 1's specific scene. NO TEXT in image. Describe people, objects, lighting, atmosphere, composition. This visual must reinforce slide 1's overlay_copy theme — NOT just generic business imagery." },
+        { "overlay_copy": "2枚目: 具体的な事実・数字・事例を含む見出し", "text": "2枚目での詳細な解説文", "image_hint_en": "Detailed English visual for slide 2's specific theme (30-50 words). NO TEXT in image. Reinforce slide 2's specific message visually." },
+        { "overlay_copy": "3枚目: 読者が『自分のことだ』と感じる具体的な見出し", "text": "3枚目での詳細な解説文", "image_hint_en": "Detailed English visual for slide 3 (30-50 words). NO TEXT. Visualize slide 3's specific theme." },
+        { "overlay_copy": "4枚目: 解決策・提供価値を具体的に示す見出し", "text": "4枚目での詳細な解説文", "image_hint_en": "Detailed English visual for slide 4 (30-50 words). NO TEXT. Show slide 4's solution/value visually." },
+        { "overlay_copy": "5枚目: 具体的な次の行動を促すCTA（例:『まずは無料相談から』等）", "text": "保存やフォロー、リンククリックを促す文章", "image_hint_en": "Detailed English visual for slide 5's CTA theme (30-50 words). NO TEXT. Visualize the action/outcome." }
     ],
     "image_idea": "この投稿全体の世界観を表す、${IMAGE_MODEL}で背景画像を生成するための詳細な画像プロンプト案（★毎回必ず異なる構図・切り口・被写体にする。英語、50単語程度）",
     "variants": [
         { "style": "標準", "caption": "...", "hashtags": ["..."] },
         { "style": "エモーショナル", "caption": "...", "hashtags": ["..."] }
     ]
-}`;
+}
+
+# 【超重要】image_hint_en の品質基準
+- 各スライドの image_hint_en は、そのスライドの overlay_copy の **意味的なテーマを視覚化** した英語記述にしてください
+- 例: overlay_copy=「価格競争から脱却する」→ image_hint_en="A businessperson choosing a serene golden path diverging from a crowded competitive marketplace, symbolic of breaking free from price war"
+- 単に「business person in office」のような generic な記述は禁止 (キャプションと画像の連動が弱くなる)
+- **絶対に画像内にテキスト・文字・看板・ラベル等が含まれないこと** (Imagen は日本語を文字化けで再現してしまうため)
+- 30-50語の英語、人物・物体・照明・雰囲気・構図を具体的に描写
+`;
         } else if (format === 'video_script') {
             formatInstruction = `
 # 出力形式 (JSONのみ)

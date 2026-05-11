@@ -59,23 +59,26 @@ export async function POST(req) {
         const targetLabel = productContext.target || '一般';
 
         // 🎨 各スライド固有の image prompt を構築 (caption と画像のテーマ整合性向上)
-        // 旧設計: 1つの image_idea で sampleCount: imgCount → 全スライドが同テーマ
-        // 新設計: スライド毎に visualTone / subjectAngle を回転させて 1枚ずつ生成
-        //
-        // 重要: スライドの overlay_copy / text (日本語) は Imagen prompt に渡さない。
-        // 渡すと Imagen 4 が「画像内に描くべき日本語」と解釈し、文字化けした擬似日本語を
-        // 背景に描き込んでしまう (実観測あり)。per-slide 差別化は visual/subject 多様性のみで担保。
+        // 新設計v2: generatePost が carousel_slides[i].image_hint_en を英語で生成するように改修済
+        // (apiService.js)。スライド毎にこの英語視覚記述を Imagen に渡すことで、
+        // 各スライドの overlay_copy テーマと画像内容が強く連動する。
+        // 日本語は引き続き Imagen prompt に渡さない (文字化け回避)。
         const imagePromises = [];
         for (let i = 0; i < imgCount; i++) {
             // スライド毎にビジュアル指示を回転させて多様性を担保
             const visualTone = VISUAL_VARIETY_DIRECTIVES[(variationIndex + i) % VISUAL_VARIETY_DIRECTIVES.length];
             const subjectAngle = SUBJECT_VARIETY_DIRECTIVES[(variationIndex + i) % SUBJECT_VARIETY_DIRECTIVES.length];
 
+            // スライド固有の英語視覚ヒント (generatePost が生成した image_hint_en を優先利用)
+            let slideSpecificHint = '';
+            if (isCarousel && post.carousel_slides && post.carousel_slides[i]?.image_hint_en) {
+                slideSpecificHint = `\n\n[This slide's specific visual focus (English description, do NOT render any text in image)]:\n${post.carousel_slides[i].image_hint_en}`;
+            }
             const slidePositionContext = imgCount > 1
                 ? `\n\n[Carousel slide ${i + 1} of ${imgCount} — choose a unique angle/composition distinct from other slides]`
                 : '';
 
-            const slideImageIdea = `${post.image_idea}${slidePositionContext}
+            const slideImageIdea = `${post.image_idea}${slidePositionContext}${slideSpecificHint}
 
 【ビジュアルトーン指示】${visualTone}
 【構図・被写体指示】${subjectAngle}`;
