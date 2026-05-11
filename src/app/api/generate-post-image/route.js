@@ -59,9 +59,12 @@ export async function POST(req) {
         const targetLabel = productContext.target || '一般';
 
         // 🎨 各スライド固有の image prompt を構築 (caption と画像のテーマ整合性向上)
-        // 新設計v2: generatePost が carousel_slides[i].image_hint_en を英語で生成するように改修済
-        // (apiService.js)。スライド毎にこの英語視覚記述を Imagen に渡すことで、
-        // 各スライドの overlay_copy テーマと画像内容が強く連動する。
+        // 新設計v3: スライドに image_hint_en があれば、それを主役にして
+        //   競合する post.image_idea / subjectAngle を抜く。
+        //   理由: 旧設計では post.image_idea (汎用) と subjectAngle (例:「俯瞰構図の机上シーン」)
+        //   が Imagen を支配し、各スライドが結局「ノート/PC/コーヒー」の汎用オフィスシーンに収束していた。
+        //
+        // image_hint_en が無い場合 (旧データ・single投稿) は従来の汎用構成にフォールバック。
         // 日本語は引き続き Imagen prompt に渡さない (文字化け回避)。
         const imagePromises = [];
         for (let i = 0; i < imgCount; i++) {
@@ -69,19 +72,31 @@ export async function POST(req) {
             const visualTone = VISUAL_VARIETY_DIRECTIVES[(variationIndex + i) % VISUAL_VARIETY_DIRECTIVES.length];
             const subjectAngle = SUBJECT_VARIETY_DIRECTIVES[(variationIndex + i) % SUBJECT_VARIETY_DIRECTIVES.length];
 
-            // スライド固有の英語視覚ヒント (generatePost が生成した image_hint_en を優先利用)
-            let slideSpecificHint = '';
-            if (isCarousel && post.carousel_slides && post.carousel_slides[i]?.image_hint_en) {
-                slideSpecificHint = `\n\n[This slide's specific visual focus (English description, do NOT render any text in image)]:\n${post.carousel_slides[i].image_hint_en}`;
-            }
-            const slidePositionContext = imgCount > 1
-                ? `\n\n[Carousel slide ${i + 1} of ${imgCount} — choose a unique angle/composition distinct from other slides]`
-                : '';
+            const slideHintEn = isCarousel && post.carousel_slides && post.carousel_slides[i]?.image_hint_en
+                ? post.carousel_slides[i].image_hint_en
+                : null;
 
-            const slideImageIdea = `${post.image_idea}${slidePositionContext}${slideSpecificHint}
+            let slideImageIdea;
+            if (slideHintEn) {
+                // 新設計: image_hint_en を主役にする (汎用 image_idea / 机上シーン強制 subjectAngle を排除)
+                slideImageIdea = `${slideHintEn}
+
+[Style constraints]
+- High-quality professional photography or cinematic visual, Instagram-ready 4:5 portrait composition
+- The scene MUST visually reinforce the message above through symbolism, metaphor, or evocative setting
+- ABSOLUTELY NO text, letters, signs, labels, signage, captions, watermarks, logos in the image
+- Avoid generic stock-photo clichés (no plain office desks with laptops/notebooks/coffee unless the hint explicitly calls for them)
+- Carousel slide ${i + 1} of ${imgCount} — visually distinct from other slides`;
+            } else {
+                // フォールバック: image_hint_en が無い旧データ用
+                const slidePositionContext = imgCount > 1
+                    ? `\n\n[Carousel slide ${i + 1} of ${imgCount} — choose a unique angle/composition distinct from other slides]`
+                    : '';
+                slideImageIdea = `${post.image_idea}${slidePositionContext}
 
 【ビジュアルトーン指示】${visualTone}
 【構図・被写体指示】${subjectAngle}`;
+            }
 
             imagePromises.push(
                 generateImage(

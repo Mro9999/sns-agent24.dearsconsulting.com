@@ -227,11 +227,11 @@ export async function generatePost(research, platformId, category, targetLabel, 
     "caption": "一切の絵文字や顔文字を使用せず、ターゲットに深く響く知的で洗練されたプロフェッショナルな投稿文（最後にCTAやURLを含む）",
     "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
     "carousel_slides": [
-        { "overlay_copy": "1枚目(表紙): 読者の具体的な悩みや願望に刺さる一言。抽象論禁止。適宜 '\\n' で改行", "text": "表紙の補足となる短い文章", "image_hint_en": "Detailed English visual description (30-50 words) for slide 1's specific scene. NO TEXT in image. Describe people, objects, lighting, atmosphere, composition. This visual must reinforce slide 1's overlay_copy theme — NOT just generic business imagery." },
-        { "overlay_copy": "2枚目: 具体的な事実・数字・事例を含む見出し", "text": "2枚目での詳細な解説文", "image_hint_en": "Detailed English visual for slide 2's specific theme (30-50 words). NO TEXT in image. Reinforce slide 2's specific message visually." },
-        { "overlay_copy": "3枚目: 読者が『自分のことだ』と感じる具体的な見出し", "text": "3枚目での詳細な解説文", "image_hint_en": "Detailed English visual for slide 3 (30-50 words). NO TEXT. Visualize slide 3's specific theme." },
-        { "overlay_copy": "4枚目: 解決策・提供価値を具体的に示す見出し", "text": "4枚目での詳細な解説文", "image_hint_en": "Detailed English visual for slide 4 (30-50 words). NO TEXT. Show slide 4's solution/value visually." },
-        { "overlay_copy": "5枚目: 具体的な次の行動を促すCTA（例:『まずは無料相談から』等）", "text": "保存やフォロー、リンククリックを促す文章", "image_hint_en": "Detailed English visual for slide 5's CTA theme (30-50 words). NO TEXT. Visualize the action/outcome." }
+        { "overlay_copy": "1枚目(表紙): 読者の具体的な悩みや願望に刺さる一言。抽象論禁止。適宜 '\\n' で改行", "text": "表紙の補足となる短い文章", "image_hint_en": "Symbolic English visual (40-60 words) reinforcing slide 1's overlay_copy theme. NO TEXT in image. NO generic office (desk/laptop/notebook/coffee). Use metaphor, landscape, or specific human action." },
+        { "overlay_copy": "2枚目: 具体的な事実・数字・事例を含む見出し", "text": "2枚目での詳細な解説文", "image_hint_en": "Symbolic English visual (40-60 words) for slide 2's specific message. NO TEXT. NO generic office. Distinct setting/subject from slide 1." },
+        { "overlay_copy": "3枚目: 読者が『自分のことだ』と感じる具体的な見出し", "text": "3枚目での詳細な解説文", "image_hint_en": "Symbolic English visual (40-60 words) for slide 3. NO TEXT. NO generic office. Distinct setting from slides 1-2." },
+        { "overlay_copy": "4枚目: 解決策・提供価値を具体的に示す見出し", "text": "4枚目での詳細な解説文", "image_hint_en": "Symbolic English visual (40-60 words) for slide 4's solution. NO TEXT. NO generic office. Distinct setting." },
+        { "overlay_copy": "5枚目: 具体的な次の行動を促すCTA（例:『まずは無料相談から』等）", "text": "保存やフォロー、リンククリックを促す文章", "image_hint_en": "Symbolic English visual (40-60 words) for slide 5's CTA/outcome. NO TEXT. NO generic office. Distinct setting." }
     ],
     "image_idea": "この投稿全体の世界観を表す、${IMAGE_MODEL}で背景画像を生成するための詳細な画像プロンプト案（★毎回必ず異なる構図・切り口・被写体にする。英語、50単語程度）",
     "variants": [
@@ -240,12 +240,32 @@ export async function generatePost(research, platformId, category, targetLabel, 
     ]
 }
 
-# 【超重要】image_hint_en の品質基準
-- 各スライドの image_hint_en は、そのスライドの overlay_copy の **意味的なテーマを視覚化** した英語記述にしてください
-- 例: overlay_copy=「価格競争から脱却する」→ image_hint_en="A businessperson choosing a serene golden path diverging from a crowded competitive marketplace, symbolic of breaking free from price war"
-- 単に「business person in office」のような generic な記述は禁止 (キャプションと画像の連動が弱くなる)
-- **絶対に画像内にテキスト・文字・看板・ラベル等が含まれないこと** (Imagen は日本語を文字化けで再現してしまうため)
-- 30-50語の英語、人物・物体・照明・雰囲気・構図を具体的に描写
+# 【超重要】image_hint_en の品質基準 (これに従わないと画像がgenericなオフィス写真に収束し、キャプションと画像が乖離します)
+
+## 必ず守るルール
+1. **そのスライドの overlay_copy の意味的テーマを「比喩」「象徴的シーン」「具体的な人間の行動」で視覚化** すること
+2. **以下の generic 要素は禁止** (画像が「ノート・PC・コーヒー・手書き」に収束するため):
+   - desk with laptop / notebook / pen / coffee cup / hands writing / person at computer / typical office scene
+   - 単独の「businessperson in suit at office」「woman reading a book」のような無内容な記述
+3. **各スライドは互いに完全に異なる setting / subject** にすること (例: スライド1=山頂、2=賑わう市場、3=静謐な工房 等)
+4. **画像内にテキスト・文字・看板・ラベル・ロゴが一切含まれないこと** (Imagen が日本語を文字化けで再現するため)
+5. 40-60語の英語、人物の姿勢/表情・物体・照明・雰囲気・構図・色調を具体的に記述
+
+## 推奨される視覚モチーフ (テーマ別の例)
+- 「価格競争から脱却」: 群衆から離れて静かな道を歩く後ろ姿 / 賑やかな市場の喧騒の外で凛と佇むシルエット
+- 「思想/哲学を言語化」: 山頂で広大な景色を見渡す人 / 暗い部屋で一筋の光に向かう人物
+- 「美意識/作品性」: 職人が一点の道具を丁寧に磨くクローズアップ / 静謐な日本庭園 / 美術館の彫刻
+- 「無意識の願望」: 鏡に映る自分を見つめる人物 / 水面の波紋 / 霧の中から現れる人影
+- 「選ばれ続ける」: 多数の手の中で一つだけ選ばれて差し出される花 / 群衆を背景に光が当たる一人
+- 「具体的なステップ」: 階段を一段ずつ登る足元 / 連なる扉が開いていく構図 / 橋を渡る人物
+- 「データ/事実」: 抽象的な光のグラフィック / 星空や天体図 / 結晶構造のマクロ撮影
+
+## BAD vs GOOD 例
+BAD: "A businessperson sitting at a desk with a laptop, writing in a notebook, with a coffee cup nearby, in a modern office with soft lighting"
+GOOD: "A solitary figure standing at the edge of a serene mountain plateau at golden hour, gazing toward distant peaks beyond a sea of clouds, conveying clarity of vision and quiet resolve, warm cinematic light, shallow depth of field, painterly atmosphere"
+
+BAD: "Hands writing on a notebook with abstract symbols, representing thought"
+GOOD: "Close-up of weathered artisan hands carefully shaping clay on a potter's wheel in a dim warm-lit workshop, single beam of light from a high window catching airborne dust, conveying patient craftsmanship and embodied philosophy"
 `;
         } else if (format === 'video_script') {
             formatInstruction = `
