@@ -228,10 +228,8 @@ export async function generatePost(research, platformId, category, targetLabel, 
     "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
     "carousel_slides": [
         { "overlay_copy": "1枚目(表紙): 読者の具体的な悩みや願望に刺さる一言。抽象論禁止。適宜 '\\n' で改行", "text": "表紙の補足となる短い文章", "image_hint_en": "Symbolic English visual (40-60 words) reinforcing slide 1's overlay_copy theme. NO TEXT in image. NO generic office (desk/laptop/notebook/coffee). Use metaphor, landscape, or specific human action." },
-        { "overlay_copy": "2枚目: 具体的な事実・数字・事例を含む見出し", "text": "2枚目での詳細な解説文", "image_hint_en": "Symbolic English visual (40-60 words) for slide 2's specific message. NO TEXT. NO generic office. Distinct setting/subject from slide 1." },
-        { "overlay_copy": "3枚目: 読者が『自分のことだ』と感じる具体的な見出し", "text": "3枚目での詳細な解説文", "image_hint_en": "Symbolic English visual (40-60 words) for slide 3. NO TEXT. NO generic office. Distinct setting from slides 1-2." },
-        { "overlay_copy": "4枚目: 解決策・提供価値を具体的に示す見出し", "text": "4枚目での詳細な解説文", "image_hint_en": "Symbolic English visual (40-60 words) for slide 4's solution. NO TEXT. NO generic office. Distinct setting." },
-        { "overlay_copy": "5枚目: 具体的な次の行動を促すCTA（例:『まずは無料相談から』等）", "text": "保存やフォロー、リンククリックを促す文章", "image_hint_en": "Symbolic English visual (40-60 words) for slide 5's CTA/outcome. NO TEXT. NO generic office. Distinct setting." }
+        { "overlay_copy": "2枚目: 具体的な事実・事例・本論を含む見出し", "text": "2枚目での詳細な解説文", "image_hint_en": "Symbolic English visual (40-60 words) for slide 2's specific message. NO TEXT. NO generic office. Distinct setting/subject from slide 1." },
+        { "overlay_copy": "3枚目: 解決策・価値・次の一歩を具体的に示す見出し（CTAを兼ねる）", "text": "3枚目での詳細な解説文（読者の行動を促す）", "image_hint_en": "Symbolic English visual (40-60 words) for slide 3's solution/outcome. NO TEXT. NO generic office. Distinct setting from slides 1-2." }
     ],
     "image_idea": "この投稿全体の世界観を表す、${IMAGE_MODEL}で背景画像を生成するための詳細な画像プロンプト案（★毎回必ず異なる構図・切り口・被写体にする。英語、50単語程度）",
     "variants": [
@@ -347,6 +345,17 @@ GOOD: "Close-up of weathered artisan hands carefully shaping clay on a potter's 
   - 具体的なツール・書籍・リソースの紹介
   - 経営者の日常的なエピソード（朝のルーティン、読書、健康習慣等）— ただし「人生観」「哲学」に発展させない
 - このルールは他の禁止事項と同等に優先されます。違反した場合、その投稿は失敗とみなされます。
+
+# 【絶対厳守の禁止事項（架空の事実・イベント・数字の捏造禁止）】
+- **ユーザーから提供されていない「具体的な事実情報」を絶対に創作してはいけません。** 以下は特に頻繁に発生する捏造パターンで、固く禁止します:
+  - **架空のイベント開催:** 「セミナーを開催します」「ウェビナー開催決定」「来月◯◯セミナーを開催」「特別講座開催」「説明会を実施」「新セミナーを企画しました」など、ユーザー入力に存在しないイベント情報の創作
+  - **架空の新サービス・新商品:** 「新サービスをリリース」「新商品発表」「新プラン開始」など、ユーザーが言及していないリリース情報
+  - **架空の統計・調査結果:** 「73%の経営者が…と回答」「過去5年で2.8倍に増加」「78%がAIで代替可能」など、出典が明示できない具体的な％・倍数・年数の数字
+  - **架空の事例・実績:** 「あるクライアントは売上が30%増加」「申込数が1.7倍になった」など、ユーザー提供以外の具体的成果数値
+  - **架空の期間限定キャンペーン:** 「席数限定」「先着◯名様」「期間限定」など、実在しないオファー
+- ユーザーが提供したコンテキスト（textContext / userProfile / siteContent）に明示的に書かれている事実のみを使ってください。書かれていない情報は「一般論」「思考の枠組み」「考え方」として記述し、具体的な数字・イベント・固有の実績の言及は避けてください。
+- CTA も「セミナーへ」「お申込みは」のようなイベント誘導ではなく、「プロフィールのリンクから詳細をご覧ください」「お気軽にご相談ください」など、ユーザー提供のWebサイト/SNS URLへの誘導に統一してください。
+- このルールに違反した投稿は虚偽広告となり、ユーザーのビジネスに深刻なダメージを与えます。最優先で遵守してください。
 ${formatInstruction}
 
 # 【最重要】発信者と読者（誰から誰へのメッセージか）
