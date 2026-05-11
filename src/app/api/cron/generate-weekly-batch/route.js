@@ -131,6 +131,7 @@ async function generateForUser(settings) {
         business_style,
         tone,
         language,
+        overlay_language,
         format,
         product_context,
         user_profile
@@ -197,7 +198,8 @@ async function generateForUser(settings) {
                 cleanProductContext?.siteContent || '',
                 selectedFormat === 'carousel' ? 'carousel' : 'single',
                 userProfile,
-                purposeSeed
+                purposeSeed,
+                overlay_language || 'ja'
             )
             .then(post => ({ post, index: i }))
             .catch(err => {

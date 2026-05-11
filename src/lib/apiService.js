@@ -185,22 +185,43 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
 /**
  * 投稿内容生成
  */
-export async function generatePost(research, platformId, category, targetLabel, gender, businessStyle, tone, language = 'ja', textContext, siteContent, format = 'single', userProfile = {}, purpose = null) {
+export async function generatePost(research, platformId, category, targetLabel, gender, businessStyle, tone, language = 'ja', textContext, siteContent, format = 'single', userProfile = {}, purpose = null, overlayLanguage = 'ja') {
     try {
-        let languageInstruction = "【基本言語】すべての出力テキスト（キャプション、ハッシュタグ、コピーなど）は、**必ず完全で自然な「日本語」のみ**で作成してください。";
-
+        // ---- A. キャプション・本文系の言語 (キャプション/ハッシュタグ/スライド本文 text/image_idea) ----
+        // 多言語併記可。インバウンド対応はここでハンドル。
+        let captionLangInstruction = "**必ず完全で自然な「日本語」のみ**で作成してください。";
         if (language === 'ja_en') {
-            languageInstruction = "【インバウンド対応】キャプション文章などは【日本語】とネイティブな【英語】の両方を併記してください。ハッシュタグも日本語と英語を混ぜて生成してください。";
+            captionLangInstruction = "【日本語】とネイティブな【英語】の両方を併記してください。ハッシュタグも日本語と英語を混ぜて生成してください。";
         } else if (language === 'ja_zh') {
-            languageInstruction = "【インバウンド対応】キャプション文章などは【日本語】と自然な【中国語(繁体字)】の両方を併記してください。ハッシュタグも日本語と中国語を混ぜて生成してください。";
+            captionLangInstruction = "【日本語】と自然な【中国語(繁体字)】の両方を併記してください。ハッシュタグも日本語と中国語を混ぜて生成してください。";
         } else if (language === 'ja_ko') {
-            languageInstruction = "【インバウンド対応】キャプション文章などは【日本語】と自然な【韓国語】の両方を併記してください。ハッシュタグも日本語と韓国語を混ぜて生成してください。";
+            captionLangInstruction = "【日本語】と自然な【韓国語】の両方を併記してください。ハッシュタグも日本語と韓国語を混ぜて生成してください。";
         } else if (language === 'all') {
-            languageInstruction = "【インバウンド最強対応】キャプション文章などは【日本語】【英語】【中国語(繁体字)】【韓国語】の4ヶ国語すべてを各段落に分けて併記してください。ハッシュタグも4言語のハイブリッドで幅広く生成してください。";
+            captionLangInstruction = "【日本語】【英語】【中国語(繁体字)】【韓国語】の4ヶ国語すべてを各段落に分けて併記してください。ハッシュタグも4言語のハイブリッドで幅広く生成してください。";
         }
 
+        // ---- B. 画像オーバーレイ (overlay_copy) 専用の言語: 必ず単一 ----
+        // 視認性のため画像内に乗せるテキストは1言語に絞る。インバウンド設定でも複数併記不可。
+        const OVERLAY_LANG_LABELS = {
+            ja: '日本語',
+            en: 'English (英語)',
+            zh_TW: '繁體中文 (中国語繁体字)',
+            ko: '한국어 (韓国語)'
+        };
+        const overlayLangLabel = OVERLAY_LANG_LABELS[overlayLanguage] || '日本語';
+
+        let languageInstruction = `【出力言語ルール（重要・必読）】
+
+A. キャプション / ハッシュタグ / スライド本文 (carousel_slides[].text) / image_idea / variants:
+   → ${captionLangInstruction}
+
+B. 画像オーバーレイ (overlay_copy / carousel_slides[].overlay_copy):
+   → **必ず ${overlayLangLabel} のみ** で生成してください。複数言語の併記は絶対に禁止です。理由: overlay_copy は画像上に直接表示されるため、視認性確保のため1言語に厳密制限しています。たとえキャプション側が多言語併記設定 (例: ja_en) であっても、overlay_copy だけは必ず ${overlayLangLabel} のみで書いてください。
+
+C. image_hint_en は Imagen 画像生成プロンプト用のため、上記設定に関わらず **必ず英語で固定** してください。`;
+
         // 選択された言語（日本語単体、またはインバウンドを含む複数言語）以外の混入を強力に防ぐための共通ルール
-        languageInstruction += `\n\n【超重要・多言語混入防止】上記で指定された言語（および一般的な固有名詞）以外の言語が1文字でも混入することはシステムエラーとなるため固く禁じます。特にロシア語（例: готовые）、アラビア語、フランス語などが意図せず出力されないよう、出力言語を極めて厳密にコントロールしてください。`;
+        languageInstruction += `\n\n【超重要・多言語混入防止】上記で指定された各フィールドの言語以外（および一般的な固有名詞を除く）が1文字でも混入することはシステムエラーとなるため固く禁じます。特にロシア語（例: готовые）、アラビア語、フランス語などが意図せず出力されないよう、出力言語を極めて厳密にコントロールしてください。`;
 
         let formatInstruction = "";
         let basePurpose = purpose;

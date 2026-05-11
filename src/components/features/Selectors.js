@@ -306,7 +306,8 @@ export function LanguageSelector({ selected, onSelect, isPro }) {
     ];
     return (
         <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
-            <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">出力言語（インバウンド対応）</h3>
+            <h3 className="text-2xl md:text-3xl font-extrabold mb-3 text-center text-slate-800 tracking-tight">キャプション言語（インバウンド対応）</h3>
+            <p className="text-xs text-center text-slate-600 mb-6">投稿文・ハッシュタグ・スライド本文の言語。長文なので多言語併記OK。</p>
             <div className="flex flex-wrap justify-center gap-2">
                 {languages.map(l => {
                     const isDisabled = l.isProOnly && !isPro;
@@ -315,7 +316,7 @@ export function LanguageSelector({ selected, onSelect, isPro }) {
                             key={l.id}
                             disabled={isDisabled}
                             onClick={() => onSelect(l.id)}
-                            className={`py-2 px-4 rounded-full font-bold transition-all text-sm border 
+                            className={`py-2 px-4 rounded-full font-bold transition-all text-sm border
                                 ${isDisabled ? 'bg-white/90 border border-slate-200 shadow-sm text-slate-8000 border border-white shadow-lg/80 border-gray-700 text-slate-800 cursor-not-allowed' :
                                     selected === l.id ? 'bg-indigo-600/30 border-indigo-500 text-gray-900 shadow-[0_0_15px_rgba(79,70,229,0.3)]' :
                                         'bg-transparent border-gray-600 text-slate-800 font-medium hover:border-gray-400 hover:text-gray-900'}`}
@@ -324,6 +325,36 @@ export function LanguageSelector({ selected, onSelect, isPro }) {
                         </button>
                     )
                 })}
+            </div>
+        </div>
+    );
+}
+
+// 画像オーバーレイ専用の言語選択 (常に単一言語)
+// キャプションは多言語OKだが、画像内のテキストは視認性のため必ず1言語に絞る
+export function OverlayLanguageSelector({ selected, onSelect }) {
+    const overlayLanguages = [
+        { id: 'ja', label: '日本語' },
+        { id: 'en', label: 'English' },
+        { id: 'zh_TW', label: '繁體中文' },
+        { id: 'ko', label: '한국어' }
+    ];
+    return (
+        <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
+            <h3 className="text-2xl md:text-3xl font-extrabold mb-3 text-center text-slate-800 tracking-tight">画像内テキストの言語</h3>
+            <p className="text-xs text-center text-slate-600 mb-6">画像オーバーレイ（写真上の文字）に使う言語。視認性のため必ず1言語のみ。</p>
+            <div className="flex flex-wrap justify-center gap-2">
+                {overlayLanguages.map(l => (
+                    <button
+                        key={l.id}
+                        onClick={() => onSelect(l.id)}
+                        className={`py-2 px-4 rounded-full font-bold transition-all text-sm border
+                            ${selected === l.id ? 'bg-pink-600/30 border-pink-500 text-gray-900 shadow-[0_0_15px_rgba(236,72,153,0.3)]' :
+                                'bg-transparent border-gray-600 text-slate-800 font-medium hover:border-gray-400 hover:text-gray-900'}`}
+                    >
+                        {l.label}
+                    </button>
+                ))}
             </div>
         </div>
     );

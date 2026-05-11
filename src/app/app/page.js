@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Gem, Lock, Instagram, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History, Smartphone, ArrowRight, ArrowDown, CheckCircle2 } from 'lucide-react';
 import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
-import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
+import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, OverlayLanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
 // VISUAL_VARIETY_DIRECTIVES / SUBJECT_VARIETY_DIRECTIVES は手動バッチでは未使用 (サーバー側 /api/generate-post-image が利用)
 import { drawCanvasImage } from '@/lib/canvasHelper';
@@ -46,7 +46,8 @@ export default function Home() {
     const [selectedGender, setSelectedGender] = useState(null);
     const [selectedBusinessStyle, setSelectedBusinessStyle] = useState(null);
     const [selectedTone, setSelectedTone] = useState(null);
-    const [selectedLanguage, setSelectedLanguage] = useState('ja'); // デフォルトは日本語
+    const [selectedLanguage, setSelectedLanguage] = useState('ja'); // キャプション用の言語（多言語可）
+    const [selectedOverlayLanguage, setSelectedOverlayLanguage] = useState('ja'); // 画像オーバーレイ用の言語（常に単一）
     const [selectedFormat, setSelectedFormat] = useState('carousel'); // デフォルトはカルーセル(5枚)
     const [productContext, setProductContext] = useState({});
 
@@ -102,6 +103,7 @@ export default function Home() {
                 if (parsed.selectedBusinessStyle) setSelectedBusinessStyle(parsed.selectedBusinessStyle);
                 if (parsed.selectedTone) setSelectedTone(parsed.selectedTone);
                 if (parsed.selectedLanguage) setSelectedLanguage(parsed.selectedLanguage);
+                if (parsed.selectedOverlayLanguage) setSelectedOverlayLanguage(parsed.selectedOverlayLanguage);
                 if (parsed.selectedFormat) setSelectedFormat(parsed.selectedFormat);
                 if (parsed.productContext) setProductContext(parsed.productContext);
             } catch (e) {
@@ -122,11 +124,12 @@ export default function Home() {
                 selectedBusinessStyle,
                 selectedTone,
                 selectedLanguage,
+                selectedOverlayLanguage,
                 selectedFormat,
                 productContext
             }));
         }
-    }, [selectedPlatform, selectedCategory, selectedPurpose, selectedTarget, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, selectedFormat, productContext, isStateLoaded]);
+    }, [selectedPlatform, selectedCategory, selectedPurpose, selectedTarget, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, selectedOverlayLanguage, selectedFormat, productContext, isStateLoaded]);
 
     const [loading, setLoading] = useState(false);
     const [loadingPhase, setLoadingPhase] = useState(0);
@@ -391,7 +394,7 @@ export default function Home() {
 
             // 2. キャプション生成 (言語指定・フォーマット指定・ユーザープロフィールを追加)
             currentStep = 'generatePost';
-            const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, cleanProductContext, siteContent, selectedFormat, userProfile, selectedPurpose);
+            const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, cleanProductContext, siteContent, selectedFormat, userProfile, selectedPurpose, selectedOverlayLanguage);
             setLoadingPhase(2); // 2: "デザインを作成中..."
             await new Promise(resolve => setTimeout(resolve, 300)); // ReactのUI再レンダリングを確実に行わせるための待機
 
@@ -608,8 +611,9 @@ export default function Home() {
                         cleanProductContext, 
                         siteContent, 
                         platformType === 'instagram' ? 'carousel' : 'single',
-                        userProfile, 
-                        currentPurpose
+                        userProfile,
+                        currentPurpose,
+                        selectedOverlayLanguage
                     );
 
                     // APIレスポンス自体がpostオブジェクト
@@ -698,6 +702,7 @@ export default function Home() {
                         business_style: selectedBusinessStyle,
                         tone: selectedTone,
                         language: selectedLanguage,
+                        overlay_language: selectedOverlayLanguage,
                         format: selectedFormat,
                         product_context: cleanProductContext,
                         user_profile: userProfile,
@@ -1216,6 +1221,7 @@ export default function Home() {
                                 <ToneSelector selected={selectedTone} onSelect={setSelectedTone} />
                                 <FormatSelector selected={selectedFormat} onSelect={setSelectedFormat} isPro={isPro} />
                                 <LanguageSelector selected={selectedLanguage} onSelect={setSelectedLanguage} isPro={isPro} />
+                                <OverlayLanguageSelector selected={selectedOverlayLanguage} onSelect={setSelectedOverlayLanguage} />
                                 <ProductInput value={productContext} onChange={setProductContext} />
 
                                 <div className="mt-8 mb-16">
