@@ -163,7 +163,7 @@ export function FormatSelector({ selected, onSelect, isPro }) {
     const formats = [
         { id: 'single', label: '1枚画像', desc: '通常のシングル投稿' },
         { id: 'carousel', label: 'カルーセル', desc: '解説型・複数枚' },
-        { id: 'video_script', label: 'ショート動画', desc: '台本と画面指示', isProOnly: true },
+        { id: 'video_script', label: 'ショート動画 (Pro限定)', desc: '台本と画面指示', isProOnly: true },
     ];
     return (
         <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
@@ -299,10 +299,10 @@ export function ToneSelector({ selected, onSelect }) {
 export function LanguageSelector({ selected, onSelect, isPro }) {
     const languages = [
         { id: 'ja', label: '日本語のみ' },
-        { id: 'ja_en', label: '日本語 ＋ 英語 (Pro)', isProOnly: true },
-        { id: 'ja_zh', label: '日本語 ＋ 繁体字 (Pro)', isProOnly: true },
-        { id: 'ja_ko', label: '日本語 ＋ 韓国語 (Pro)', isProOnly: true },
-        { id: 'all', label: '4ヶ国語全て (Pro)', isProOnly: true }
+        { id: 'ja_en', label: '日本語 ＋ 英語 (Pro限定)', isProOnly: true },
+        { id: 'ja_zh', label: '日本語 ＋ 繁体字 (Pro限定)', isProOnly: true },
+        { id: 'ja_ko', label: '日本語 ＋ 韓国語 (Pro限定)', isProOnly: true },
+        { id: 'all', label: '4ヶ国語全て (Pro限定)', isProOnly: true }
     ];
     return (
         <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
