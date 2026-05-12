@@ -317,7 +317,7 @@ export function LanguageSelector({ selected, onSelect, isPro }) {
                             disabled={isDisabled}
                             onClick={() => onSelect(l.id)}
                             className={`py-2 px-4 rounded-full font-bold transition-all text-sm border
-                                ${isDisabled ? 'bg-white/90 border border-slate-200 shadow-sm text-slate-8000 border border-white shadow-lg/80 border-gray-700 text-slate-800 cursor-not-allowed' :
+                                ${isDisabled ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60' :
                                     selected === l.id ? 'bg-indigo-600/30 border-indigo-500 text-gray-900 shadow-[0_0_15px_rgba(79,70,229,0.3)]' :
                                         'bg-transparent border-gray-600 text-slate-800 font-medium hover:border-gray-400 hover:text-gray-900'}`}
                         >
