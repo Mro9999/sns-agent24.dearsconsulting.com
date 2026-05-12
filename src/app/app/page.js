@@ -1220,8 +1220,8 @@ export default function Home() {
                                 <BusinessStyleSelector selected={selectedBusinessStyle} onSelect={setSelectedBusinessStyle} />
                                 <ToneSelector selected={selectedTone} onSelect={setSelectedTone} />
                                 <FormatSelector selected={selectedFormat} onSelect={setSelectedFormat} isPro={isPro} />
-                                <LanguageSelector selected={selectedLanguage} onSelect={setSelectedLanguage} isPro={isPro} />
                                 <OverlayLanguageSelector selected={selectedOverlayLanguage} onSelect={setSelectedOverlayLanguage} />
+                                <LanguageSelector selected={selectedLanguage} onSelect={setSelectedLanguage} isPro={isPro} />
                                 <ProductInput value={productContext} onChange={setProductContext} />
 
                                 <div className="mt-8 mb-16">
