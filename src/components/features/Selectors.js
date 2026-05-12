@@ -149,7 +149,7 @@ export function CategorySelector({ selected, onSelect }) {
                     <button
                         key={c.id}
                         onClick={() => onSelect(c)}
-                        className={`py-3.5 px-3 rounded-2xl text-sm transition-all border flex items-center justify-center ${selected?.id === c.id ? "bg-slate-900 border-slate-900 text-white shadow-[0_8px_25px_rgba(0,0,0,0.15)] font-bold scale-[1.03]" : "bg-white/80 backdrop-blur-md border-white shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-slate-600 font-medium hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:text-slate-900 hover:border-slate-200"}`}
+                        className={`py-3.5 px-3 rounded-2xl text-sm transition-all border flex items-center justify-center ${selected?.id === c.id ? "bg-slate-900 border-slate-900 text-white shadow-[0_8px_25px_rgba(0,0,0,0.15)] font-bold scale-[1.03]" : "bg-white/80 backdrop-blur-md border-slate-300 shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-slate-600 font-medium hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:text-slate-900 hover:border-slate-400"}`}
                     >
                         {c.label}
                     </button>
@@ -176,7 +176,7 @@ export function FormatSelector({ selected, onSelect, isPro }) {
                             key={f.id}
                             disabled={isDisabled}
                             onClick={() => onSelect(f.id)}
-                            className={`p-3 md:px-5 md:py-3 rounded-xl md:rounded-full text-sm font-semibold transition-all border flex flex-col items-center justify-center gap-1 ${selected === f.id ? 'bg-indigo-600/30 border-indigo-500 text-gray-900' : 'bg-white border-transparent shadow-sm text-slate-500 font-medium hover:border-slate-200 font-medium hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:-translate-y-1 hover:text-rose-600'
+                            className={`p-3 md:px-5 md:py-3 rounded-xl md:rounded-full text-sm font-semibold transition-all border flex flex-col items-center justify-center gap-1 ${selected === f.id ? 'bg-indigo-600/30 border-indigo-500 text-gray-900' : 'bg-white border-slate-300 shadow-sm text-slate-500 font-medium hover:border-slate-400 font-medium hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:-translate-y-1 hover:text-rose-600'
                                 } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''} ${f.id === 'video_script' ? 'col-span-2 md:col-span-1' : ''}`}
                         >
                             <span>{f.label}</span>
@@ -211,7 +211,7 @@ export function TargetSelector({ selected, onSelect, isPro }) {
                             className={`py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm 
                                 ${isDisabled ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60' :
                                     selected === t.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' :
-                                        'bg-white/80 backdrop-blur-sm border-white text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-200'}`}
+                                        'bg-white/80 backdrop-blur-sm border-slate-300 text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-400'}`}
                         >
                             {t.label}
                         </button>
@@ -236,7 +236,7 @@ export function GenderSelector({ selected, onSelect }) {
                     <button
                         key={g.id}
                         onClick={() => onSelect(g.id)}
-                        className={`py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm ${selected === g.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-sm border-white text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-200'}`}
+                        className={`py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm ${selected === g.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-sm border-slate-300 text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-400'}`}
                     >
                         {g.label}
                     </button>
@@ -260,7 +260,7 @@ export function BusinessStyleSelector({ selected, onSelect }) {
                     <button
                         key={s.id}
                         onClick={() => onSelect(s.id)}
-                        className={`py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm ${selected === s.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-sm border-white text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-200'}`}
+                        className={`py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm ${selected === s.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-sm border-slate-300 text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-400'}`}
                     >
                         {s.label}
                     </button>
@@ -286,7 +286,7 @@ export function ToneSelector({ selected, onSelect }) {
                     <button
                         key={t.id}
                         onClick={() => onSelect(t.id)}
-                        className={`py-2 px-4 rounded font-medium transition-all text-sm border ${selected === t.id ? 'bg-orange-600/30 border-orange-500 text-gray-900' : 'bg-white/90 border border-slate-200 shadow-sm text-slate-8000 border border-white shadow-lg/80 border-gray-700 text-slate-800 font-medium hover:bg-black/60 hover:text-gray-200'}`}
+                        className={`py-2 px-4 rounded font-medium transition-all text-sm border ${selected === t.id ? 'bg-orange-600/30 border-orange-500 text-gray-900' : 'bg-white/90 border-slate-300 shadow-sm text-slate-800 font-medium hover:border-slate-400 hover:text-slate-900'}`}
                     >
                         {t.label}
                     </button>
@@ -319,7 +319,7 @@ export function LanguageSelector({ selected, onSelect, isPro }) {
                             className={`py-2 px-4 rounded-full font-bold transition-all text-sm border
                                 ${isDisabled ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60' :
                                     selected === l.id ? 'bg-indigo-600/30 border-indigo-500 text-gray-900 shadow-[0_0_15px_rgba(79,70,229,0.3)]' :
-                                        'bg-transparent border-gray-600 text-slate-800 font-medium hover:border-gray-400 hover:text-gray-900'}`}
+                                        'bg-white/80 border-slate-300 text-slate-800 font-medium hover:border-slate-400 hover:text-gray-900'}`}
                         >
                             {l.label}
                         </button>
@@ -350,7 +350,7 @@ export function OverlayLanguageSelector({ selected, onSelect }) {
                         onClick={() => onSelect(l.id)}
                         className={`py-2 px-4 rounded-full font-bold transition-all text-sm border
                             ${selected === l.id ? 'bg-pink-600/30 border-pink-500 text-gray-900 shadow-[0_0_15px_rgba(236,72,153,0.3)]' :
-                                'bg-transparent border-gray-600 text-slate-800 font-medium hover:border-gray-400 hover:text-gray-900'}`}
+                                'bg-white/80 border-slate-300 text-slate-800 font-medium hover:border-slate-400 hover:text-gray-900'}`}
                     >
                         {l.label}
                     </button>
