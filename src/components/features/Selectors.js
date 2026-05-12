@@ -286,7 +286,7 @@ export function ToneSelector({ selected, onSelect }) {
                     <button
                         key={t.id}
                         onClick={() => onSelect(t.id)}
-                        className={`py-2 px-4 rounded font-medium transition-all text-sm border ${selected === t.id ? 'bg-orange-600/30 border-orange-500 text-gray-900' : 'bg-white/90 border-slate-300 shadow-sm text-slate-800 font-medium hover:border-slate-400 hover:text-slate-900'}`}
+                        className={`py-2 px-4 rounded font-medium transition-all text-sm border ${selected === t.id ? 'bg-orange-600/30 border-orange-500 text-gray-900' : 'bg-white/90 border-slate-300 shadow-sm text-slate-800 font-medium hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:border-slate-400 hover:text-slate-900'}`}
                     >
                         {t.label}
                     </button>
@@ -319,7 +319,7 @@ export function LanguageSelector({ selected, onSelect, isPro }) {
                             className={`py-2 px-4 rounded-full font-bold transition-all text-sm border
                                 ${isDisabled ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60' :
                                     selected === l.id ? 'bg-indigo-600/30 border-indigo-500 text-gray-900 shadow-[0_0_15px_rgba(79,70,229,0.3)]' :
-                                        'bg-white/80 border-slate-300 text-slate-800 font-medium hover:border-slate-400 hover:text-gray-900'}`}
+                                        'bg-white/80 border-slate-300 text-slate-800 font-medium hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:border-slate-400 hover:text-gray-900'}`}
                         >
                             {l.label}
                         </button>
@@ -350,7 +350,7 @@ export function OverlayLanguageSelector({ selected, onSelect }) {
                         onClick={() => onSelect(l.id)}
                         className={`py-2 px-4 rounded-full font-bold transition-all text-sm border
                             ${selected === l.id ? 'bg-pink-600/30 border-pink-500 text-gray-900 shadow-[0_0_15px_rgba(236,72,153,0.3)]' :
-                                'bg-white/80 border-slate-300 text-slate-800 font-medium hover:border-slate-400 hover:text-gray-900'}`}
+                                'bg-white/80 border-slate-300 text-slate-800 font-medium hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:border-slate-400 hover:text-gray-900'}`}
                     >
                         {l.label}
                     </button>
