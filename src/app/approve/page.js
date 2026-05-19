@@ -170,6 +170,33 @@ export default function ApprovePage() {
         setStatusMsg('全件承認完了');
     };
 
+    const handleRejectAll = async () => {
+        if (!confirm(`${posts.length}件すべてを却下しますか？この操作は取り消せません。`)) return;
+        const targets = [...posts];
+        // 並列で却下API を叩く (確認ダイアログは handleReject 側ではスキップしたいので直接呼ぶ)
+        setProcessingIds(new Set(targets.map(p => p.id)));
+        try {
+            await Promise.all(targets.map(async (post) => {
+                try {
+                    const res = await fetch('/api/batch-approve', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'reject', id: post.id })
+                    });
+                    if (!res.ok) throw new Error(`却下API失敗 (${post.id.slice(0, 8)})`);
+                } catch (e) {
+                    console.error('rejectAll item error:', e);
+                }
+            }));
+            setPosts([]);
+            setStatusMsg(`${targets.length}件すべてを却下しました`);
+        } catch (e) {
+            setStatusMsg(`全件却下エラー: ${e.message}`);
+        } finally {
+            setProcessingIds(new Set());
+        }
+    };
+
     if (!isLoaded) {
         return (
             <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -225,13 +252,22 @@ export default function ApprovePage() {
                             <RefreshCcw size={14} /> 更新
                         </button>
                         {posts.length > 0 && (
-                            <button
-                                onClick={handleApproveAll}
-                                disabled={processingIds.size > 0}
-                                className="flex items-center gap-2 text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 px-4 py-2 rounded font-bold disabled:opacity-50"
-                            >
-                                <Check size={16} /> 全件承認
-                            </button>
+                            <>
+                                <button
+                                    onClick={handleRejectAll}
+                                    disabled={processingIds.size > 0}
+                                    className="flex items-center gap-2 text-sm bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded font-bold disabled:opacity-50"
+                                >
+                                    <X size={16} /> 全件却下
+                                </button>
+                                <button
+                                    onClick={handleApproveAll}
+                                    disabled={processingIds.size > 0}
+                                    className="flex items-center gap-2 text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 px-4 py-2 rounded font-bold disabled:opacity-50"
+                                >
+                                    <Check size={16} /> 全件承認
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>
