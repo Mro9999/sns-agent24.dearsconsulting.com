@@ -592,6 +592,152 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後�
 }
 
 /**
+ * 校閲者役 (Phase 2): 生成された画像を Gemini Vision で監査。
+ * - 画像内に文字 / 看板 / ラベル等が混入していないかチェック
+ * - スライドの overlay_copy と画像内容の整合性スコア (0-100)
+ *
+ * 戻り値: { hasText, alignmentScore, issues[], skipped, error }
+ * 失敗時は { hasText: false, alignmentScore: 70 } を返して上位処理を継続させる (品質ゲートを過剰に厳格にしない)。
+ */
+export async function auditSlideImage(rawImageUrl, slideOverlay = '', slideText = '') {
+    try {
+        if (!rawImageUrl) return { hasText: false, alignmentScore: 70, issues: [], skipped: true };
+
+        // 画像をフェッチして base64 化 (Gemini Vision の inline_data 用)
+        const imgResp = await fetch(rawImageUrl);
+        if (!imgResp.ok) throw new Error(`image fetch ${imgResp.status}`);
+        const arrayBuf = await imgResp.arrayBuffer();
+        const base64 = Buffer.from(arrayBuf).toString('base64');
+
+        const prompt = `Audit this image for a Japanese B2B Instagram carousel slide.
+
+Slide overlay text (to be overlaid later as Japanese text on top): "${slideOverlay}"
+Slide body context: "${slideText}"
+
+Evaluate on 2 critical criteria.
+
+1. TEXT CONTAMINATION (CRITICAL — must catch this):
+   Does the image itself contain ANY visible text, letters, numbers, signs, labels, words, captions, watermarks, or readable typography of any language (Japanese kanji/kana, English alphabet, numerals)?
+   - "yes" if you can read or identify ANY rendered text in the image
+   - "no" only if the image is completely free of typography
+
+2. ALIGNMENT SCORE (0-100):
+   How well does the image visually reinforce the slide's specific message?
+   - 100 = perfectly visualizes the exact concept stated in the overlay
+   - 80 = strong, on-topic metaphor with clear relevance
+   - 60 = somewhat related but generic
+   - 40 = loosely related
+   - 0 = unrelated, contradictory, or hallucinated
+
+Output strictly as JSON:
+{"hasText": true|false, "alignmentScore": 0-100, "issues": ["..."]}`;
+
+        const ai = getAI();
+        const response = await withRetry(async () => {
+            return await ai.models.generateContent({
+                model: RESEARCH_MODEL, // gemini-2.5-flash (multimodal対応)
+                contents: [
+                    { inlineData: { mimeType: 'image/jpeg', data: base64 } },
+                    { text: prompt }
+                ],
+                config: { temperature: 0.2 } // 採点は安定性優先
+            });
+        });
+
+        const parsed = extractJSON(response?.text || '');
+        if (!parsed || typeof parsed.alignmentScore !== 'number') {
+            return { hasText: false, alignmentScore: 70, issues: ['audit parse failed'], error: 'parse' };
+        }
+        return {
+            hasText: !!parsed.hasText,
+            alignmentScore: Math.max(0, Math.min(100, parsed.alignmentScore)),
+            issues: Array.isArray(parsed.issues) ? parsed.issues : []
+        };
+    } catch (e) {
+        console.error('[auditSlideImage] error:', e?.message);
+        return { hasText: false, alignmentScore: 70, issues: [], error: e?.message };
+    }
+}
+
+/**
+ * 品質監督役 (Phase 3): OpenAI GPT-5-mini でキャプション全体をファクトチェック。
+ * - 出典なしの具体数字 (捏造)
+ * - スピリチュアル/マインドセット系語彙の過剰使用
+ * - 架空のイベント・キャンペーン
+ * - 個人エピソード起点エッセイ
+ *
+ * OPENAI_API_KEY が無い場合は skip (Pro Max 限定機能のため)。
+ * 失敗時は passed=true (ゲート開放) を返す — 監督役の障害で投稿停止を起こさない。
+ */
+export async function factCheckPost(caption = '', slides = []) {
+    if (!process.env.OPENAI_API_KEY) {
+        return { passed: true, issues: [], skipped: true, reason: 'OPENAI_API_KEY not set' };
+    }
+    try {
+        const slideSummary = (slides || []).map((s, i) =>
+            `Slide ${i + 1}: overlay="${s?.overlay_copy || ''}", text="${s?.text || ''}"`
+        ).join('\n');
+
+        const systemPrompt = `あなたは日本のBtoB向け Instagram 投稿のファクトチェッカーです。以下の4つの違反パターンを検出してください。
+1. fabricated_stat: 出典機関名と発表年が明示されていない具体数字 (例: "73%", "2.8倍", "+30%向上", "1.5倍に増加")
+2. spiritual_overuse: スピリチュアル系語彙の過剰使用 (魂・不可欠性・本質・思想・内なる声・静寂・余白・在り方・らしさ・覚悟・選ばれる理由 等。1投稿で合計3個以上なら違反)
+3. fake_event: 実在しないイベント・セミナー・キャンペーン・新サービス開始の言及
+4. personal_anecdote: 「先日〜に行きました」「散歩で気づいた」型の個人エピソード起点
+
+JSONのみで応答。説明文不要。`;
+
+        const userPrompt = `## 検査対象
+
+### Caption
+${caption}
+
+### Slides
+${slideSummary}
+
+## 出力形式 (JSON厳守)
+{
+  "passed": true/false,
+  "issues": [
+    { "type": "fabricated_stat|spiritual_overuse|fake_event|personal_anecdote", "excerpt": "問題の該当文(短く)", "reason": "なぜ違反か" }
+  ]
+}
+
+issuesが空配列なら passed=true、1つでも検出されたら passed=false にすること。`;
+
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'gpt-5-mini', // ファクトチェック用途には十分・低コスト
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                response_format: { type: 'json_object' }
+            })
+        });
+
+        if (!res.ok) {
+            const errBody = await res.text();
+            throw new Error(`OpenAI ${res.status}: ${errBody.slice(0, 200)}`);
+        }
+        const json = await res.json();
+        const content = json?.choices?.[0]?.message?.content || '{}';
+        const parsed = JSON.parse(content);
+        return {
+            passed: parsed.passed !== false, // 不明なら通す
+            issues: Array.isArray(parsed.issues) ? parsed.issues : []
+        };
+    } catch (e) {
+        console.error('[factCheckPost] error (skipping gate):', e?.message);
+        return { passed: true, issues: [], error: e?.message };
+    }
+}
+
+/**
  * 編集者役: スライド本文 (overlay_copy + text) を読み、そのスライド固有の
  * 視覚的メッセージに tightly-aligned な英語の image_hint_en を Gemini Flash で再構築。
  *

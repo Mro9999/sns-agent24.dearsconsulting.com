@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { researchTrends, generatePost } from '@/lib/apiService';
+import { researchTrends, generatePost, factCheckPost } from '@/lib/apiService';
 import { buildPlatformCaption, PLATFORM_CAPTION_LIMITS } from '@/lib/captionUtils';
 
 const supabase = createClient(
@@ -218,7 +218,27 @@ async function generateForUser(settings) {
     const postOutcomes = await Promise.all(postPromises);
     const results = [];
 
-    for (const outcome of postOutcomes) {
+    // 🛡 品質監督役 (Phase 3): 全投稿をまとめてファクトチェック (OpenAI GPT-5-mini)
+    // OPENAI_API_KEY が未設定なら自動スキップ。
+    const factCheckPromises = postOutcomes.map(async (outcome) => {
+        if (!outcome || !outcome.post) return null;
+        const p = outcome.post;
+        return await factCheckPost(p.caption || '', p.carousel_slides || []);
+    });
+    const factCheckResults = await Promise.all(factCheckPromises);
+    let blockedByFactCheck = 0;
+    factCheckResults.forEach((fc, idx) => {
+        if (fc && fc.passed === false) {
+            blockedByFactCheck++;
+            console.warn(`[generate-weekly-batch] ${user_id} ${idx + 1}件目 ファクトチェック違反:`, JSON.stringify(fc.issues).slice(0, 300));
+        }
+    });
+    if (blockedByFactCheck > 0) {
+        console.log(`[generate-weekly-batch] ${user_id} ファクトチェックで ${blockedByFactCheck}件 違反を検出 (記録のみ、保存は継続)`);
+    }
+
+    for (let outcomeIdx = 0; outcomeIdx < postOutcomes.length; outcomeIdx++) {
+        const outcome = postOutcomes[outcomeIdx];
         if (!outcome || !outcome.post) continue;
         const { post, index: i } = outcome;
 

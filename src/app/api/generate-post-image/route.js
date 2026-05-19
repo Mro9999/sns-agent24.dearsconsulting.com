@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
-import { generateImage, refineSlideImageHint } from '@/lib/apiService';
+import { generateImage, refineSlideImageHint, auditSlideImage } from '@/lib/apiService';
 import { VISUAL_VARIETY_DIRECTIVES, SUBJECT_VARIETY_DIRECTIVES } from '@/lib/canvasHelper';
 import { composeOverlayImage } from '@/lib/serverOverlayHelper';
 
@@ -140,7 +140,57 @@ export async function POST(req) {
             );
         }
 
-        const slideResults = await Promise.all(imagePromises);
+        let slideResults = await Promise.all(imagePromises);
+
+        // 🔍 校閲者役 (Phase 2): 各画像を Gemini Vision で監査し、
+        // 「画像内に文字混入」または「整合性スコア < 60」のスライドを1回だけ再生成
+        if (isCarousel && Array.isArray(post.carousel_slides)) {
+            const auditPromises = slideResults.map((url, i) => {
+                if (!url) return Promise.resolve(null);
+                const slide = post.carousel_slides[i];
+                return auditSlideImage(url, slide?.overlay_copy || '', slide?.text || '');
+            });
+            const audits = await Promise.all(auditPromises);
+
+            const ALIGNMENT_THRESHOLD = 60;
+            const regenIndices = [];
+            for (let i = 0; i < audits.length; i++) {
+                const a = audits[i];
+                if (!a || a.skipped) continue;
+                const failed = a.hasText === true || (typeof a.alignmentScore === 'number' && a.alignmentScore < ALIGNMENT_THRESHOLD);
+                if (failed) regenIndices.push(i);
+            }
+            if (regenIndices.length > 0) {
+                console.log(`[generate-post-image] audit found ${regenIndices.length} problematic slide(s); regenerating`);
+                const regenPromises = regenIndices.map(async (i) => {
+                    const slide = post.carousel_slides[i];
+                    const hint = refinedHints[i] || slide?.image_hint_en || post.image_idea;
+                    // 再生成時は監査で見つかった問題を抑制する追加注意書きを加える
+                    const auditNote = audits[i].hasText
+                        ? '\n[CRITICAL] The previous attempt contained visible text/letters/signs in the image. ABSOLUTELY NO text of any language in the regenerated image.'
+                        : '\n[CRITICAL] The previous attempt did not align with the slide message. Make the image more specifically tied to the slide concept.';
+                    const retryPrompt = `${hint}${auditNote}
+
+[Style constraints]
+- High-quality professional photography or cinematic visual, Instagram-ready 4:5 portrait composition
+- ABSOLUTELY NO text, letters, signs, labels, signage, captions, watermarks, logos in the image
+- Avoid generic stock-photo cliches
+- Carousel slide ${i + 1} of ${imgCount}`;
+                    try {
+                        const arr = await generateImage(category, targetLabel, 'other', retryPrompt, productContext, post.platform, null, 1);
+                        return { i, url: Array.isArray(arr) ? arr[0] : null };
+                    } catch (err) {
+                        console.error(`[generate-post-image] regen slide ${i} failed:`, err?.message);
+                        return { i, url: null };
+                    }
+                });
+                const regenResults = await Promise.all(regenPromises);
+                for (const r of regenResults) {
+                    if (r.url) slideResults[r.i] = r.url;
+                }
+            }
+        }
+
         const rawUrls = slideResults.filter(Boolean);
 
         if (rawUrls.length === 0) {
