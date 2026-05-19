@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
-import { generateImage } from '@/lib/apiService';
+import { generateImage, refineSlideImageHint } from '@/lib/apiService';
 import { VISUAL_VARIETY_DIRECTIVES, SUBJECT_VARIETY_DIRECTIVES } from '@/lib/canvasHelper';
 import { composeOverlayImage } from '@/lib/serverOverlayHelper';
 
@@ -66,15 +66,38 @@ export async function POST(req) {
         //
         // image_hint_en が無い場合 (旧データ・single投稿) は従来の汎用構成にフォールバック。
         // 日本語は引き続き Imagen prompt に渡さない (文字化け回避)。
+        // 🎬 編集者役 (Phase 1): 各スライドの本文に tightly-aligned な image_hint_en を再構築
+        // generatePost が作った image_hint_en は caption と同時生成のため緩い結合になりがち。
+        // ここで slide ごとに Gemini Flash で refocus して整合性を上げる。失敗時は既存hintを使う。
+        const refinedHints = [];
+        if (isCarousel && Array.isArray(post.carousel_slides)) {
+            const refinePromises = [];
+            for (let i = 0; i < imgCount; i++) {
+                const slide = post.carousel_slides[i];
+                if (!slide) { refinePromises.push(Promise.resolve(null)); continue; }
+                refinePromises.push(
+                    refineSlideImageHint(slide.overlay_copy, slide.text, slide.image_hint_en || '')
+                );
+            }
+            const settled = await Promise.all(refinePromises);
+            for (let i = 0; i < imgCount; i++) {
+                refinedHints.push(settled[i] || post.carousel_slides[i]?.image_hint_en || null);
+            }
+            console.log(`[generate-post-image] refined ${refinedHints.filter(Boolean).length}/${imgCount} slide hints`);
+        }
+
         const imagePromises = [];
         for (let i = 0; i < imgCount; i++) {
             // スライド毎にビジュアル指示を回転させて多様性を担保
             const visualTone = VISUAL_VARIETY_DIRECTIVES[(variationIndex + i) % VISUAL_VARIETY_DIRECTIVES.length];
             const subjectAngle = SUBJECT_VARIETY_DIRECTIVES[(variationIndex + i) % SUBJECT_VARIETY_DIRECTIVES.length];
 
-            const slideHintEn = isCarousel && post.carousel_slides && post.carousel_slides[i]?.image_hint_en
-                ? post.carousel_slides[i].image_hint_en
-                : null;
+            // 編集者役が refine した hint を優先、無ければ generatePost 時の image_hint_en にフォールバック
+            const slideHintEn = (isCarousel && refinedHints[i])
+                ? refinedHints[i]
+                : (isCarousel && post.carousel_slides && post.carousel_slides[i]?.image_hint_en
+                    ? post.carousel_slides[i].image_hint_en
+                    : null);
 
             let slideImageIdea;
             if (slideHintEn) {

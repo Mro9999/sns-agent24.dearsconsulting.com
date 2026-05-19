@@ -592,6 +592,64 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後�
 }
 
 /**
+ * 編集者役: スライド本文 (overlay_copy + text) を読み、そのスライド固有の
+ * 視覚的メッセージに tightly-aligned な英語の image_hint_en を Gemini Flash で再構築。
+ *
+ * 背景: generatePost が一回の呼び出しで caption + slides + image_hint_en を全部
+ * 生成すると、image_hint_en がスライド本文と緩い結合になりがち（チェス画像が
+ * 「3ステップBefore/After」に出る等）。これを slide ごとに focused 生成し直す。
+ *
+ * 失敗時 (API エラーや空応答) は fallback を返し、既存の image_hint_en を温存する。
+ */
+export async function refineSlideImageHint(overlayCopy, slideText, fallback = '') {
+    try {
+        if (!overlayCopy && !slideText) return fallback || '';
+        const prompt = `You are a visual director for premium Japanese B2B Instagram carousel posts. Given a single slide's text content, generate a precise English image prompt that DIRECTLY visualizes the slide's main message.
+
+Slide overlay (the headline text shown on the image):
+"${overlayCopy || ''}"
+
+Slide body text (additional context):
+"${slideText || ''}"
+
+Requirements:
+- 40-60 English words
+- Must visually communicate THE EXACT specific message of this slide, not a generic version
+- If the slide mentions "3 steps" / "3つのステップ", show 3 distinct visual elements (e.g. three stones in sequence, three doors, three paths converging)
+- If the slide mentions "Before / After" / "ビフォーアフター", show a transformation, contrast, or split composition
+- If a specific industry is named (e.g. SaaS / 旅館 / 化粧品メーカー / 士業), reflect that industry's environment
+- If a specific action or process is described, show that action being performed
+- If a specific failure pattern is named, show the negative state symbolically
+- ABSOLUTELY NO text, letters, numbers, signs, labels, captions, watermarks, logos anywhere in the image
+- Premium editorial/cinematic photography style, 4:5 portrait composition
+- Avoid generic stock-photo cliches (no plain desk + laptop + coffee unless the slide explicitly needs them)
+
+Output ONLY the English image prompt itself. No prefix, no explanation, no quotes around it.`;
+
+        const ai = getAI();
+        const response = await withRetry(async () => {
+            return await ai.models.generateContent({
+                model: RESEARCH_MODEL, // gemini-2.5-flash (低コスト、高速)
+                contents: prompt,
+                config: {
+                    temperature: 0.7, // 多様性は適度に、整合性を優先
+                }
+            });
+        });
+
+        const refined = (response?.text || '').trim();
+        if (!refined || refined.length < 20) {
+            console.warn('[refineSlideImageHint] empty/too-short response, using fallback');
+            return fallback || '';
+        }
+        return refined;
+    } catch (e) {
+        console.error('[refineSlideImageHint] error, using fallback:', e?.message);
+        return fallback || '';
+    }
+}
+
+/**
  * 画像生成 (Gemini 3 Pro Image = imagen-4.0-generate-001 利用)
  */
 export async function generateImage(category, targetLabel, gender, imageContext, textContext, platformId, visualDescription, count = 1) {

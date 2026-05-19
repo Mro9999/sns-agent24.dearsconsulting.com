@@ -43,3 +43,32 @@
 - 画像生成は組み込み `image_gen` ツールを明示指定（「APIキーやスクリプトは書かず、組み込みimage_genツールを使う」）
 - `--dangerously-bypass-approvals-and-sandbox` はユーザー明示許可がない限り使わない
 - 出力先パスは `test-images/sample-{key}.png` のような workdir 内に統一
+
+## ランタイム品質保証パイプライン（dev時設計、runtime はGeminiチームで実行）
+
+「全体ディレクションは Claude Code が管理、ランタイム実行は Gemini チーム」の原則。
+Claude Code が dev 時に設計・実装・改善するが、Vercel本番は Claude/Codex を呼ばず Gemini族のみで完結する（追加APIキー不要・低コスト・低レイテンシ）。
+
+### ランタイムの役者編成（投稿生成→Instagram公開までの流れ）
+
+| 役者 | 担当モデル | 責務 |
+|---|---|---|
+| **作家** | Gemini Pro | caption + carousel_slides[].overlay_copy/.text 生成 |
+| **編集者** (Phase 1) | Gemini Flash | 各スライドの本文を読み、tightly-aligned `image_hint_en` を slide ごとに refocus |
+| **画家** | Imagen 4 | refined hint で画像生成 |
+| **校閲者** (Phase 2, 未実装) | Gemini Vision | 生成画像 vs overlay_copy の整合性採点、低スコアなら編集者に差戻し |
+| **品質監督** (Phase 3, Pro Max 限定オプション) | Codex/GPT-5 (要 OpenAI API key) | キャプション全体のファクトチェック・捏造数字検出・スピリチュアル化検出 |
+
+### Phase 1 実装ポイント
+
+- `refineSlideImageHint(overlayCopy, slideText, fallback)` を `src/lib/apiService.js` に追加
+- `src/app/api/generate-post-image/route.js` の Imagen 呼び出し直前に各スライドで実行
+- 失敗時は generatePost が生成した既存 `image_hint_en` を fallback として使用
+- 編集者プロンプトは「DIRECT visual translation of the slide's specific concrete message」を要求
+
+### 全体方針
+
+- Claude Code は dev時にパイプラインを設計・改善し、CLAUDE.md と apiService.js に記録する
+- 本番ランタイムは Gemini族（Pro/Flash/Vision/Imagen）で完結（追加APIキー不要）
+- Codex/GPT-5 は dev時のセカンドオピニオン専用（runtime には載せない）
+- ただし Phase 3 で Pro Max 限定の高精度ファクトチェックを runtime に追加する可能性あり
