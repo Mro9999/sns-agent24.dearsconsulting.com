@@ -95,6 +95,94 @@ const TEXT_MODEL = 'gemini-2.5-pro'; // 高機能・最新の文章・推論用�
 const RESEARCH_MODEL = 'gemini-2.5-flash';
 const IMAGE_MODEL = 'imagen-4.0-generate-001'; // 最新の画像生成モデル
 
+const STEP_PROMISE_PATTERN = /([3３]\s*(?:つの)?(?:具体的な)?\s*(?:ステップ|手順|工程)|三\s*(?:つの)?(?:具体的な)?\s*(?:ステップ|手順|工程)|[3３]\s*steps?)/i;
+const STEP_LABEL_PATTERNS = [
+    /(?:step|STEP)\s*0?[1１]|ステップ\s*[1１]|手順\s*[1１]|工程\s*[1１]|[1１][.．、:：]/i,
+    /(?:step|STEP)\s*0?[2２]|ステップ\s*[2２]|手順\s*[2２]|工程\s*[2２]|[2２][.．、:：]/i,
+    /(?:step|STEP)\s*0?[3３]|ステップ\s*[3３]|手順\s*[3３]|工程\s*[3３]|[3３][.．、:：]/i
+];
+
+const getSlideText = (slide) => `${slide?.overlay_copy || ''}\n${slide?.text || ''}`;
+
+const hasStepPromise = (post = {}) => {
+    const slidesText = Array.isArray(post.carousel_slides)
+        ? post.carousel_slides.map(getSlideText).join('\n')
+        : '';
+    return STEP_PROMISE_PATTERN.test(`${post.caption || ''}\n${slidesText}`);
+};
+
+const hasExplicitStepSlides = (slides = []) => {
+    if (!Array.isArray(slides) || slides.length < 3) return false;
+    return STEP_LABEL_PATTERNS.every((pattern, index) => pattern.test(getSlideText(slides[index])));
+};
+
+const hasCarouselStepMismatch = (post = {}, format = 'single') => {
+    return format === 'carousel' && hasStepPromise(post) && !hasExplicitStepSlides(post.carousel_slides);
+};
+
+const softenStepPromiseText = (value) => {
+    if (typeof value !== 'string') return value;
+    return value
+        .replace(/[3３]\s*つの\s*具体的な\s*(?:ステップ|手順|工程)で解説します/g, '3つの観点から整理します')
+        .replace(/[3３]\s*つの\s*具体的な\s*(?:ステップ|手順|工程)/g, '3つの観点')
+        .replace(/三\s*つの\s*具体的な\s*(?:ステップ|手順|工程)/g, '3つの観点')
+        .replace(/[3３]\s*(?:ステップ|手順|工程)/g, '3つの観点');
+};
+
+const softenCarouselStepPromises = (post = {}) => {
+    const softened = {
+        ...post,
+        caption: softenStepPromiseText(post.caption),
+        overlay_copy: softenStepPromiseText(post.overlay_copy),
+        carousel_slides: Array.isArray(post.carousel_slides)
+            ? post.carousel_slides.map(slide => ({
+                ...slide,
+                overlay_copy: softenStepPromiseText(slide?.overlay_copy),
+                text: softenStepPromiseText(slide?.text)
+            }))
+            : post.carousel_slides,
+        variants: Array.isArray(post.variants)
+            ? post.variants.map(variant => ({
+                ...variant,
+                caption: softenStepPromiseText(variant?.caption)
+            }))
+            : post.variants
+    };
+    return softened;
+};
+
+const repairCarouselStepNarrative = async (ai, post, overlayLangLabel) => {
+    const repairPrompt = `
+以下のInstagramカルーセルJSONは、キャプションまたはスライド見出しで「3ステップ」と約束しているのに、3枚のスライドが Step 1 / Step 2 / Step 3 として対応していません。
+キャプションと carousel_slides を、読者が本当に3つの手順を読める構成へ修正してください。
+
+厳守ルール:
+- JSONのみで返すこと。
+- caption, hashtags, carousel_slides, image_idea, variants のキー構造は維持すること。
+- carousel_slides は必ず3枚。
+- 1枚目 overlay_copy は必ず「Step 1: ...」または「ステップ1: ...」で始める。
+- 2枚目 overlay_copy は必ず「Step 2: ...」または「ステップ2: ...」で始める。
+- 3枚目 overlay_copy は必ず「Step 3: ...」または「ステップ3: ...」で始める。
+- 各ステップはタイトルだけでなく、顧客体験を再設計するための具体的な行動にする。
+- caption 内で「3つの具体的なステップ」と書く場合は、本文中にも同じ3ステップ名を短く列挙する。
+- overlay_copy は必ず${overlayLangLabel}のみ。絵文字は禁止。
+- image_hint_en は英語のみで、各ステップの具体的な行動を視覚化する。
+
+修正対象JSON:
+${JSON.stringify(post)}
+`;
+
+    const response = await withRetry(async () => {
+        return await ai.models.generateContent({
+            model: TEXT_MODEL,
+            contents: repairPrompt,
+            config: { temperature: 0.25 }
+        });
+    }, 2, 2000);
+
+    return extractJSON(response.text, post);
+};
+
 /**
  * トレンドリサーチ
  */
@@ -258,6 +346,13 @@ C. image_hint_en は Imagen 画像生成プロンプト用のため、上記設�
         { "style": "エモーショナル", "caption": "...", "hashtags": ["..."] }
     ]
 }
+
+# 【最重要】キャプションとカルーセル3枚の内容同期
+- caption で「3ステップ」「3つの具体的なステップ」「3手順」「3工程」と約束する場合、carousel_slides の3枚は必ずその3ステップそのものにしてください。
+- その場合、1枚目 overlay_copy は「Step 1: ...」または「ステップ1: ...」、2枚目は「Step 2: ...」または「ステップ2: ...」、3枚目は「Step 3: ...」または「ステップ3: ...」で始めてください。
+- 「3ステップ」と言いながら、1枚目=問題提起、2枚目=タイトル、3枚目=まとめ のような構成にすることは禁止です。
+- 3枚のうち1枚だけに「3ステップ」と書くことは禁止です。読者が各スライドを見ただけで Step 1 / Step 2 / Step 3 の中身を理解できる構成にしてください。
+- もしスライド構成が「問題提起 → 原因分解 → 解決の方向性」の場合、caption では「3ステップ」と書かず、「3つの観点」「3枚で整理します」のように表現してください。
 
 # 【超重要】image_hint_en の品質基準 (これに従わないと画像がgenericなオフィス写真に収束し、キャプションと画像が乖離します)
 
@@ -474,6 +569,12 @@ GOOD: "Close-up of weathered artisan hands carefully shaping clay on a potter's 
   - 例:「Step 1: 商品説明から5つの感情ワードを抽出 / Step 2: 顧客接点別に翻訳 / Step 3: 月1回の検証MTG」
 - この型から外れる場合でも、必ず「失敗→分解→改善手順」または「課題→事例→打ち手」の論理が通る構成にすること
 
+## ルールD: 「3ステップ」と書いたら、3枚すべてをステップ化する
+- caption に「3ステップ」「3つの具体的なステップ」「3手順」「3工程」と書く場合、carousel_slides の1枚目から3枚目は必ず Step 1 / Step 2 / Step 3 そのものにすること。
+- Step 1 / Step 2 / Step 3 の各見出しは overlay_copy 冒頭に明記すること。text だけに隠してはいけない。
+- 「3ステップ」と言いながら、スライドが表紙・タイトル・まとめだけで終わる構成は禁止。これはキャプションと画像の不一致として生成失敗です。
+- 3枚構成で問題提起・原因・解決を語るだけなら、「3ステップ」ではなく「3つの観点」「3つの構造」「3枚で整理」と表現すること。
+
 # 【絶対厳守の禁止事項（架空の事実・イベント・数字の捏造禁止）】
 - **ユーザーから提供されていない「具体的な事実情報」を絶対に創作してはいけません。** 以下は特に頻繁に発生する捏造パターンで、固く禁止します:
   - **架空のイベント開催:** 「セミナーを開催します」「ウェビナー開催決定」「来月◯◯セミナーを開催」「特別講座開催」「説明会を実施」「新セミナーを企画しました」など、ユーザー入力に存在しないイベント情報の創作
@@ -584,7 +685,22 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後�
             console.log(`[generatePost:${format}] cache: ${cached}/${total} tok (${hitRate}% hit)`);
         }
 
-        return extractJSON(response.text);
+        let generatedPost = extractJSON(response.text);
+        if (hasCarouselStepMismatch(generatedPost, format)) {
+            console.warn('[generatePost] carousel step mismatch detected; attempting repair');
+            try {
+                generatedPost = await repairCarouselStepNarrative(ai, generatedPost, overlayLangLabel);
+            } catch (repairError) {
+                console.error('[generatePost] carousel step repair failed:', repairError?.message || repairError);
+            }
+        }
+
+        if (hasCarouselStepMismatch(generatedPost, format)) {
+            console.warn('[generatePost] carousel step mismatch remained after repair; softening step promise');
+            generatedPost = softenCarouselStepPromises(generatedPost);
+        }
+
+        return generatedPost;
     } catch (error) {
         console.error("generatePost error:", error);
         throw new Error("投稿内容の生成に失敗しました。");
