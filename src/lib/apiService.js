@@ -496,12 +496,12 @@ C. image_hint_en は Imagen 画像生成プロンプト用のため、上記設�
             formatInstruction = `
 # 出力形式 (JSONのみ)
 {
-    "caption": "一切の絵文字や顔文字を使用せず、ターゲットに深く響く知的で洗練されたプロフェッショナルな投稿文（最後にCTAやURLを含む）",
+    "caption": "一切の絵文字や顔文字を使用せず、Instagramで読みやすい自然な投稿文。硬い提案書口調は禁止。500〜900字程度、短い段落で構成し、最後にCTAやURLを含む",
     "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
     "carousel_slides": [
-        { "overlay_copy": "1枚目(表紙): 読者の具体的な悩みや願望に刺さる一言。抽象論禁止。適宜 '\\n' で改行", "text": "表紙の補足となる短い文章", "image_hint_en": "Symbolic English visual (40-60 words) reinforcing slide 1's overlay_copy theme. NO TEXT in image. NO generic office (desk/laptop/notebook/coffee). Use metaphor, landscape, or specific human action." },
-        { "overlay_copy": "2枚目: 具体的な事実・事例・本論を含む見出し", "text": "2枚目での詳細な解説文", "image_hint_en": "Symbolic English visual (40-60 words) for slide 2's specific message. NO TEXT. NO generic office. Distinct setting/subject from slide 1." },
-        { "overlay_copy": "3枚目: 解決策・価値・次の一歩を具体的に示す見出し（CTAを兼ねる）", "text": "3枚目での詳細な解説文（読者の行動を促す）", "image_hint_en": "Symbolic English visual (40-60 words) for slide 3's solution/outcome. NO TEXT. NO generic office. Distinct setting from slides 1-2." }
+        { "overlay_copy": "1枚目(表紙): 24文字前後まで。読者がスマホで止まる自然な一言。抽象論・専門語詰め込み禁止。適宜 '\\n' で改行", "text": "表紙の補足。80〜140字程度で短く", "image_hint_en": "Symbolic English visual (40-60 words) reinforcing slide 1's overlay_copy theme. NO TEXT in image. NO generic office (desk/laptop/notebook/coffee). Use metaphor, landscape, or specific human action." },
+        { "overlay_copy": "2枚目: 24文字前後まで。原因・見落とし・比較軸を自然な言葉で示す", "text": "2枚目の解説。120〜180字程度。箇条書き可。専門用語は言い換える", "image_hint_en": "Symbolic English visual (40-60 words) for slide 2's specific message. NO TEXT. NO generic office. Distinct setting/subject from slide 1." },
+        { "overlay_copy": "3枚目: 24文字前後まで。読者が次に試す行動を示す", "text": "3枚目の解説。120〜180字程度。読者の行動を促す", "image_hint_en": "Symbolic English visual (40-60 words) for slide 3's solution/outcome. NO TEXT. NO generic office. Distinct setting from slides 1-2." }
     ],
     "image_idea": "この投稿全体の世界観を表す、${IMAGE_MODEL}で背景画像を生成するための詳細な画像プロンプト案（★毎回必ず異なる構図・切り口・被写体にする。英語、50単語程度）",
     "variants": [
@@ -516,6 +516,14 @@ C. image_hint_en は Imagen 画像生成プロンプト用のため、上記設�
 - 「3ステップ」と言いながら、1枚目=問題提起、2枚目=タイトル、3枚目=まとめ のような構成にすることは禁止です。
 - 3枚のうち1枚だけに「3ステップ」と書くことは禁止です。読者が各スライドを見ただけで Step 1 / Step 2 / Step 3 の中身を理解できる構成にしてください。
 - もしスライド構成が「問題提起 → 原因分解 → 解決の方向性」の場合、caption では「3ステップ」と書かず、「3つの観点」「3枚で整理します」のように表現してください。
+
+# 【超重要】Instagram向けの文体・読みやすさ
+- 提案書、白書、論文、営業資料のような硬い文章は禁止です。
+- 読者はスマホで流し見しています。1文は45文字前後まで。1段落は2文まで。長い説明はスライドに分けてください。
+- 「貴社」「弊社」「不可欠です」「〜といえるでしょう」「〜少なくありません」「客観的に評価」「計画的に高める」のような硬い表現を避けてください。
+- 代わりに「自社」「私たち」「まず見直したいのは」「ここで差が出ます」「置き去りになりがちです」のような自然な言葉を使ってください。
+- キャプションは、1.共感できる現場の違和感 → 2.なぜ起こるか → 3.今日見直すポイント → 4.プロフィールリンクへの自然なCTA、の流れにしてください。
+- ハッシュタグは日本語中心で5〜8個まで。英語ハッシュタグの大量追加は禁止です。
 
 # 【超重要】image_hint_en の品質基準 (これに従わないと画像がgenericなオフィス写真に収束し、キャプションと画像が乖離します)
 
@@ -548,7 +556,7 @@ GOOD: "Close-up of weathered artisan hands carefully shaping clay on a potter's 
             formatInstruction = `
 # 出力形式 (JSONのみ)
 {
-    "caption": "（※投稿文用）一切の絵文字や顔文字を使用せず、ターゲットに深く響く知的で洗練されたプロフェッショナルな投稿文",
+    "caption": "（※投稿文用）一切の絵文字や顔文字を使用せず、Instagramで読みやすい自然な投稿文。硬い提案書口調は禁止",
     "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
     "video_script": [
         { "time": "0-3秒 (フック)", "visual": "画面に映すべき映像や行動の指示", "audio": "音声読み上げ用・セリフ", "text_overlay": "画面にデカデカと出すテロップ" },
@@ -566,7 +574,7 @@ GOOD: "Close-up of weathered artisan hands carefully shaping clay on a potter's 
             formatInstruction = `
 # 出力形式 (JSONのみ)
 {
-    "caption": "一切の絵文字や顔文字を使用せず、ターゲットに深く響く知的で洗練されたプロフェッショナルな投稿文（最後にCTAやURLを含む）",
+    "caption": "一切の絵文字や顔文字を使用せず、Instagramで読みやすい自然な投稿文。硬い提案書口調は禁止。500〜900字程度、最後にCTAやURLを含む",
     "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
     "image_idea": "この投稿文に合う、${IMAGE_MODEL}で生成するための詳細な画像プロンプト案（★毎回必ず異なる構図・切り口・被写体にする。英語、50単語程度）",
     "overlay_copy": "写真上に表示するキャッチコピー（10〜25文字程度、'\\n'で改行推奨）。★必ず読者の具体的な悩み・願望・行動に言及すること。『美学』『本質』『哲学』等の抽象語だけのコピーは禁止。具体的なサービス内容・メリット・数字を含めて書く",
@@ -596,6 +604,14 @@ GOOD: "Close-up of weathered artisan hands carefully shaping clay on a potter's 
 - research.avoid_angles に含まれる切り口は使わないでください。
 - ユーザー提供にない「DEARS CONSULTINGが実際に支援した」「クライアント企業で実践した」「広告費を35%削減した」「売上2.8倍」等の実績・成果は絶対に書かないでください。
 - 自社実績を語れない場合は「実績」ではなく、「よくある構造」「見直し手順」「チェックリスト」「仮説検証」として書いてください。
+
+# Instagram文体の絶対ルール
+- 難しい内容を、経営者が朝の移動中にスマホで読める文章にしてください。
+- 「貴社」「弊社」「有形資産」「無形資産」「貸借対照表」「客観的に評価」「戦略的に高める」「不可欠です」を連発しないでください。必要な専門語は1投稿につき2つまでに抑え、すぐに日常語で言い換えてください。
+- キャプションは500〜900字を目安にし、長すぎる説明は禁止です。カルーセルで伝えられる内容を本文に詰め込みすぎないでください。
+- 1文は短く。硬い断定より、読者の現場に寄り添う自然な言い方にしてください。
+- 「これは、〜です。」「〜することが不可欠です。」の連続は禁止です。リズムを作ってください。
+- 投稿者は高圧的なコンサルではなく、事業者の隣で整理を手伝う伴走者として話してください。
 
 # ★★★最重要★★★ 投稿品質の絶対基準（このプロジェクトの命）
 
