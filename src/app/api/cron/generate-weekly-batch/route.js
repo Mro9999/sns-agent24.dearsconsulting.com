@@ -223,7 +223,7 @@ async function generateForUser(settings) {
     const factCheckPromises = postOutcomes.map(async (outcome) => {
         if (!outcome || !outcome.post) return null;
         const p = outcome.post;
-        return await factCheckPost(p.caption || '', p.carousel_slides || []);
+        return await factCheckPost(p.caption || '', p.carousel_slides || [], language || 'ja');
     });
     const factCheckResults = await Promise.all(factCheckPromises);
     let blockedByFactCheck = 0;
@@ -234,13 +234,24 @@ async function generateForUser(settings) {
         }
     });
     if (blockedByFactCheck > 0) {
-        console.log(`[generate-weekly-batch] ${user_id} ファクトチェックで ${blockedByFactCheck}件 違反を検出 (記録のみ、保存は継続)`);
+        console.log(`[generate-weekly-batch] ${user_id} ファクトチェックで ${blockedByFactCheck}件 違反を検出 (保存スキップ)`);
     }
 
     for (let outcomeIdx = 0; outcomeIdx < postOutcomes.length; outcomeIdx++) {
         const outcome = postOutcomes[outcomeIdx];
         if (!outcome || !outcome.post) continue;
         const { post, index: i } = outcome;
+        const factCheck = factCheckResults[outcomeIdx];
+
+        if (post.quality_blocked === true) {
+            console.warn(`[generate-weekly-batch] ${user_id} ${i + 1}件目は生成後品質ゲートNGのため保存スキップ:`, JSON.stringify(post.quality_issues || []).slice(0, 300));
+            continue;
+        }
+
+        if (factCheck && factCheck.passed === false) {
+            console.warn(`[generate-weekly-batch] ${user_id} ${i + 1}件目はファクトチェックNGのため保存スキップ:`, JSON.stringify(factCheck.issues || []).slice(0, 300));
+            continue;
+        }
 
         // 投稿本文＋ハッシュタグを Instagram の 2,200 文字上限内に収めて結合
         // (Make.com の Instagram 自動投稿で "The caption was too long. (36004)" を回避)

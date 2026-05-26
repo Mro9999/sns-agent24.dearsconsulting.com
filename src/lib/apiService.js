@@ -183,6 +183,154 @@ ${JSON.stringify(post)}
     return extractJSON(response.text, post);
 };
 
+const RESULT_METRIC_CONTEXT = '(売上|EC売上|広告費|CVR|CPA|ROAS|LTV|客単価|顧客満足度|問い合わせ|問合せ|申込|申し込み|成約率|離脱率|継続率|リピート率|利益|粗利|予約数|集客|フォロワー|再購入|購入率|解約率)';
+const RESULT_CHANGE_CONTEXT = '(削減|改善|増加|向上|短縮|伸び|上昇|低下|達成|実現|成功|改善)';
+const UNSUPPORTED_METRIC_PATTERNS = [
+    new RegExp(`${RESULT_METRIC_CONTEXT}.{0,24}(\\d+(?:\\.\\d+)?\\s*(?:%|％|倍)|[0-9０-９]+割|半数|約半数)`, 'i'),
+    new RegExp(`(\\d+(?:\\.\\d+)?\\s*(?:%|％|倍)|[0-9０-９]+割|半数|約半数).{0,24}${RESULT_METRIC_CONTEXT}`, 'i'),
+    new RegExp(`(\\d+(?:\\.\\d+)?\\s*(?:%|％|倍)).{0,24}${RESULT_CHANGE_CONTEXT}`, 'i'),
+    new RegExp(`(?:ある調査|調査では|データでは|研究では|レポートでは|市場データ).{0,36}\\d+(?:\\.\\d+)?\\s*(?:%|％|倍)`, 'i')
+];
+const SOURCE_HINT_PATTERN = /(出典|によると|省|庁|機構|協会|白書|調査20\d{2}|20\d{2}年版|令和[0-9０-９]+年)/;
+const UNSUPPORTED_PROOF_PATTERNS = [
+    /(?:私たち|当社|弊社|DEARS\s*CONSULTING).{0,36}(?:実際に支援|支援した|伴走支援|伴走した|実現しました|改善しました|成果|事例)/i,
+    /(?:クライアント|顧客企業|導入企業|支援先).{0,36}(?:売上|広告費|成果|改善|増加|削減|実践|実現|成功)/i,
+    /(?:実際に|実在の|具体的な).{0,24}(?:支援|伴走|事例|成功|変化|成果)/i,
+    /(?:年商|月商).{0,18}(?:クライアント|顧客企業|支援先|企業).{0,36}(?:支援|伴走|実践|実現|改善|成果)/i
+];
+const ENGLISH_TRANSLATION_PATTERN = /\[?\s*English Translation\s*\]?/i;
+const LONG_ENGLISH_SENTENCE_PATTERN = /[A-Za-z]{4,}(?:[\s,.;:'"!?()-]+[A-Za-z]{3,}){5,}/;
+
+const getTextExcerpt = (text = '', pattern) => {
+    const match = String(text).match(pattern);
+    if (!match) return '';
+    const start = Math.max(0, match.index - 20);
+    return String(text).slice(start, start + 120).replace(/\s+/g, ' ').trim();
+};
+
+const stripJapaneseLanguageLeak = (value, language) => {
+    if (language !== 'ja' || typeof value !== 'string') return value;
+    return value
+        .replace(/\n?\s*\[?\s*English Translation\s*\]?[\s\S]*$/i, '')
+        .replace(/\n?\s*Many executives[\s\S]*$/i, '')
+        .trim();
+};
+
+const normalizeGeneratedPostLanguage = (post = {}, language = 'ja') => ({
+    ...post,
+    caption: stripJapaneseLanguageLeak(post.caption, language),
+    overlay_copy: stripJapaneseLanguageLeak(post.overlay_copy, language),
+    carousel_slides: Array.isArray(post.carousel_slides)
+        ? post.carousel_slides.map(slide => ({
+            ...slide,
+            overlay_copy: stripJapaneseLanguageLeak(slide?.overlay_copy, language),
+            text: stripJapaneseLanguageLeak(slide?.text, language)
+        }))
+        : post.carousel_slides,
+    variants: Array.isArray(post.variants)
+        ? post.variants.map(variant => ({
+            ...variant,
+            caption: stripJapaneseLanguageLeak(variant?.caption, language)
+        }))
+        : post.variants
+});
+
+const collectQualityText = (post = {}) => {
+    const parts = [];
+    if (post.caption) parts.push(post.caption);
+    if (post.overlay_copy) parts.push(post.overlay_copy);
+    if (Array.isArray(post.carousel_slides)) {
+        post.carousel_slides.forEach(slide => {
+            if (slide?.overlay_copy) parts.push(slide.overlay_copy);
+            if (slide?.text) parts.push(slide.text);
+        });
+    }
+    if (Array.isArray(post.variants)) {
+        post.variants.forEach(variant => {
+            if (variant?.caption) parts.push(variant.caption);
+        });
+    }
+    return parts.join('\n');
+};
+
+const detectUnsafeCopyIssues = (post = {}, language = 'ja') => {
+    const text = collectQualityText(post);
+    const issues = [];
+
+    for (const pattern of UNSUPPORTED_PROOF_PATTERNS) {
+        if (pattern.test(text)) {
+            issues.push({
+                type: 'unsupported_case_study',
+                excerpt: getTextExcerpt(text, pattern),
+                reason: 'ユーザー提供にない自社・クライアント実績のように読める表現です。'
+            });
+            break;
+        }
+    }
+
+    for (const pattern of UNSUPPORTED_METRIC_PATTERNS) {
+        if (pattern.test(text) && !SOURCE_HINT_PATTERN.test(text)) {
+            issues.push({
+                type: 'unsupported_metric',
+                excerpt: getTextExcerpt(text, pattern),
+                reason: '出典なしの成果数値・割合・倍率に見えるため、虚偽広告リスクがあります。'
+            });
+            break;
+        }
+    }
+
+    if (language === 'ja' && (ENGLISH_TRANSLATION_PATTERN.test(text) || LONG_ENGLISH_SENTENCE_PATTERN.test(text))) {
+        issues.push({
+            type: 'language_contamination',
+            excerpt: getTextExcerpt(text, ENGLISH_TRANSLATION_PATTERN.test(text) ? ENGLISH_TRANSLATION_PATTERN : LONG_ENGLISH_SENTENCE_PATTERN),
+            reason: '日本語投稿に英語翻訳や長い英文が混入しています。'
+        });
+    }
+
+    return issues;
+};
+
+const repairUnsafePostCopy = async (ai, post, language, textContext, userProfile, issues = []) => {
+    const repairPrompt = `
+以下のInstagram投稿JSONには、根拠のない実績表現・具体数字・言語混入のリスクがあります。
+危険箇所だけを修正し、JSONのみで返してください。
+
+検出された問題:
+${JSON.stringify(issues)}
+
+厳守ルール:
+- caption, hashtags, carousel_slides, image_idea, variants のキー構造は維持する。
+- carousel_slides がある場合は3枚を維持する。
+- ユーザー提供にない「支援実績」「クライアント成果」「売上改善」「広告費削減」「実際に支援した」等は書かない。
+- 出典機関名と発表年がない %・倍率・成果数字は、範囲表現または定性的表現に置換する。
+- 「DEARS CONSULTINGが支援した事例」ではなく、「よくある構造」「見直しポイント」「設計手順」として書く。
+- language が ja の場合、caption / text / overlay_copy は日本語のみ。英語翻訳セクションは削除する。
+- ただし image_hint_en は英語のまま維持してよい。
+- 抽象論ではなく、読者が明日見直せる具体的な作業・チェック項目へ落とす。
+
+ユーザー提供コンテキスト:
+- 会社名: ${textContext?.companyName || '未設定'}
+- 訴求ポイント: ${textContext?.sellingPoint || '未設定'}
+- 業種: ${userProfile?.industry || '未設定'}
+- 顧客層: ${userProfile?.targetAudience || '未設定'}
+- USP: ${userProfile?.usp || '未設定'}
+- language: ${language}
+
+修正対象JSON:
+${JSON.stringify(post)}
+`;
+
+    const response = await withRetry(async () => {
+        return await ai.models.generateContent({
+            model: TEXT_MODEL,
+            contents: repairPrompt,
+            config: { temperature: 0.2 }
+        });
+    }, 2, 2000);
+
+    return extractJSON(response.text, post);
+};
+
 /**
  * トレンドリサーチ
  */
@@ -206,14 +354,29 @@ export async function researchTrends(category, targetLabel, gender, businessStyl
 2. 業界内でのトレンド（競合の動き、最新のビジネスモデルや提供価値など）
 3. ターゲット層のトレンド（対象ユーザーが今一番関心を持っていること、行動・消費パターンなど）
 
+# リサーチ品質の絶対基準
+- 「価格競争から脱却」「価値を伝える」「顧客体験を設計する」のような一般論だけで終わらせないでください。
+- 読者が思わず保存する投稿にするため、対象読者が朝の業務中に実際に困っている具体的な場面、見落としている判断基準、すぐ見直せる作業を抽出してください。
+- 支援実績・クライアント成果・売上増加率など、ユーザー提供にない事実は作らないでください。実績が必要な場合は「よくある構造」「見直し観点」「仮説」として扱ってください。
+- 出典名と発表年を明示できない具体的な %・倍率・成果数字は禁止です。数字が必要ならレンジ表現または定性的表現にしてください。
+- 投稿で避けるべき「ありきたりな角度」も必ず列挙してください。
+
 # 出力形式 (JSONのみ)
 {
     "insight_macro": "①世の中の大きなトレンド (100文字程度)",
     "insight_industry": "②業界内でのトレンド (100文字程度)",
     "insight_target": "③ターゲット層のトレンド (100文字程度)",
     "insight_summary": "これら3方向のトレンドを掛け合わせた、今回の投稿内容や画像生成に活かすべき見込み客の深い心理と全く新しいアプローチ方針（200文字程度）",
+    "audience_tension": "読者が今まさに困っている、表に出にくい具体的な葛藤や業務上の摩擦 (120文字程度)",
+    "non_obvious_angle": "Instagramでよくある一般論と違う、保存されやすい逆張り・盲点・実務切り口 (120文字程度)",
+    "scroll_stopper": "1枚目で止めるための強い切り口。煽りではなく、読者の現場に刺さる具体的な違和感 (80文字程度)",
+    "save_worthy_action": "読者が明日実行できるチェック項目・手順・見直し作業 (120文字程度)",
+    "avoid_angles": ["避けるべきありきたりな切り口1", "避けるべきありきたりな切り口2", "避けるべき危険な捏造/実績表現"],
+    "evidence_notes": ["参照した事実・トレンドのメモ。出典名が曖昧な数字は書かない"],
     "logic": {
-        "query": "リサーチで使用した想定検索キーワード",
+        "query": "代表的なリサーチ検索キーワード",
+        "queries": ["検索キーワード1", "検索キーワード2", "検索キーワード3"],
+        "why_not_generic": "なぜこの切り口が一般論ではなく、このビジネス/読者に刺さるのか",
         "model": "使用モデル名"
     }
 }
@@ -426,6 +589,13 @@ GOOD: "Close-up of weathered artisan hands carefully shaping clay on a potter's 
 「私が考えたキャプションです」「AIとしての提案です」などの言葉は絶対に使わず、ビジネスオーナーや店舗スタッフが直接顧客に語りかける自然なテキストを完成品として出力してください。
 
 ※最重要指令: 生成するたびに前回の出力パターンを完全に捨て去り、【毎回全く異なる切り口、異なる語り口、異なるストーリー展開、異なるオファーの出し方】をして、ユーザーを飽きさせないクリエイティブなテキストを書き下ろしてください。テンプレ化は厳禁です。
+
+# リサーチ活用の絶対ルール
+- research.audience_tension / research.non_obvious_angle / research.scroll_stopper / research.save_worthy_action を必ず投稿の骨格に反映してください。
+- 「価格競争から脱却」「価値を伝える」「顧客体験を再設計する」だけで終わる投稿は禁止です。必ず、読者が明日触れるWebページ、初回ヒアリング、見積書、導入事例、商品説明、購入後フォローなどの具体的な接点へ落としてください。
+- research.avoid_angles に含まれる切り口は使わないでください。
+- ユーザー提供にない「DEARS CONSULTINGが実際に支援した」「クライアント企業で実践した」「広告費を35%削減した」「売上2.8倍」等の実績・成果は絶対に書かないでください。
+- 自社実績を語れない場合は「実績」ではなく、「よくある構造」「見直し手順」「チェックリスト」「仮説検証」として書いてください。
 
 # ★★★最重要★★★ 投稿品質の絶対基準（このプロジェクトの命）
 
@@ -653,6 +823,12 @@ ${formatInstruction}
 - ② 業界のトレンド: ${research.insight_industry}
 - ③ ターゲット層のトレンド: ${research.insight_target}
 - 総合アプローチ方針: ${research.insight_summary}
+- 読者の具体的な葛藤: ${research.audience_tension || '未設定'}
+- 一般論ではない切り口: ${research.non_obvious_angle || '未設定'}
+- 1枚目で止める違和感: ${research.scroll_stopper || '未設定'}
+- 保存される実行アクション: ${research.save_worthy_action || '未設定'}
+- 避けるべき切り口: ${Array.isArray(research.avoid_angles) ? research.avoid_angles.join(' / ') : (research.avoid_angles || '未設定')}
+- 根拠メモ: ${Array.isArray(research.evidence_notes) ? research.evidence_notes.join(' / ') : (research.evidence_notes || '未設定')}
 - 自社・ブランド名: ${textContext?.companyName || '特になし'}
 - 訴求ポイント: ${textContext?.sellingPoint || '特になし'}
 ${siteContent ? `- サイト情報: ${siteContent.substring(0, 1000)}` : ''}
@@ -685,11 +861,14 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後�
             console.log(`[generatePost:${format}] cache: ${cached}/${total} tok (${hitRate}% hit)`);
         }
 
-        let generatedPost = extractJSON(response.text);
+        let generatedPost = normalizeGeneratedPostLanguage(extractJSON(response.text), language);
         if (hasCarouselStepMismatch(generatedPost, format)) {
             console.warn('[generatePost] carousel step mismatch detected; attempting repair');
             try {
-                generatedPost = await repairCarouselStepNarrative(ai, generatedPost, overlayLangLabel);
+                generatedPost = normalizeGeneratedPostLanguage(
+                    await repairCarouselStepNarrative(ai, generatedPost, overlayLangLabel),
+                    language
+                );
             } catch (repairError) {
                 console.error('[generatePost] carousel step repair failed:', repairError?.message || repairError);
             }
@@ -698,6 +877,26 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後�
         if (hasCarouselStepMismatch(generatedPost, format)) {
             console.warn('[generatePost] carousel step mismatch remained after repair; softening step promise');
             generatedPost = softenCarouselStepPromises(generatedPost);
+        }
+
+        let qualityIssues = detectUnsafeCopyIssues(generatedPost, language);
+        if (qualityIssues.length > 0) {
+            console.warn('[generatePost] unsafe copy detected; attempting repair:', JSON.stringify(qualityIssues).slice(0, 300));
+            try {
+                generatedPost = normalizeGeneratedPostLanguage(
+                    await repairUnsafePostCopy(ai, generatedPost, language, textContext, userProfile, qualityIssues),
+                    language
+                );
+                qualityIssues = detectUnsafeCopyIssues(generatedPost, language);
+            } catch (repairError) {
+                console.error('[generatePost] unsafe copy repair failed:', repairError?.message || repairError);
+            }
+        }
+
+        if (qualityIssues.length > 0) {
+            console.warn('[generatePost] unsafe copy remained after repair; marking as blocked:', JSON.stringify(qualityIssues).slice(0, 300));
+            generatedPost.quality_blocked = true;
+            generatedPost.quality_issues = qualityIssues;
         }
 
         return generatedPost;
@@ -785,7 +984,12 @@ Output strictly as JSON:
  * OPENAI_API_KEY が無い場合は skip (Pro Max 限定機能のため)。
  * 失敗時は passed=true (ゲート開放) を返す — 監督役の障害で投稿停止を起こさない。
  */
-export async function factCheckPost(caption = '', slides = []) {
+export async function factCheckPost(caption = '', slides = [], language = 'ja') {
+    const localIssues = detectUnsafeCopyIssues({ caption, carousel_slides: slides }, language);
+    if (localIssues.length > 0) {
+        return { passed: false, issues: localIssues, source: 'local' };
+    }
+
     if (!process.env.OPENAI_API_KEY) {
         return { passed: true, issues: [], skipped: true, reason: 'OPENAI_API_KEY not set' };
     }
@@ -794,11 +998,14 @@ export async function factCheckPost(caption = '', slides = []) {
             `Slide ${i + 1}: overlay="${s?.overlay_copy || ''}", text="${s?.text || ''}"`
         ).join('\n');
 
-        const systemPrompt = `あなたは日本のBtoB向け Instagram 投稿のファクトチェッカーです。以下の4つの違反パターンを検出してください。
+        const systemPrompt = `あなたは日本のBtoB向け Instagram 投稿のファクトチェッカーです。以下の7つの違反パターンを検出してください。
 1. fabricated_stat: 出典機関名と発表年が明示されていない具体数字 (例: "73%", "2.8倍", "+30%向上", "1.5倍に増加")
 2. spiritual_overuse: スピリチュアル系語彙の過剰使用 (魂・不可欠性・本質・思想・内なる声・静寂・余白・在り方・らしさ・覚悟・選ばれる理由 等。1投稿で合計3個以上なら違反)
 3. fake_event: 実在しないイベント・セミナー・キャンペーン・新サービス開始の言及
 4. personal_anecdote: 「先日〜に行きました」「散歩で気づいた」型の個人エピソード起点
+5. unsupported_case_study: ユーザー提供にない「実際に支援した」「伴走支援した」「クライアント企業で実践」「導入企業で成果」などの自社/顧客実績表現
+6. unsupported_metric: 出典なしの成果数値・割合・倍率 (例: "EC売上2.8倍", "広告費35%削減", "顧客満足度95%")
+7. language_contamination: 日本語投稿に英語翻訳セクションや長い英文が混入している
 
 JSONのみで応答。説明文不要。`;
 
@@ -814,7 +1021,7 @@ ${slideSummary}
 {
   "passed": true/false,
   "issues": [
-    { "type": "fabricated_stat|spiritual_overuse|fake_event|personal_anecdote", "excerpt": "問題の該当文(短く)", "reason": "なぜ違反か" }
+    { "type": "fabricated_stat|spiritual_overuse|fake_event|personal_anecdote|unsupported_case_study|unsupported_metric|language_contamination", "excerpt": "問題の該当文(短く)", "reason": "なぜ違反か" }
   ]
 }
 

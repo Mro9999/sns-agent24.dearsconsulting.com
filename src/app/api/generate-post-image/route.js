@@ -189,6 +189,36 @@ export async function POST(req) {
                     if (r.url) slideResults[r.i] = r.url;
                 }
             }
+
+            const finalAuditPromises = slideResults.map((url, i) => {
+                if (!url) return Promise.resolve(null);
+                const slide = post.carousel_slides[i];
+                return auditSlideImage(url, slide?.overlay_copy || '', slide?.text || '');
+            });
+            const finalAudits = await Promise.all(finalAuditPromises);
+            const finalFailures = [];
+            for (let i = 0; i < finalAudits.length; i++) {
+                const a = finalAudits[i];
+                if (!a || a.skipped) continue;
+                const failed = a.hasText === true || (typeof a.alignmentScore === 'number' && a.alignmentScore < ALIGNMENT_THRESHOLD);
+                if (failed) {
+                    finalFailures.push({
+                        slide: i + 1,
+                        hasText: !!a.hasText,
+                        alignmentScore: a.alignmentScore,
+                        issues: a.issues || []
+                    });
+                }
+            }
+
+            if (finalFailures.length > 0) {
+                console.warn('[generate-post-image] final image audit failed; not saving images:', JSON.stringify(finalFailures).slice(0, 500));
+                return NextResponse.json({
+                    error: 'Generated image did not pass final quality audit',
+                    message: '画像内の文字混入またはスライド内容との不一致が残ったため、保存を中止しました。もう一度画像生成を試してください。',
+                    failures: finalFailures
+                }, { status: 422 });
+            }
         }
 
         const rawUrls = slideResults.filter(Boolean);
