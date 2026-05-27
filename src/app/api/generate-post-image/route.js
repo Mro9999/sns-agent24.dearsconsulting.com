@@ -3,7 +3,6 @@ import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { generateImage, refineSlideImageHint, auditSlideImage } from '@/lib/apiService';
-import { VISUAL_VARIETY_DIRECTIVES, SUBJECT_VARIETY_DIRECTIVES } from '@/lib/canvasHelper';
 import { composeOverlayImage } from '@/lib/serverOverlayHelper';
 
 const supabase = createClient(
@@ -16,6 +15,18 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const COMPOSED_BUCKET = 'generated-images';
+
+const buildNaturalPhotoConstraints = (slideNumber, totalSlides) => `[Style constraints]
+- Natural documentary/editorial photograph, Instagram-ready 4:5 portrait composition
+- Use a believable real-world Japanese service, retail, hospitality, craft, product, or consultation setting
+- Real camera look: natural window light, ordinary materials, human-scale composition, slight real-life imperfection
+- Keep the scene quiet and specific, with clean negative space for the Japanese overlay copy
+- No CGI, no 3D render, no illustration, no surreal/fantasy scene, no glowing particles, no neon sci-fi, no abstract brain/data graphics, no impossible objects
+- Avoid uncanny AI artifacts: distorted hands or faces, plastic skin, overly perfect studio stock-photo staging
+- If people appear, prefer natural distance, profile, back view, over-the-shoulder, or hands only when anatomically simple and realistic
+- ABSOLUTELY NO text, letters, signs, labels, signage, captions, watermarks, logos in the image
+- No readable books, documents, screens, whiteboards, charts, diagrams, posters, packaging labels, or UI
+- Carousel slide ${slideNumber} of ${totalSlides}: visually distinct from the other slides, but keep the same realistic photo language`;
 
 // 承認画面から呼び出される、1投稿分の画像生成API
 // body: { postId: string, variationIndex: number }
@@ -88,10 +99,6 @@ export async function POST(req) {
 
         const imagePromises = [];
         for (let i = 0; i < imgCount; i++) {
-            // スライド毎にビジュアル指示を回転させて多様性を担保
-            const visualTone = VISUAL_VARIETY_DIRECTIVES[(variationIndex + i) % VISUAL_VARIETY_DIRECTIVES.length];
-            const subjectAngle = SUBJECT_VARIETY_DIRECTIVES[(variationIndex + i) % SUBJECT_VARIETY_DIRECTIVES.length];
-
             // 編集者役が refine した hint を優先、無ければ generatePost 時の image_hint_en にフォールバック
             const slideHintEn = (isCarousel && refinedHints[i])
                 ? refinedHints[i]
@@ -104,12 +111,7 @@ export async function POST(req) {
                 // 新設計: image_hint_en を主役にする (汎用 image_idea / 机上シーン強制 subjectAngle を排除)
                 slideImageIdea = `${slideHintEn}
 
-[Style constraints]
-- High-quality professional photography or cinematic visual, Instagram-ready 4:5 portrait composition
-- The scene MUST visually reinforce the message above through symbolism, metaphor, or evocative setting
-- ABSOLUTELY NO text, letters, signs, labels, signage, captions, watermarks, logos in the image
-- Avoid generic stock-photo clichés (no plain office desks with laptops/notebooks/coffee unless the hint explicitly calls for them)
-- Carousel slide ${i + 1} of ${imgCount} — visually distinct from other slides`;
+${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
             } else {
                 // フォールバック: image_hint_en が無い旧データ用
                 const slidePositionContext = imgCount > 1
@@ -117,8 +119,11 @@ export async function POST(req) {
                     : '';
                 slideImageIdea = `${post.image_idea}${slidePositionContext}
 
-【ビジュアルトーン指示】${visualTone}
-【構図・被写体指示】${subjectAngle}`;
+[Fallback scene direction]
+- Choose a concrete real-world customer touchpoint, service scene, product handling moment, storefront detail, or quiet consultation table that fits the post topic
+- Do not default to generic desk/laptop/notebook/coffee scenes
+
+${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
             }
 
             imagePromises.push(
@@ -173,11 +178,7 @@ export async function POST(req) {
                         : '\n[CRITICAL] The previous attempt did not align with the slide message. Make the image more specifically tied to the slide concept.';
                     const retryPrompt = `${hint}${auditNote}
 
-[Style constraints]
-- High-quality professional photography or cinematic visual, Instagram-ready 4:5 portrait composition
-- ABSOLUTELY NO text, letters, signs, labels, signage, captions, watermarks, logos in the image
-- Avoid generic stock-photo cliches
-- Carousel slide ${i + 1} of ${imgCount}`;
+${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
                     try {
                         const arr = await generateImage(category, targetLabel, 'other', retryPrompt, productContext, post.platform, null, 1);
                         return { i, url: Array.isArray(arr) ? arr[0] : null };

@@ -526,9 +526,9 @@ C. image_hint_en は Imagen 画像生成プロンプト用のため、上記設�
     "caption": "一切の絵文字や顔文字を使用せず、Instagramで読みやすい自然な投稿文。硬い提案書口調は禁止。350〜650字程度、短い段落で構成し、最後にCTAやURLを含む",
     "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
     "carousel_slides": [
-        { "overlay_copy": "1枚目(表紙): 18〜26文字。読者がスマホで止まる自然な一言。専門語・かぎ括弧の多用は禁止。適宜 '\\n' で改行", "text": "表紙の補足。60〜110字程度で短く", "image_hint_en": "Symbolic English visual (40-60 words) reinforcing slide 1's overlay_copy theme. NO TEXT in image. NO generic office (desk/laptop/notebook/coffee). Use metaphor, landscape, or specific human action." },
-        { "overlay_copy": "2枚目: 18〜26文字。原因・見落とし・比較軸を日常語で示す", "text": "2枚目の解説。90〜150字程度。箇条書き可。専門用語は必ず言い換える", "image_hint_en": "Symbolic English visual (40-60 words) for slide 2's specific message. NO TEXT. NO generic office. Distinct setting/subject from slide 1." },
-        { "overlay_copy": "3枚目: 18〜26文字。読者が次に試す行動を示す", "text": "3枚目の解説。90〜150字程度。読者の行動を促す", "image_hint_en": "Symbolic English visual (40-60 words) for slide 3's solution/outcome. NO TEXT. NO generic office. Distinct setting from slides 1-2." }
+        { "overlay_copy": "1枚目(表紙): 18〜26文字。読者がスマホで止まる自然な一言。専門語・かぎ括弧の多用は禁止。適宜 '\\n' で改行", "text": "表紙の補足。60〜110字程度で短く", "image_hint_en": "Natural documentary English photo prompt (40-60 words) reinforcing slide 1's overlay_copy theme. NO TEXT in image. Use a believable Japanese service, retail, hospitality, craft, product, or consultation scene. No CGI, 3D render, surreal metaphor, glowing particles, or abstract graphics." },
+        { "overlay_copy": "2枚目: 18〜26文字。原因・見落とし・比較軸を日常語で示す", "text": "2枚目の解説。90〜150字程度。箇条書き可。専門用語は必ず言い換える", "image_hint_en": "Natural documentary English photo prompt (40-60 words) for slide 2's specific message. NO TEXT. Distinct real-world setting/subject from slide 1. No generic office, no fake diagrams, no uncanny hands/faces, no symbolic fantasy objects." },
+        { "overlay_copy": "3枚目: 18〜26文字。読者が次に試す行動を示す", "text": "3枚目の解説。90〜150字程度。読者の行動を促す", "image_hint_en": "Natural documentary English photo prompt (40-60 words) for slide 3's solution/outcome. NO TEXT. Distinct realistic setting from slides 1-2. Keep clean negative space for overlay, no readable books, screens, labels, or documents." }
     ],
     "image_idea": "この投稿全体の世界観を表す、${IMAGE_MODEL}で背景画像を生成するための詳細な画像プロンプト案（★毎回必ず異なる構図・切り口・被写体にする。英語、50単語程度）",
     "variants": [
@@ -556,32 +556,27 @@ C. image_hint_en は Imagen 画像生成プロンプト用のため、上記設�
 - 良い文体例: 「情報を足すほど、なぜか伝わりにくくなることがあります。まず見るべきなのは、何を書くかではなく、何を削るかです。」
 - 悪い文体例: 「中長期的に企業価値を向上させるためには、無形資産を客観的に評価する視点が不可欠です。」
 
-# 【超重要】image_hint_en の品質基準 (これに従わないと画像がgenericなオフィス写真に収束し、キャプションと画像が乖離します)
+# 【超重要】image_hint_en の品質基準 (AIっぽいCG・抽象画像・genericなオフィス写真を避ける)
 
 ## 必ず守るルール
-1. **そのスライドの overlay_copy の意味的テーマを「比喩」「象徴的シーン」「具体的な人間の行動」で視覚化** すること
-2. **以下の generic 要素は禁止** (画像が「ノート・PC・コーヒー・手書き」に収束するため):
+1. **そのスライドの overlay_copy を、現実に存在しそうな日本の事業現場・顧客接点・商品接点で視覚化** すること
+2. **AIっぽく見える以下の表現は禁止**:
+   - CGI / 3D render / surreal object / fantasy scene / glowing particles / neon sci-fi / abstract brain or data graphics
+   - 不自然な手や顔、プラスチックのような肌、過度に完璧なストックフォト風の人物
+   - 架空の文字が出やすい本、資料、画面、ホワイトボード、図表、ポスター、ラベル、パッケージ正面
+3. **以下の generic 要素は禁止** (画像が「ノート・PC・コーヒー・手書き」に収束するため):
    - desk with laptop / notebook / pen / coffee cup / hands writing / person at computer / typical office scene
    - 単独の「businessperson in suit at office」「woman reading a book」のような無内容な記述
-3. **各スライドは互いに完全に異なる setting / subject** にすること (例: スライド1=山頂、2=賑わう市場、3=静謐な工房 等)
-4. **画像内にテキスト・文字・看板・ラベル・ロゴが一切含まれないこと** (Imagen が日本語を文字化けで再現するため)
-5. 40-60語の英語、人物の姿勢/表情・物体・照明・雰囲気・構図・色調を具体的に記述
-
-## 推奨される視覚モチーフ (テーマ別の例)
-- 「価格競争から脱却」: 群衆から離れて静かな道を歩く後ろ姿 / 賑やかな市場の喧騒の外で凛と佇むシルエット
-- 「思想/哲学を言語化」: 山頂で広大な景色を見渡す人 / 暗い部屋で一筋の光に向かう人物
-- 「美意識/作品性」: 職人が一点の道具を丁寧に磨くクローズアップ / 静謐な日本庭園 / 美術館の彫刻
-- 「無意識の願望」: 鏡に映る自分を見つめる人物 / 水面の波紋 / 霧の中から現れる人影
-- 「選ばれ続ける」: 多数の手の中で一つだけ選ばれて差し出される花 / 群衆を背景に光が当たる一人
-- 「具体的なステップ」: 階段を一段ずつ登る足元 / 連なる扉が開いていく構図 / 橋を渡る人物
-- 「データ/事実」: 抽象的な光のグラフィック / 星空や天体図 / 結晶構造のマクロ撮影
+4. **各スライドは互いに異なる real-world setting / subject** にすること (例: 相談テーブル、商品棚、受付、工房、客室、梱包台、店頭ディスプレイ)
+5. **画像内にテキスト・文字・看板・ラベル・ロゴが一切含まれないこと** (Imagen が日本語を文字化けで再現するため)
+6. 40-60語の英語。自然光、普通の素材感、人物との距離、背景の余白を具体的に記述
 
 ## BAD vs GOOD 例
 BAD: "A businessperson sitting at a desk with a laptop, writing in a notebook, with a coffee cup nearby, in a modern office with soft lighting"
-GOOD: "A solitary figure standing at the edge of a serene mountain plateau at golden hour, gazing toward distant peaks beyond a sea of clouds, conveying clarity of vision and quiet resolve, warm cinematic light, shallow depth of field, painterly atmosphere"
+GOOD: "A quiet Japanese consultation table in a small hospitality office, two people seen from the side reviewing blank material samples with no readable text, natural window light, simple wooden surfaces, realistic human posture, calm negative space above the table for overlay copy"
 
 BAD: "Hands writing on a notebook with abstract symbols, representing thought"
-GOOD: "Close-up of weathered artisan hands carefully shaping clay on a potter's wheel in a dim warm-lit workshop, single beam of light from a high window catching airborne dust, conveying patient craftsmanship and embodied philosophy"
+GOOD: "A realistic product shelf in a small Japanese specialty shop, plain unlabeled packages arranged with one item being gently adjusted by a staff member, natural daylight, ordinary imperfections, shallow depth of field, no visible writing, no logos, no surreal lighting"
 `;
         } else if (format === 'video_script') {
             formatInstruction = `
@@ -1122,7 +1117,7 @@ issuesが空配列なら passed=true、1つでも検出されたら passed=false
 export async function refineSlideImageHint(overlayCopy, slideText, fallback = '') {
     try {
         if (!overlayCopy && !slideText) return fallback || '';
-        const prompt = `You are a visual director for premium Japanese B2B Instagram carousel posts. Given a single slide's text content, generate a precise English image prompt that DIRECTLY visualizes the slide's main message.
+        const prompt = `You are a realistic photo editor for premium Japanese Instagram carousel posts. Given a single slide's text content, generate a precise English image prompt that DIRECTLY visualizes the slide's main message as a believable real-world photograph, not AI art.
 
 Slide overlay (the headline text shown on the image):
 "${overlayCopy || ''}"
@@ -1133,13 +1128,18 @@ Slide body text (additional context):
 Requirements:
 - 40-60 English words
 - Must visually communicate THE EXACT specific message of this slide, not a generic version
-- If the slide mentions "3 steps" / "3つのステップ", show 3 distinct visual elements (e.g. three stones in sequence, three doors, three paths converging)
-- If the slide mentions "Before / After" / "ビフォーアフター", show a transformation, contrast, or split composition
+- Use a natural Japanese service, retail, hospitality, craft, product, storefront, customer touchpoint, or quiet consultation setting
+- Use realistic camera language: natural window light, ordinary materials, human-scale composition, slight real-life imperfection, clean negative space for overlay copy
+- If the slide mentions "3 steps" / "3つのステップ", show 3 simple real objects or service touchpoints in a believable scene, not fantasy symbols
+- If the slide mentions "Before / After" / "ビフォーアフター", show a subtle realistic contrast or arrangement, not a split-screen graphic
 - If a specific industry is named (e.g. SaaS / 旅館 / 化粧品メーカー / 士業), reflect that industry's environment
 - If a specific action or process is described, show that action being performed
-- If a specific failure pattern is named, show the negative state symbolically
+- If a specific failure pattern is named, show the realistic customer or service situation behind it
 - ABSOLUTELY NO text, letters, numbers, signs, labels, captions, watermarks, logos anywhere in the image
-- Premium editorial/cinematic photography style, 4:5 portrait composition
+- No books, documents, screens, whiteboards, charts, diagrams, posters, packaging labels, or UI with readable writing
+- No CGI, 3D render, illustration, surreal/fantasy scene, glowing particles, neon sci-fi, abstract brain/data graphics, impossible objects
+- Avoid uncanny AI artifacts: distorted hands/faces, plastic skin, overly perfect studio stock-photo staging
+- Natural documentary/editorial photography style, 4:5 portrait composition
 - Avoid generic stock-photo cliches (no plain desk + laptop + coffee unless the slide explicitly needs them)
 
 Output ONLY the English image prompt itself. No prefix, no explanation, no quotes around it.`;
@@ -1175,7 +1175,14 @@ export async function generateImage(category, targetLabel, gender, imageContext,
         // "Japanese" (日本人) を被写体として強力に指定し、かつ「文字を絶対に入れない」ようにネガティブプロンプト的に指示
         // Imagen 4 は日本語テキストを生成できず、強制的に描こうとすると文字化けした「日本語に見える模様」を
         // 背景に描き込んでしまう (実観測あり)。anti-text 指示は徹底的に強化する。
-        const basePrompt = `High quality, commercial photography, engaging social media post for ${platformId}, featuring Japanese ${targetLabel} ${gender}. Category: ${category?.label || category}. ${imageContext}.
+        const basePrompt = `Realistic documentary/editorial photograph for ${platformId}, featuring Japanese ${targetLabel} ${gender}. Category: ${category?.label || category}. ${imageContext}.
+
+REALISTIC PHOTO CONSTRAINT (HIGHEST PRIORITY):
+The image must look like a believable photograph taken by a human photographer in a real Japanese business, service, retail, hospitality, craft, product, or consultation setting.
+- No CGI, no 3D render, no illustration, no anime, no surreal or fantasy objects
+- No glowing particles, neon sci-fi effects, abstract brain/data graphics, impossible architecture, or synthetic diagram overlays
+- No overly perfect stock-photo staging, plastic skin, distorted anatomy, uncanny faces, or complicated close-up hands
+- Prefer natural window light, ordinary materials, human-scale composition, imperfect real environments, and simple negative space for overlay copy
 
 CRITICAL TEXT-FREE CONSTRAINT (HIGHEST PRIORITY):
 The generated image MUST be completely TEXT-FREE. Absolutely zero of the following anywhere in the image:

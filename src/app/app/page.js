@@ -5,7 +5,6 @@ import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, OverlayLanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
-// VISUAL_VARIETY_DIRECTIVES / SUBJECT_VARIETY_DIRECTIVES は手動バッチでは未使用 (サーバー側 /api/generate-post-image が利用)
 import { drawCanvasImage } from '@/lib/canvasHelper';
 import { buildPlatformCaption } from '@/lib/captionUtils';
 import ProMaxInquiryModal from '@/components/ProMaxInquiryModal';
