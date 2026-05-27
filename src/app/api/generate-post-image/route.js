@@ -142,6 +142,8 @@ export async function POST(req) {
 
         let slideResults = await Promise.all(imagePromises);
 
+        let imageQualityWarnings = [];
+
         // 🔍 校閲者役 (Phase 2): 各画像を Gemini Vision で監査し、
         // 「画像内に文字混入」または「整合性スコア < 60」のスライドを1回だけ再生成
         if (isCarousel && Array.isArray(post.carousel_slides)) {
@@ -212,12 +214,8 @@ export async function POST(req) {
             }
 
             if (finalFailures.length > 0) {
-                console.warn('[generate-post-image] final image audit failed; not saving images:', JSON.stringify(finalFailures).slice(0, 500));
-                return NextResponse.json({
-                    error: 'Generated image did not pass final quality audit',
-                    message: '画像内の文字混入またはスライド内容との不一致が残ったため、画像保存を中止しました。投稿案は承認待ちのまま残しています。更新すると再試行できます。',
-                    failures: finalFailures
-                }, { status: 422 });
+                console.warn('[generate-post-image] final image audit warning; saving for manual review:', JSON.stringify(finalFailures).slice(0, 500));
+                imageQualityWarnings = finalFailures;
             }
         }
 
@@ -265,7 +263,11 @@ export async function POST(req) {
 
         if (upErr) throw upErr;
 
-        return NextResponse.json({ success: true, image_urls: composedUrls });
+        return NextResponse.json({
+            success: true,
+            image_urls: composedUrls,
+            quality_warnings: imageQualityWarnings
+        });
     } catch (error) {
         console.error('[generate-post-image] error:', error);
         return NextResponse.json({ error: error.message || 'Unknown error' }, { status: 500 });

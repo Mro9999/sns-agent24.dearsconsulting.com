@@ -66,6 +66,8 @@ export default function ApprovePage() {
 
         // 先に全て「生成中」としてマーク(スケルトン表示用)
         setGeneratingIds(new Set(needsImage.map(p => p.id)));
+        let failedCount = 0;
+        let warningCount = 0;
 
         for (let idx = 0; idx < needsImage.length; idx++) {
             const p = needsImage[idx];
@@ -79,6 +81,7 @@ export default function ApprovePage() {
                     body: JSON.stringify({ postId: p.id, variationIndex: idx })
                 });
                 if (!res.ok) {
+                    failedCount++;
                     const errorText = await res.text();
                     console.warn(`画像生成失敗 (${p.id}):`, errorText);
                     try {
@@ -89,6 +92,9 @@ export default function ApprovePage() {
                     }
                 } else {
                     const data = await res.json();
+                    if (Array.isArray(data.quality_warnings) && data.quality_warnings.length > 0) {
+                        warningCount++;
+                    }
                     if (Array.isArray(data.image_urls) && data.image_urls.length > 0) {
                         setPosts(prev => prev.map(x => x.id === p.id ? { ...x, image_urls: data.image_urls } : x));
                         // 生成完了後すぐに文字合成プレビューも作る
@@ -98,6 +104,7 @@ export default function ApprovePage() {
                 }
             } catch (err) {
                 console.error('image gen loop:', err);
+                failedCount++;
             }
             setGeneratingIds(prev => {
                 const s = new Set(prev);
@@ -105,7 +112,13 @@ export default function ApprovePage() {
                 return s;
             });
         }
-        setStatusMsg('画像生成がすべて完了しました。内容をご確認のうえ承認してください。');
+        if (failedCount > 0) {
+            setStatusMsg(`${failedCount}件の画像生成に失敗しました。投稿案は残しています。更新すると再試行できます。`);
+        } else if (warningCount > 0) {
+            setStatusMsg('画像生成は完了しました。一部の画像は品質警告があります。必ず目視で確認してから承認してください。');
+        } else {
+            setStatusMsg('画像生成がすべて完了しました。内容をご確認のうえ承認してください。');
+        }
     };
 
     useEffect(() => {
