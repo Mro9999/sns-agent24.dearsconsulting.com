@@ -79,7 +79,17 @@ export default function ApprovePage() {
                     body: JSON.stringify({ postId: p.id, variationIndex: idx })
                 });
                 if (!res.ok) {
-                    console.warn(`画像生成失敗 (${p.id}):`, await res.text());
+                    const errorText = await res.text();
+                    console.warn(`画像生成失敗 (${p.id}):`, errorText);
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        if (errorJson?.skipped) {
+                            setPosts(prev => prev.filter(x => x.id !== p.id));
+                            setStatusMsg('画像品質が基準に満たない投稿を自動で却下しました。残りの投稿をご確認ください。');
+                        }
+                    } catch {
+                        // JSON以外のエラーはログのみ。投稿は画面に残して手動確認できるようにする。
+                    }
                 } else {
                     const data = await res.json();
                     if (Array.isArray(data.image_urls) && data.image_urls.length > 0) {

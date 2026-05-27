@@ -213,9 +213,18 @@ export async function POST(req) {
 
             if (finalFailures.length > 0) {
                 console.warn('[generate-post-image] final image audit failed; not saving images:', JSON.stringify(finalFailures).slice(0, 500));
+                await supabase
+                    .from('scheduled_posts')
+                    .update({
+                        status: 'skipped',
+                        published_at: new Date().toISOString()
+                    })
+                    .eq('id', postId)
+                    .eq('user_id', userId);
                 return NextResponse.json({
                     error: 'Generated image did not pass final quality audit',
                     message: '画像内の文字混入またはスライド内容との不一致が残ったため、保存を中止しました。もう一度画像生成を試してください。',
+                    skipped: true,
                     failures: finalFailures
                 }, { status: 422 });
             }
