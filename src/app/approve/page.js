@@ -83,12 +83,9 @@ export default function ApprovePage() {
                     console.warn(`画像生成失敗 (${p.id}):`, errorText);
                     try {
                         const errorJson = JSON.parse(errorText);
-                        if (errorJson?.skipped) {
-                            setPosts(prev => prev.filter(x => x.id !== p.id));
-                            setStatusMsg('画像品質が基準に満たない投稿を自動で却下しました。残りの投稿をご確認ください。');
-                        }
+                        setStatusMsg(errorJson?.message || '画像生成に失敗しました。投稿案は残しています。更新すると再試行できます。');
                     } catch {
-                        // JSON以外のエラーはログのみ。投稿は画面に残して手動確認できるようにする。
+                        setStatusMsg('画像生成に失敗しました。投稿案は残しています。更新すると再試行できます。');
                     }
                 } else {
                     const data = await res.json();
