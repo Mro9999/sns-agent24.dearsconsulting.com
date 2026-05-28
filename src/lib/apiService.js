@@ -216,6 +216,39 @@ const HARD_WHITEPAPER_TERMS = [
     '企業価値',
     '戦略的に高める'
 ];
+const SPIRITUAL_DRIFT_TERMS = [
+    '哲学',
+    '美学',
+    '思想',
+    '魂',
+    '本質',
+    '内なる声',
+    '静寂',
+    '余白',
+    '在り方',
+    'らしさ',
+    '覚悟',
+    '解像度',
+    '世界観',
+    'ストーリー',
+    '物語',
+    '共感',
+    '共鳴',
+    '感情価値'
+];
+const OVERUSED_VALUE_MARKETING_TERMS = [
+    '価格競争',
+    '価格で比べ',
+    '価格だけで判断',
+    'スペック',
+    '感情価値',
+    '心が動',
+    '買う理由',
+    '良いもの',
+    '価値を伝',
+    'ファンが増',
+    '選ばれる理由'
+];
 
 const getTextExcerpt = (text = '', pattern) => {
     const match = String(text).match(pattern);
@@ -309,6 +342,24 @@ const detectUnsafeCopyIssues = (post = {}, language = 'ja') => {
             type: 'hard_whitepaper_style',
             excerpt: hardTerms.slice(0, 6).join(', '),
             reason: 'Instagram投稿として硬すぎる提案書・白書・会計資料寄りの表現です。'
+        });
+    }
+
+    const spiritualTerms = SPIRITUAL_DRIFT_TERMS.filter(term => text.includes(term));
+    if (spiritualTerms.length >= 4) {
+        issues.push({
+            type: 'spiritual_overuse',
+            excerpt: spiritualTerms.slice(0, 8).join(', '),
+            reason: '実務投稿ではなく、抽象的なブランディング/マインドセット投稿に寄っています。'
+        });
+    }
+
+    const overusedValueTerms = OVERUSED_VALUE_MARKETING_TERMS.filter(term => text.includes(term));
+    if (overusedValueTerms.length >= 4) {
+        issues.push({
+            type: 'generic_value_marketing_drift',
+            excerpt: overusedValueTerms.slice(0, 8).join(', '),
+            reason: '価格競争・感情価値・スペック周辺の一般論に寄りすぎています。'
         });
     }
 
@@ -952,14 +1003,15 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後�
 /**
  * 校閲者役 (Phase 2): 生成された画像を Gemini Vision で監査。
  * - 画像内に文字 / 看板 / ラベル等が混入していないかチェック
+ * - 黒背景だけ、抽象CG、AIっぽい不自然さをチェック
  * - スライドの overlay_copy と画像内容の整合性スコア (0-100)
  *
- * 戻り値: { hasText, alignmentScore, issues[], skipped, error }
+ * 戻り値: { hasText, isBlankOrDark, looksAI, alignmentScore, issues[], skipped, error }
  * 失敗時は { hasText: false, alignmentScore: 70 } を返して上位処理を継続させる (品質ゲートを過剰に厳格にしない)。
  */
 export async function auditSlideImage(rawImageUrl, slideOverlay = '', slideText = '') {
     try {
-        if (!rawImageUrl) return { hasText: false, alignmentScore: 70, issues: [], skipped: true };
+        if (!rawImageUrl) return { hasText: false, isBlankOrDark: false, looksAI: false, alignmentScore: 70, issues: [], skipped: true };
 
         // 画像をフェッチして base64 化 (Gemini Vision の inline_data 用)
         const imgResp = await fetch(rawImageUrl);
@@ -972,7 +1024,7 @@ export async function auditSlideImage(rawImageUrl, slideOverlay = '', slideText 
 Slide overlay text (to be overlaid later as Japanese text on top): "${slideOverlay}"
 Slide body context: "${slideText}"
 
-Evaluate on 2 critical criteria.
+Evaluate on 4 critical criteria.
 
 1. TEXT CONTAMINATION (CRITICAL — must catch this):
    Does the image itself contain ANY visible text, letters, numbers, signs, labels, words, captions, watermarks, or readable typography of any language (Japanese kanji/kana, English alphabet, numerals)?
@@ -982,13 +1034,19 @@ Evaluate on 2 critical criteria.
 2. ALIGNMENT SCORE (0-100):
    How well does the image visually reinforce the slide's specific message?
    - 100 = perfectly visualizes the exact concept stated in the overlay
-   - 80 = strong, on-topic metaphor with clear relevance
+   - 80 = strong, realistic, on-topic visual with clear relevance
    - 60 = somewhat related but generic
    - 40 = loosely related
    - 0 = unrelated, contradictory, or hallucinated
 
+3. BLANK / DARK FAILURE:
+   Mark isBlankOrDark=true if the image is mostly black, nearly empty, text-only-looking, has no meaningful photographic subject, or would appear as a black square behind overlay text.
+
+4. AI-LIKE / SYNTHETIC FAILURE:
+   Mark looksAI=true if the image looks like CGI, 3D render, fantasy/surreal composition, glowing particles, abstract brain/data art, impossible objects, distorted hands/faces, plastic skin, or an obviously synthetic stock-photo hallucination.
+
 Output strictly as JSON:
-{"hasText": true|false, "alignmentScore": 0-100, "issues": ["..."]}`;
+{"hasText": true|false, "isBlankOrDark": true|false, "looksAI": true|false, "alignmentScore": 0-100, "issues": ["..."]}`;
 
         const ai = getAI();
         const response = await withRetry(async () => {
@@ -1008,12 +1066,14 @@ Output strictly as JSON:
         }
         return {
             hasText: !!parsed.hasText,
+            isBlankOrDark: !!parsed.isBlankOrDark,
+            looksAI: !!parsed.looksAI,
             alignmentScore: Math.max(0, Math.min(100, parsed.alignmentScore)),
             issues: Array.isArray(parsed.issues) ? parsed.issues : []
         };
     } catch (e) {
         console.error('[auditSlideImage] error:', e?.message);
-        return { hasText: false, alignmentScore: 70, issues: [], error: e?.message };
+        return { hasText: false, isBlankOrDark: false, looksAI: false, alignmentScore: 70, issues: [], error: e?.message };
     }
 }
 
@@ -1041,7 +1101,7 @@ export async function factCheckPost(caption = '', slides = [], language = 'ja') 
             `Slide ${i + 1}: overlay="${s?.overlay_copy || ''}", text="${s?.text || ''}"`
         ).join('\n');
 
-        const systemPrompt = `あなたは日本のBtoB向け Instagram 投稿のファクトチェッカーです。以下の7つの違反パターンを検出してください。
+        const systemPrompt = `あなたは日本のBtoB向け Instagram 投稿のファクトチェッカーです。以下の9つの違反パターンを検出してください。
 1. fabricated_stat: 出典機関名と発表年が明示されていない具体数字 (例: "73%", "2.8倍", "+30%向上", "1.5倍に増加")
 2. spiritual_overuse: スピリチュアル系語彙の過剰使用 (魂・不可欠性・本質・思想・内なる声・静寂・余白・在り方・らしさ・覚悟・選ばれる理由 等。1投稿で合計3個以上なら違反)
 3. fake_event: 実在しないイベント・セミナー・キャンペーン・新サービス開始の言及
@@ -1050,6 +1110,7 @@ export async function factCheckPost(caption = '', slides = [], language = 'ja') 
 6. unsupported_metric: 出典なしの成果数値・割合・倍率 (例: "EC売上2.8倍", "広告費35%削減", "顧客満足度95%")
 7. language_contamination: 日本語投稿に英語翻訳セクションや長い英文が混入している
 8. hard_whitepaper_style: Instagram投稿として硬すぎる提案書・白書・会計資料口調 (例: "貸借対照表", "B/S", "無形資産", "客観的に評価", "中長期的", "不可欠", "貴社")
+9. generic_value_marketing_drift: 「価格競争」「感情価値」「スペック」「共感」「心が動く」「選ばれる理由」などの一般的な価値訴求に寄りすぎ、具体的な実務接点が薄い
 
 JSONのみで応答。説明文不要。`;
 
@@ -1065,7 +1126,7 @@ ${slideSummary}
 {
   "passed": true/false,
   "issues": [
-    { "type": "fabricated_stat|spiritual_overuse|fake_event|personal_anecdote|unsupported_case_study|unsupported_metric|language_contamination|hard_whitepaper_style", "excerpt": "問題の該当文(短く)", "reason": "なぜ違反か" }
+    { "type": "fabricated_stat|spiritual_overuse|fake_event|personal_anecdote|unsupported_case_study|unsupported_metric|language_contamination|hard_whitepaper_style|generic_value_marketing_drift", "excerpt": "問題の該当文(短く)", "reason": "なぜ違反か" }
   ]
 }
 

@@ -30,48 +30,75 @@ const NO_QUESTION_FORMAT_RULE = "問いかけは1投稿につき最大1回、冒
 
 const VARIETY_ANGLES = [
     {
-        theme: "実践ノウハウ・ステップバイステップ",
-        guidance: "今すぐ使える具体的な手法・手順・チェックリストを提示。読者が『今日試してみよう』と思える教育的コンテンツ。",
-        avoid: `「売上達成後の虚しさ」「経営者の心理」「100年後」「未来の自分」のような哲学・心理寄りのテーマ。${NO_QUESTION_FORMAT_RULE}`
+        theme: "Webサイトのファーストビュー改善",
+        guidance: "トップページ冒頭、CTA、問い合わせ導線、実績/料金/対応範囲の見せ方など、Webサイト上で明日直せる具体的なチェック項目に絞る。",
+        requiredAnchors: "ファーストビュー / CTA / 問い合わせフォーム / 料金目安 / 対応範囲 のうち2つ以上",
+        avoid: `価格競争、感情価値、スペック、共感、世界観、ファン化の話に広げない。${NO_QUESTION_FORMAT_RULE}`
     },
     {
-        theme: "業界トレンド・データ分析",
-        guidance: "数値・統計・最新動向を用いた客観的な業界解説。具体的な数字や事実ベースで語る。",
-        avoid: `情緒的な表現、「あなたの心は」「本当の願い」のような内省系のフレーズ。${NO_QUESTION_FORMAT_RULE}`
+        theme: "料金メニュー・プラン設計",
+        guidance: "高単価サービスや商品を、松竹梅プラン、初回プラン、比較表、オプション整理で選びやすくする実務に絞る。",
+        requiredAnchors: "松竹梅 / 初回プラン / オプション削減 / 比較表 / 予約導線 のうち2つ以上",
+        avoid: `Webサイト全体論、感情価値、スペック、ブランド資産、ファン化に逃げない。${NO_QUESTION_FORMAT_RULE}`
     },
     {
-        theme: "顧客の現場課題と解決策",
-        guidance: "顧客が日々ぶつかる具体的な業務課題（人材、集客手法、業務効率、ツール選定 等）と実践的解決策。",
-        avoid: `「売上目標の先」「達成しても満たされない」のような抽象的悩み。${NO_QUESTION_FORMAT_RULE}`
+        theme: "見積書・提案資料の見直し",
+        guidance: "見積書、提案資料、初回商談資料で、価格だけを見られないために順番・項目名・説明量を変える具体策に絞る。",
+        requiredAnchors: "見積書 / 提案資料 / 項目名 / 対応範囲 / 納品後サポート のうち2つ以上",
+        avoid: `商品説明、Webサイト、SNS投稿、抽象的なブランディング論に広げない。${NO_QUESTION_FORMAT_RULE}`
     },
     {
-        theme: "業界用語・専門知識の解説",
-        guidance: "読者が『学べた』と感じる、業界専門用語や仕組みの平易な解説。図解的・教科書的な切り口。",
-        avoid: `感情訴求、ポエム調。${NO_QUESTION_FORMAT_RULE}`
+        theme: "購入後・契約後フォローの設計",
+        guidance: "同梱カード、初回メール、使い方案内、30日後フォロー、紹介依頼など、購入後の接点を改善する手順に絞る。",
+        requiredAnchors: "同梱カード / 初回メール / 30日後フォロー / 使い方案内 / 紹介依頼 のうち2つ以上",
+        avoid: `購入前の広告・Web・価格説明の話に戻らない。${NO_QUESTION_FORMAT_RULE}`
     },
     {
-        theme: "事例紹介・ケーススタディ",
-        guidance: "業種別の取り組み事例（企業名は伏せて構わない）。具体的な施策・結果・学びを示す。",
-        avoid: `抽象論、「本質」「美学」のような曖昧語。${NO_QUESTION_FORMAT_RULE}`
+        theme: "口コミ・紹介が生まれる接点設計",
+        guidance: "お客さんが誰かに紹介しやすくなる一言、写真を撮りたくなる受け渡し、レビュー依頼のタイミングを具体化する。",
+        requiredAnchors: "レビュー依頼 / 紹介カード / 写真を撮る接点 / 受け渡し / UGC のうち2つ以上",
+        avoid: `ファン化という言葉だけで終わらせない。感情価値・世界観・価格競争の話に戻らない。${NO_QUESTION_FORMAT_RULE}`
     },
     {
-        theme: "ツール・リソース紹介",
-        guidance: "実際に使える具体的なツール・サービス・参考文献の紹介と活用方法。",
-        avoid: `経営哲学、人生観。${NO_QUESTION_FORMAT_RULE}`
+        theme: "アクセス解析・顧客の声の読み方",
+        guidance: "GA4、Search Console、User Heat、Typeform、問い合わせログなどを使い、数字と顧客の声を並べて改善仮説を作る手順に絞る。",
+        requiredAnchors: "GA4 / Search Console / User Heat / Typeform / 問い合わせログ のうち2つ以上",
+        avoid: `数字ではなく心、左脳右脳、感情価値のような抽象的な橋渡しをしない。${NO_QUESTION_FORMAT_RULE}`
     },
     {
-        // 旧「経営者の日常」は気づき/儀式/内省に流れて毎回スピリチュアル化したため、
-        // 「実用ツール紹介」に置換。エッセイ調・体験談・気づき型は完全に書けない構造にする。
-        theme: "経営者向け実用ツール・サブスク・サービスの具体紹介",
-        guidance: `経営者が即座に試せるソフトウェア / サブスク / サービスを 3〜5 個リストアップする実用記事。各ツールについて以下を必ず明示すること:
-- ツール名 (Notion / NewsPicks / Granola / Whisper / Slack / Linear など実在のツール名)
-- 用途 (会議要約、情報収集、議事録自動化、タスク管理 等)
-- 料金レンジ (無料 / 月◯ドル / 年◯円 等の概算)
-- 使い始める所要時間や、月の利用時間目安
-気づき・儀式・人生観・内省・哲学的敷衍は完全禁止。「これは事業にも言える」型の橋渡しも禁止。`,
-        avoid: `「ささやかな儀式」「内なる声」「思考の余白」「判断力を守る」「日々の習慣の意味」のような内省・気づき型の語り口。「先日〜に行きました」「朝の散歩で気づいた」のような体験談エッセイ調。「これは事業にも言える」「ブランドにも同じことが言える」のような哲学敷衍構文。${NO_QUESTION_FORMAT_RULE}`
+        theme: "問い合わせ・DM返信テンプレート改善",
+        guidance: "問い合わせ、DM、初回返信、予約前の質問対応で、返信率や来店率を落とさないテンプレート改善に絞る。",
+        requiredAnchors: "初回返信 / DM / FAQ / 予約前質問 / 返信テンプレート のうち2つ以上",
+        avoid: `経営者の日常、読書、思考習慣、内省、哲学、感情価値、価格競争の話に広げない。${NO_QUESTION_FORMAT_RULE}`
     }
 ];
+
+const TOPIC_CLASSIFIERS = [
+    { key: 'website', pattern: /(Webサイト|トップページ|ファーストビュー|CTA|問い合わせフォーム|LP|導線)/ },
+    { key: 'pricing_menu', pattern: /(松竹梅|初回プラン|料金メニュー|オプション|比較表|プラン設計)/ },
+    { key: 'proposal', pattern: /(見積書|提案資料|初回商談|対応範囲|納品後サポート)/ },
+    { key: 'followup', pattern: /(同梱カード|初回メール|購入後|30日後|使い方案内|紹介依頼)/ },
+    { key: 'review_referral', pattern: /(口コミ|レビュー|紹介カード|UGC|受け渡し|写真を撮)/ },
+    { key: 'analytics', pattern: /(GA4|Google Analytics|Search Console|User Heat|Typeform|問い合わせログ|ヒートマップ)/ },
+    { key: 'dm_reply', pattern: /(DM|初回返信|FAQ|予約前質問|返信テンプレート)/ },
+    { key: 'generic_value', pattern: /(価格競争|価格で比べ|感情価値|スペック|共感|心が動|買う理由|良いもの|価値を伝)/ }
+];
+
+function getPostText(post = {}) {
+    const parts = [post.caption, post.overlay_copy, post.image_idea];
+    if (Array.isArray(post.carousel_slides)) {
+        post.carousel_slides.forEach(slide => {
+            parts.push(slide?.overlay_copy, slide?.text);
+        });
+    }
+    return parts.filter(Boolean).join('\n');
+}
+
+function classifyWeeklyTopic(post = {}) {
+    const text = getPostText(post);
+    const found = TOPIC_CLASSIFIERS.find(item => item.pattern.test(text));
+    return found?.key || 'other';
+}
 
 async function sendApprovalEmail(email, pendingCount) {
     if (!process.env.SENDGRID_API_KEY || !email) {
@@ -182,12 +209,15 @@ async function generateForUser(settings) {
 【今週の投稿テーマ切り口（必ず厳守）】
 主題: ${angle.theme}
 方針: ${angle.guidance}
+必須具体物: ${angle.requiredAnchors}
 禁止: ${angle.avoid}
 
 【厳守事項】
 - 上記の「主題」「方針」を必ず投稿の中心に据えること。
+- 「必須具体物」から2つ以上を、caption または carousel_slides に具体的な言葉として必ず入れること。
 - 上記の「禁止」に挙げたフレーズや概念は使わないこと。
-- 1週間分の投稿はそれぞれ全く異なる角度から語る必要があり、特定のキーワード（売上、達成、虚しさ、100年後、燃える、遺す、満たされる など）に偏らせないこと。
+- 1週間分の投稿はそれぞれ全く異なる実務接点から語る必要があり、特定のキーワード（価格競争、感情価値、スペック、共感、世界観、ファン化、良いもの、選ばれる理由）に偏らせないこと。
+- 「価格で比べられる」「感情で選ばれる」「スペックではなく価値」の話は、指定テーマが明示的に要求しない限り使わないこと。
 - 抽象的な哲学やポエム調ではなく、読者が具体的な学び・気づき・行動を得られる実用的な内容を優先する。`;
 
         postPromises.push(
@@ -238,6 +268,11 @@ async function generateForUser(settings) {
     }
 
     for (let outcomeIdx = 0; outcomeIdx < postOutcomes.length; outcomeIdx++) {
+        const topicCounts = results.reduce((acc, r) => {
+            const key = r.topic_key || 'other';
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
         const outcome = postOutcomes[outcomeIdx];
         if (!outcome || !outcome.post) continue;
         const { post, index: i } = outcome;
@@ -267,6 +302,12 @@ async function generateForUser(settings) {
             continue;
         }
 
+        const topicKey = classifyWeeklyTopic(post);
+        if (topicKey !== 'other' && topicCounts[topicKey] >= 1) {
+            console.warn(`[generate-weekly-batch] ${user_id} ${i + 1}件目は週内テーマ重複 (${topicKey}) のためスキップ`);
+            continue;
+        }
+
         // 予約時刻: 明日以降、1日1件、12:00 JST (= 03:00 UTC)
         // Vercelサーバーは UTC で動くため setHours(12) だと 12:00 UTC = 21:00 JST になってしまう
         // setUTCHours(3) で明示的に 03:00 UTC = 12:00 JST を指定する
@@ -283,7 +324,8 @@ async function generateForUser(settings) {
             status: 'pending_approval',
             overlay_copy: post.overlay_copy || null,
             carousel_slides: post.carousel_slides || null,
-            image_idea: post.image_idea || null
+            image_idea: post.image_idea || null,
+            topic_key: topicKey
         });
     }
 

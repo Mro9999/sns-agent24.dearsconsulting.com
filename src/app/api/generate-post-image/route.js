@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import sharp from 'sharp';
 import { generateImage, refineSlideImageHint, auditSlideImage } from '@/lib/apiService';
 import { composeOverlayImage } from '@/lib/serverOverlayHelper';
 
@@ -15,6 +16,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const COMPOSED_BUCKET = 'generated-images';
+const IMAGE_RETRY_LIMIT = 2;
 
 const buildNaturalPhotoConstraints = (slideNumber, totalSlides) => `[Style constraints]
 - Natural documentary/editorial photograph, Instagram-ready 4:5 portrait composition
@@ -27,6 +29,84 @@ const buildNaturalPhotoConstraints = (slideNumber, totalSlides) => `[Style const
 - ABSOLUTELY NO text, letters, signs, labels, signage, captions, watermarks, logos in the image
 - No readable books, documents, screens, whiteboards, charts, diagrams, posters, packaging labels, or UI
 - Carousel slide ${slideNumber} of ${totalSlides}: visually distinct from the other slides, but keep the same realistic photo language`;
+
+async function inspectGeneratedImage(url) {
+    if (!url) return { usable: false, reason: 'missing URL' };
+
+    try {
+        const res = await fetch(url);
+        if (!res.ok) return { usable: false, reason: `fetch ${res.status}` };
+
+        const buffer = Buffer.from(await res.arrayBuffer());
+        if (buffer.length < 4096) return { usable: false, reason: 'image too small' };
+
+        const { data, info } = await sharp(buffer)
+            .resize(48, 48, { fit: 'inside' })
+            .removeAlpha()
+            .raw()
+            .toBuffer({ resolveWithObject: true });
+
+        const channels = info.channels || 3;
+        let total = 0;
+        let totalSq = 0;
+        let pixels = 0;
+
+        for (let i = 0; i < data.length; i += channels) {
+            const r = data[i] || 0;
+            const g = data[i + 1] || 0;
+            const b = data[i + 2] || 0;
+            const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            total += luma;
+            totalSq += luma * luma;
+            pixels++;
+        }
+
+        const mean = pixels ? total / pixels : 0;
+        const variance = pixels ? (totalSq / pixels) - (mean * mean) : 0;
+        const stddev = Math.sqrt(Math.max(0, variance));
+
+        if (mean < 18 && stddev < 18) {
+            return { usable: false, reason: `too dark or blank (mean=${mean.toFixed(1)}, std=${stddev.toFixed(1)})` };
+        }
+        if (stddev < 7) {
+            return { usable: false, reason: `too flat or blank (mean=${mean.toFixed(1)}, std=${stddev.toFixed(1)})` };
+        }
+
+        return { usable: true, mean, stddev };
+    } catch (error) {
+        return { usable: false, reason: error?.message || 'inspect failed' };
+    }
+}
+
+async function generateUsableSlideImage({ category, targetLabel, slideImageIdea, productContext, platform, slideNumber }) {
+    let lastReason = '';
+
+    for (let attempt = 0; attempt < IMAGE_RETRY_LIMIT; attempt++) {
+        const retryInstruction = attempt === 0
+            ? ''
+            : `\n[CRITICAL RETRY] Previous image was rejected because it was ${lastReason}. Generate a clearly visible real-world photograph with a real environment and subject. Avoid black canvas, empty background, abstract darkness, and text-only looking visuals.`;
+
+        const arr = await generateImage(
+            category,
+            targetLabel,
+            'other',
+            `${slideImageIdea}${retryInstruction}`,
+            productContext,
+            platform,
+            null,
+            1
+        );
+        const url = Array.isArray(arr) ? arr[0] : null;
+        const inspection = await inspectGeneratedImage(url);
+
+        if (inspection.usable) return url;
+
+        lastReason = inspection.reason || 'unusable';
+        console.warn(`[generate-post-image] slide ${slideNumber} rejected generated image attempt ${attempt + 1}: ${lastReason}`);
+    }
+
+    throw new Error(`slide ${slideNumber} image unusable after retries: ${lastReason}`);
+}
 
 // 承認画面から呼び出される、1投稿分の画像生成API
 // body: { postId: string, variationIndex: number }
@@ -127,17 +207,14 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
             }
 
             imagePromises.push(
-                generateImage(
+                generateUsableSlideImage({
                     category,
                     targetLabel,
-                    'other',
                     slideImageIdea,
                     productContext,
-                    post.platform,
-                    null,
-                    1 // スライド毎に 1 枚ずつ
-                )
-                    .then(arr => (Array.isArray(arr) ? arr[0] : null))
+                    platform: post.platform,
+                    slideNumber: i + 1
+                })
                     .catch(err => {
                         console.error(`[generate-post-image] slide ${i} image gen failed:`, err);
                         return null;
@@ -164,7 +241,10 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
             for (let i = 0; i < audits.length; i++) {
                 const a = audits[i];
                 if (!a || a.skipped) continue;
-                const failed = a.hasText === true || (typeof a.alignmentScore === 'number' && a.alignmentScore < ALIGNMENT_THRESHOLD);
+                const failed = a.hasText === true
+                    || a.isBlankOrDark === true
+                    || a.looksAI === true
+                    || (typeof a.alignmentScore === 'number' && a.alignmentScore < ALIGNMENT_THRESHOLD);
                 if (failed) regenIndices.push(i);
             }
             if (regenIndices.length > 0) {
@@ -180,8 +260,15 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
 
 ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
                     try {
-                        const arr = await generateImage(category, targetLabel, 'other', retryPrompt, productContext, post.platform, null, 1);
-                        return { i, url: Array.isArray(arr) ? arr[0] : null };
+                        const url = await generateUsableSlideImage({
+                            category,
+                            targetLabel,
+                            slideImageIdea: retryPrompt,
+                            productContext,
+                            platform: post.platform,
+                            slideNumber: i + 1
+                        });
+                        return { i, url };
                     } catch (err) {
                         console.error(`[generate-post-image] regen slide ${i} failed:`, err?.message);
                         return { i, url: null };
@@ -203,11 +290,16 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
             for (let i = 0; i < finalAudits.length; i++) {
                 const a = finalAudits[i];
                 if (!a || a.skipped) continue;
-                const failed = a.hasText === true || (typeof a.alignmentScore === 'number' && a.alignmentScore < ALIGNMENT_THRESHOLD);
+                const failed = a.hasText === true
+                    || a.isBlankOrDark === true
+                    || a.looksAI === true
+                    || (typeof a.alignmentScore === 'number' && a.alignmentScore < ALIGNMENT_THRESHOLD);
                 if (failed) {
                     finalFailures.push({
                         slide: i + 1,
                         hasText: !!a.hasText,
+                        isBlankOrDark: !!a.isBlankOrDark,
+                        looksAI: !!a.looksAI,
                         alignmentScore: a.alignmentScore,
                         issues: a.issues || []
                     });
@@ -217,6 +309,15 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
             if (finalFailures.length > 0) {
                 console.warn('[generate-post-image] final image audit warning; saving for manual review:', JSON.stringify(finalFailures).slice(0, 500));
                 imageQualityWarnings = finalFailures;
+            }
+        }
+
+        if (isCarousel) {
+            const missing = slideResults
+                .map((url, i) => url ? null : i + 1)
+                .filter(Boolean);
+            if (missing.length > 0) {
+                throw new Error(`Image generation failed for carousel slide(s): ${missing.join(', ')}`);
             }
         }
 
@@ -251,8 +352,7 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
                 composedUrls.push(pub.publicUrl);
             } catch (composeErr) {
                 console.error(`[generate-post-image] overlay compose failed for slide ${i}:`, composeErr);
-                // 合成失敗時は raw URL をフォールバックとして使用 (テキストなし画像)
-                composedUrls.push(rawUrl);
+                throw composeErr;
             }
         }
 

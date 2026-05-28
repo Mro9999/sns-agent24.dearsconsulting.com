@@ -133,6 +133,33 @@ function wrapJapaneseTextLines(text) {
     return merged;
 }
 
+async function resolveBackgroundImageSrc(bgImageUrl) {
+    if (!bgImageUrl || typeof bgImageUrl !== 'string') {
+        throw new Error('background image URL is empty');
+    }
+
+    if (!/^https?:\/\//i.test(bgImageUrl)) {
+        return bgImageUrl;
+    }
+
+    const res = await fetch(bgImageUrl);
+    if (!res.ok) {
+        throw new Error(`background image fetch failed: ${res.status}`);
+    }
+
+    const contentType = res.headers.get('content-type') || 'image/jpeg';
+    if (!contentType.startsWith('image/')) {
+        throw new Error(`background image response is not an image: ${contentType}`);
+    }
+
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (buffer.length < 1024) {
+        throw new Error('background image response is too small');
+    }
+
+    return `data:${contentType};base64,${buffer.toString('base64')}`;
+}
+
 /**
  * 画像URLにオーバーレイテキストを合成し、JPEG Buffer を返す。
  *
@@ -149,6 +176,7 @@ export async function composeOverlayImage(bgImageUrl, overlayText, index = 0, op
     const fontSize = FIXED_FONT_SIZE;
     const lineHeight = Math.round(fontSize * 1.5);
     const effect = getSlideEffect(index);
+    const backgroundSrc = await resolveBackgroundImageSrc(bgImageUrl);
     // 日本語を意識した改行を事前計算 (句読点優先で各行に分割)
     const lines = wrapJapaneseTextLines(text);
 
@@ -168,7 +196,7 @@ export async function composeOverlayImage(bgImageUrl, overlayText, index = 0, op
         },
         // 背景画像 (cover 全面、各スライドの transform/filter 効果)
         React.createElement('img', {
-            src: bgImageUrl,
+            src: backgroundSrc,
             width: 1080,
             height: 1080,
             style: {
