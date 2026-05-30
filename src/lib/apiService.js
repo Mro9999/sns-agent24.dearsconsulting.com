@@ -160,11 +160,12 @@ const repairCarouselStepNarrative = async (ai, post, overlayLangLabel) => {
 - JSONのみで返すこと。
 - caption, hashtags, carousel_slides, image_idea, variants のキー構造は維持すること。
 - carousel_slides は必ず3枚。
-- 1枚目 overlay_copy は必ず「Step 1: ...」または「ステップ1: ...」で始める。
-- 2枚目 overlay_copy は必ず「Step 2: ...」または「ステップ2: ...」で始める。
-- 3枚目 overlay_copy は必ず「Step 3: ...」または「ステップ3: ...」で始める。
+- 1枚目 overlay_copy は必ず「1. ...」で始める。
+- 2枚目 overlay_copy は必ず「2. ...」で始める。
+- 3枚目 overlay_copy は必ず「3. ...」で始める。
 - 各ステップはタイトルだけでなく、顧客体験を再設計するための具体的な行動にする。
 - caption 内で「3つの具体的なステップ」と書く場合は、本文中にも同じ3ステップ名を短く列挙する。
+- overlay_copy は各スライド全角24文字以内、最大2行、スマホで読める短さにする。
 - overlay_copy は必ず${overlayLangLabel}のみ。絵文字は禁止。
 - image_hint_en は英語のみで、各ステップの具体的な行動を視覚化する。
 
@@ -214,6 +215,8 @@ const HARD_WHITEPAPER_TERMS = [
     '競争優位性',
     '経営資産',
     '企業価値',
+    'ブランド資産',
+    '情緒的価値',
     '戦略的に高める'
 ];
 const SPIRITUAL_DRIFT_TERMS = [
@@ -242,6 +245,10 @@ const OVERUSED_VALUE_MARKETING_TERMS = [
     '価格だけで判断',
     'スペック',
     '感情価値',
+    '情緒的価値',
+    '心理価値',
+    'ブランド資産',
+    '顧客体験',
     '心が動',
     '買う理由',
     '良いもの',
@@ -249,6 +256,29 @@ const OVERUSED_VALUE_MARKETING_TERMS = [
     'ファンが増',
     '選ばれる理由'
 ];
+
+const MAX_OVERLAY_VISUAL_LENGTH = 24;
+
+const overlayVisualLength = (value = '') => {
+    let len = 0;
+    for (const ch of String(value).replace(/\\n/g, '\n').replace(/\s+/g, '')) {
+        len += ch.charCodeAt(0) < 256 ? 0.5 : 1;
+    }
+    return len;
+};
+
+const collectOverlayCopies = (post = {}) => {
+    const overlays = [];
+    if (post.overlay_copy) overlays.push({ label: 'overlay_copy', value: post.overlay_copy });
+    if (Array.isArray(post.carousel_slides)) {
+        post.carousel_slides.forEach((slide, index) => {
+            if (slide?.overlay_copy) {
+                overlays.push({ label: `carousel_slides[${index}].overlay_copy`, value: slide.overlay_copy });
+            }
+        });
+    }
+    return overlays;
+};
 
 const getTextExcerpt = (text = '', pattern) => {
     const match = String(text).match(pattern);
@@ -337,7 +367,7 @@ const detectUnsafeCopyIssues = (post = {}, language = 'ja') => {
     }
 
     const hardTerms = HARD_WHITEPAPER_TERMS.filter(term => text.includes(term));
-    if (hardTerms.length >= 2 || hardTerms.some(term => ['貸借対照表', 'B/S', '有形資産', '無形資産'].includes(term))) {
+    if (hardTerms.length >= 2 || hardTerms.some(term => ['貸借対照表', 'B/S', '有形資産', '無形資産', 'ブランド資産', '情緒的価値'].includes(term))) {
         issues.push({
             type: 'hard_whitepaper_style',
             excerpt: hardTerms.slice(0, 6).join(', '),
@@ -355,11 +385,20 @@ const detectUnsafeCopyIssues = (post = {}, language = 'ja') => {
     }
 
     const overusedValueTerms = OVERUSED_VALUE_MARKETING_TERMS.filter(term => text.includes(term));
-    if (overusedValueTerms.length >= 4) {
+    if (overusedValueTerms.length >= 3) {
         issues.push({
             type: 'generic_value_marketing_drift',
             excerpt: overusedValueTerms.slice(0, 8).join(', '),
             reason: '価格競争・感情価値・スペック周辺の一般論に寄りすぎています。'
+        });
+    }
+
+    const longOverlay = collectOverlayCopies(post).find(item => overlayVisualLength(item.value) > MAX_OVERLAY_VISUAL_LENGTH);
+    if (longOverlay) {
+        issues.push({
+            type: 'overlay_too_long',
+            excerpt: `${longOverlay.label}: ${String(longOverlay.value).replace(/\s+/g, ' ').slice(0, 80)}`,
+            reason: '画像内テキストが長く、スマホ表示で読みにくくなります。'
         });
     }
 
@@ -385,6 +424,8 @@ ${JSON.stringify(issues)}
 - 抽象論ではなく、読者が明日見直せる具体的な作業・チェック項目へ落とす。
 - 「貸借対照表」「B/S」「有形資産」「無形資産」「貴社」「事業者様」「不可欠」「中長期的」「客観的に評価」は使わない。必要なら「数字に出にくい強み」「会社の強み」「まず見直すポイント」などに言い換える。
 - Instagram向けに、短い文・自然な話しかけ・保存したくなるチェック項目へ書き換える。
+- overlay_copy はスマホで読めるように、全角換算24文字以内、最大2行、1枚1メッセージにする。本文の要約ではなく、読者が止まる短い一言にする。
+- 「ブランド資産」「情緒的価値」「顧客体験」のような抽象語は、必要なら「価格で比べられにくい理由」「買った後に嬉しくなる理由」「お客さんが迷わない導線」などの日常語へ置き換える。
 
 ユーザー提供コンテキスト:
 - 会社名: ${textContext?.companyName || '未設定'}
@@ -565,7 +606,7 @@ C. image_hint_en は Imagen 画像生成プロンプト用のため、上記設�
         let goalText = '指定なし（通常の魅力発信）';
         if (basePurpose === 'reservation') goalText = '来店・予約を増やしたい（キャンペーン・新規集客・予約誘導）';
         else if (basePurpose === 'relationship') goalText = '既存客との関係を深めたい（日常・スタッフ紹介・こだわりの裏側）';
-        else if (basePurpose === 'branding') goalText = 'ブランド資産を実務目線で語る（具体的なポジショニング戦略・差別化施策・実在の業界事例・数字に基づく根拠の4軸で構成。"哲学" "美意識" "世界観" のような抽象語だけで終わる発信は禁止。読者がその場で実務に応用できる粒度まで具体化する）';
+        else if (basePurpose === 'branding') goalText = 'ブランドの強みを実務目線で語る（価格で比べられにくい理由、紹介される理由、初回相談・Webサイト・商品説明で見直せる具体的な接点の3軸で構成。"哲学" "美意識" "世界観" のような抽象語だけで終わる発信は禁止。読者がその場で実務に応用できる粒度まで具体化する）';
         else if (basePurpose === 'announcement') goalText = '新メニュー・商品を告知したい（新商品・季節メニュー・限定企画）';
         else if (basePurpose) goalText = basePurpose;
 
@@ -574,12 +615,12 @@ C. image_hint_en は Imagen 画像生成プロンプト用のため、上記設�
             formatInstruction = `
 # 出力形式 (JSONのみ)
 {
-    "caption": "一切の絵文字や顔文字を使用せず、Instagramで読みやすい自然な投稿文。硬い提案書口調は禁止。350〜650字程度、短い段落で構成し、最後にCTAやURLを含む",
-    "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
+    "caption": "一切の絵文字や顔文字を使用せず、Instagramで読みやすい自然な投稿文。硬い提案書口調は禁止。500〜800字程度、短い段落で構成し、最後にCTAやURLを含む",
+    "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3", "ハッシュタグ4", "ハッシュタグ5"],
     "carousel_slides": [
-        { "overlay_copy": "1枚目(表紙): 18〜26文字。読者がスマホで止まる自然な一言。専門語・かぎ括弧の多用は禁止。適宜 '\\n' で改行", "text": "表紙の補足。60〜110字程度で短く", "image_hint_en": "Natural documentary English photo prompt (40-60 words) reinforcing slide 1's overlay_copy theme. NO TEXT in image. Use a believable Japanese service, retail, hospitality, craft, product, or consultation scene. No CGI, 3D render, surreal metaphor, glowing particles, or abstract graphics." },
-        { "overlay_copy": "2枚目: 18〜26文字。原因・見落とし・比較軸を日常語で示す", "text": "2枚目の解説。90〜150字程度。箇条書き可。専門用語は必ず言い換える", "image_hint_en": "Natural documentary English photo prompt (40-60 words) for slide 2's specific message. NO TEXT. Distinct real-world setting/subject from slide 1. No generic office, no fake diagrams, no uncanny hands/faces, no symbolic fantasy objects." },
-        { "overlay_copy": "3枚目: 18〜26文字。読者が次に試す行動を示す", "text": "3枚目の解説。90〜150字程度。読者の行動を促す", "image_hint_en": "Natural documentary English photo prompt (40-60 words) for slide 3's solution/outcome. NO TEXT. Distinct realistic setting from slides 1-2. Keep clean negative space for overlay, no readable books, screens, labels, or documents." }
+        { "overlay_copy": "1枚目(表紙): 全角15〜24文字以内、最大2行。スマホで一瞬で読める1メッセージ。専門語・かぎ括弧の多用は禁止。適宜 '\\n' で改行", "text": "表紙の補足。50〜90字程度で短く", "image_hint_en": "Natural documentary English photo prompt (40-60 words) reinforcing slide 1's overlay_copy theme. NO TEXT in image. Use a believable Japanese service, retail, hospitality, craft, product, or consultation scene. No CGI, 3D render, surreal metaphor, glowing particles, or abstract graphics." },
+        { "overlay_copy": "2枚目: 全角15〜24文字以内、最大2行。原因・見落とし・比較軸を日常語で示す", "text": "2枚目の解説。80〜130字程度。箇条書き可。専門用語は必ず言い換える", "image_hint_en": "Natural documentary English photo prompt (40-60 words) for slide 2's specific message. NO TEXT. Distinct real-world setting/subject from slide 1. No generic office, no fake diagrams, no uncanny hands/faces, no symbolic fantasy objects." },
+        { "overlay_copy": "3枚目: 全角15〜24文字以内、最大2行。読者が次に試す行動を示す", "text": "3枚目の解説。80〜130字程度。読者の行動を促す", "image_hint_en": "Natural documentary English photo prompt (40-60 words) for slide 3's solution/outcome. NO TEXT. Distinct realistic setting from slides 1-2. Keep clean negative space for overlay, no readable books, screens, labels, or documents." }
     ],
     "image_idea": "この投稿全体の世界観を表す、${IMAGE_MODEL}で背景画像を生成するための詳細な画像プロンプト案（★毎回必ず異なる構図・切り口・被写体にする。英語、50単語程度）",
     "variants": [
@@ -590,20 +631,23 @@ C. image_hint_en は Imagen 画像生成プロンプト用のため、上記設�
 
 # 【最重要】キャプションとカルーセル3枚の内容同期
 - caption で「3ステップ」「3つの具体的なステップ」「3手順」「3工程」と約束する場合、carousel_slides の3枚は必ずその3ステップそのものにしてください。
-- その場合、1枚目 overlay_copy は「Step 1: ...」または「ステップ1: ...」、2枚目は「Step 2: ...」または「ステップ2: ...」、3枚目は「Step 3: ...」または「ステップ3: ...」で始めてください。
+- その場合、1枚目 overlay_copy は「1. ...」、2枚目は「2. ...」、3枚目は「3. ...」で始めてください。英字の Step 表記は長くなりやすいので原則使わないでください。
 - 「3ステップ」と言いながら、1枚目=問題提起、2枚目=タイトル、3枚目=まとめ のような構成にすることは禁止です。
 - 3枚のうち1枚だけに「3ステップ」と書くことは禁止です。読者が各スライドを見ただけで Step 1 / Step 2 / Step 3 の中身を理解できる構成にしてください。
 - もしスライド構成が「問題提起 → 原因分解 → 解決の方向性」の場合、caption では「3ステップ」と書かず、「3つの観点」「3枚で整理します」のように表現してください。
 
 # 【超重要】Instagram向けの文体・読みやすさ
 - 提案書、白書、論文、営業資料のような硬い文章は禁止です。
-- 読者はスマホで流し見しています。1文は45文字前後まで。1段落は2文まで。長い説明はスライドに分けてください。
+- 読者はスマホで流し見しています。1文は35〜45文字前後まで。1段落は2文まで。長い説明はスライドに分けてください。
 - 「貴社」「弊社」「不可欠です」「〜といえるでしょう」「〜少なくありません」「客観的に評価」「計画的に高める」のような硬い表現を避けてください。
 - 代わりに「自社」「私たち」「まず見直したいのは」「ここで差が出ます」「置き去りになりがちです」のような自然な言葉を使ってください。
 - キャプションは、1.共感できる現場の違和感 → 2.なぜ起こるか → 3.今日見直すポイント → 4.プロフィールリンクへの自然なCTA、の流れにしてください。
 - ハッシュタグは日本語中心で5〜8個まで。英語ハッシュタグの大量追加は禁止です。
-- 「貸借対照表」「B/S」「有形資産」「無形資産」「客観的に評価」「中長期的」「不可欠」「事業者様」は使用禁止です。
-- 「ブランド価値」「ブランド資産」を使う場合は、すぐ後ろで「お客さんが選び続ける理由」「紹介される理由」「価格で比べられにくい理由」のように日常語へ言い換えてください。
+- 画像内テキストは本文の要約ではなく、読者が止まる短い一言にしてください。全角24文字を超える overlay_copy は失敗です。
+- 「DEARS CONSULTINGでは」は最後のCTA段落で最大1回だけ使えます。本文冒頭や途中で何度も出すのは禁止です。
+- 「貸借対照表」「B/S」「有形資産」「無形資産」「客観的に評価」「中長期的」「不可欠」「事業者様」「ブランド資産」「情緒的価値」は使用禁止です。
+- 「ブランド価値」を使う場合は、すぐ後ろで「お客さんが選び続ける理由」「紹介される理由」「価格で比べられにくい理由」のように日常語へ言い換えてください。
+- 良い画像コピー例: 「いい商品なのに、価格で比べられる」「説明を足すほど、伝わりにくい」「まず削る言葉を決める」
 - 良い文体例: 「情報を足すほど、なぜか伝わりにくくなることがあります。まず見るべきなのは、何を書くかではなく、何を削るかです。」
 - 悪い文体例: 「中長期的に企業価値を向上させるためには、無形資産を客観的に評価する視点が不可欠です。」
 
@@ -651,10 +695,10 @@ GOOD: "A realistic product shelf in a small Japanese specialty shop, plain unlab
             formatInstruction = `
 # 出力形式 (JSONのみ)
 {
-    "caption": "一切の絵文字や顔文字を使用せず、Instagramで読みやすい自然な投稿文。硬い提案書口調は禁止。500〜900字程度、最後にCTAやURLを含む",
+    "caption": "一切の絵文字や顔文字を使用せず、Instagramで読みやすい自然な投稿文。硬い提案書口調は禁止。500〜800字程度、短い段落で構成し、最後にCTAやURLを含む",
     "hashtags": ["ハッシュタグ1", "ハッシュタグ2", "ハッシュタグ3"],
     "image_idea": "この投稿文に合う、${IMAGE_MODEL}で生成するための詳細な画像プロンプト案（★毎回必ず異なる構図・切り口・被写体にする。英語、50単語程度）",
-    "overlay_copy": "写真上に表示するキャッチコピー（10〜25文字程度、'\\n'で改行推奨）。★必ず読者の具体的な悩み・願望・行動に言及すること。『美学』『本質』『哲学』等の抽象語だけのコピーは禁止。具体的なサービス内容・メリット・数字を含めて書く",
+    "overlay_copy": "写真上に表示するキャッチコピー（全角15〜24文字以内、最大2行、'\\n'で改行推奨）。★スマホで一瞬で読める1メッセージにすること。『美学』『本質』『哲学』『情緒的価値』等の抽象語だけのコピーは禁止。読者の具体的な悩み・願望・行動に言及する",
     "variants": [
         { "style": "標準", "caption": "...", "hashtags": ["..."] },
         { "style": "エモーショナル", "caption": "...", "hashtags": ["..."] },
@@ -684,12 +728,15 @@ GOOD: "A realistic product shelf in a small Japanese specialty shop, plain unlab
 
 # Instagram文体の絶対ルール
 - 難しい内容を、経営者が朝の移動中にスマホで読める文章にしてください。
-- 「貴社」「弊社」「有形資産」「無形資産」「貸借対照表」「B/S」「客観的に評価」「戦略的に高める」「不可欠です」は使用禁止です。
+- 「貴社」「弊社」「有形資産」「無形資産」「貸借対照表」「B/S」「客観的に評価」「戦略的に高める」「不可欠です」「ブランド資産」「情緒的価値」は使用禁止です。
 - 必要な専門語は1投稿につき2つまでに抑え、すぐに日常語で言い換えてください。
-- キャプションは350〜650字を目安にし、長すぎる説明は禁止です。カルーセルで伝えられる内容を本文に詰め込みすぎないでください。
+- キャプションは500〜800字を目安にし、スマホで読みやすい短い段落で構成してください。カルーセルで伝えられる内容を本文に詰め込みすぎないでください。
 - 1文は短く。硬い断定より、読者の現場に寄り添う自然な言い方にしてください。
 - 「これは、〜です。」「〜することが不可欠です。」の連続は禁止です。リズムを作ってください。
 - 投稿者は高圧的なコンサルではなく、事業者の隣で整理を手伝う伴走者として話してください。
+- 冒頭は20〜45文字程度の「あるある」や違和感から入ってください。例:「いい商品なのに、価格で比べられることがあります。」
+- 「DEARS CONSULTINGでは」は最後のCTA段落で最大1回だけ使用可。本文の主語は読者の現場に置いてください。
+- 画像上の overlay_copy は全角15〜24文字以内、最大2行、1枚1メッセージにしてください。スマホで読めない長文は失敗です。
 
 # ★★★最重要★★★ 投稿品質の絶対基準（このプロジェクトの命）
 
@@ -740,7 +787,7 @@ GOOD: "A realistic product shelf in a small Japanese specialty shop, plain unlab
 # 【絶対厳守の禁止事項（抽象的・哲学的コピーの禁止）】
 - **overlay_copyやcarousel_slidesの見出しに、「美学」「本質」「哲学」「真髄」「至高」「極み」「物語」などの抽象的・哲学的な言葉だけで構成されたコピーは絶対に使用禁止です。**
 - 読者が見た瞬間に「何のサービスか」「自分にどんなメリットがあるか」が伝わる具体的な内容にしてください。
-- 良い例:「カット後、周りの反応が変わります」「月5万円の広告費を0円に」「予約が3倍になった理由」
+- 良い例:「いい商品なのに、価格で比べられる」「説明を足すほど、伝わりにくい」「初回相談で聞くことを変える」
 - 悪い例:「美学を、語り合いませんか」「本質を追求する」「あなたの物語」
 - 具体的な数字、悩み、行動、サービス名、ビフォーアフターなどを積極的に盛り込んでください。
 
@@ -835,7 +882,7 @@ GOOD: "A realistic product shelf in a small Japanese specialty shop, plain unlab
 
 ## ルールD: 「3ステップ」と書いたら、3枚すべてをステップ化する
 - caption に「3ステップ」「3つの具体的なステップ」「3手順」「3工程」と書く場合、carousel_slides の1枚目から3枚目は必ず Step 1 / Step 2 / Step 3 そのものにすること。
-- Step 1 / Step 2 / Step 3 の各見出しは overlay_copy 冒頭に明記すること。text だけに隠してはいけない。
+- 各見出しは overlay_copy 冒頭に「1.」「2.」「3.」で明記すること。text だけに隠してはいけない。
 - 「3ステップ」と言いながら、スライドが表紙・タイトル・まとめだけで終わる構成は禁止。これはキャプションと画像の不一致として生成失敗です。
 - 3枚構成で問題提起・原因・解決を語るだけなら、「3ステップ」ではなく「3つの観点」「3つの構造」「3枚で整理」と表現すること。
 
@@ -1101,7 +1148,7 @@ export async function factCheckPost(caption = '', slides = [], language = 'ja') 
             `Slide ${i + 1}: overlay="${s?.overlay_copy || ''}", text="${s?.text || ''}"`
         ).join('\n');
 
-        const systemPrompt = `あなたは日本のBtoB向け Instagram 投稿のファクトチェッカーです。以下の9つの違反パターンを検出してください。
+        const systemPrompt = `あなたは日本のBtoB向け Instagram 投稿のファクトチェッカーです。以下の10個の違反パターンを検出してください。
 1. fabricated_stat: 出典機関名と発表年が明示されていない具体数字 (例: "73%", "2.8倍", "+30%向上", "1.5倍に増加")
 2. spiritual_overuse: スピリチュアル系語彙の過剰使用 (魂・不可欠性・本質・思想・内なる声・静寂・余白・在り方・らしさ・覚悟・選ばれる理由 等。1投稿で合計3個以上なら違反)
 3. fake_event: 実在しないイベント・セミナー・キャンペーン・新サービス開始の言及
@@ -1111,6 +1158,7 @@ export async function factCheckPost(caption = '', slides = [], language = 'ja') 
 7. language_contamination: 日本語投稿に英語翻訳セクションや長い英文が混入している
 8. hard_whitepaper_style: Instagram投稿として硬すぎる提案書・白書・会計資料口調 (例: "貸借対照表", "B/S", "無形資産", "客観的に評価", "中長期的", "不可欠", "貴社")
 9. generic_value_marketing_drift: 「価格競争」「感情価値」「スペック」「共感」「心が動く」「選ばれる理由」などの一般的な価値訴求に寄りすぎ、具体的な実務接点が薄い
+10. overlay_too_long: 画像上の overlay_copy が全角24文字を超える、または1枚に複数メッセージを詰め込みすぎてスマホで読みにくい
 
 JSONのみで応答。説明文不要。`;
 
@@ -1126,7 +1174,7 @@ ${slideSummary}
 {
   "passed": true/false,
   "issues": [
-    { "type": "fabricated_stat|spiritual_overuse|fake_event|personal_anecdote|unsupported_case_study|unsupported_metric|language_contamination|hard_whitepaper_style|generic_value_marketing_drift", "excerpt": "問題の該当文(短く)", "reason": "なぜ違反か" }
+    { "type": "fabricated_stat|spiritual_overuse|fake_event|personal_anecdote|unsupported_case_study|unsupported_metric|language_contamination|hard_whitepaper_style|generic_value_marketing_drift|overlay_too_long", "excerpt": "問題の該当文(短く)", "reason": "なぜ違反か" }
   ]
 }
 

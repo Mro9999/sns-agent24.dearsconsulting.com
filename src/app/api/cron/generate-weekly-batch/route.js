@@ -176,7 +176,9 @@ async function generateForUser(settings) {
     const target = target_id ? { id: target_id, label: target_id } : { id: 'general', label: '一般' };
     const targetLabel = target.label;
     const platformType = 'instagram';
-    const selectedFormat = format || 'carousel';
+    // 週次のInstagram自動投稿は承認画面・Make.comともにカルーセル前提で運用する。
+    // user_batch_settings.format が過去操作で single になっていると1枚投稿が混ざるため固定する。
+    const selectedFormat = 'carousel';
     const cleanProductContext = product_context || {};
     const userProfile = user_profile || {};
 

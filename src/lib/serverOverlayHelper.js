@@ -39,16 +39,15 @@ function getSlideEffect(index) {
     }
 }
 
-// カルーセル内で各スライド間の見栄えを揃えるため、フォントサイズは固定 56px。
-// (旧設計: 文字数に応じて 50/58/68/80px と変動 → スライド毎に文字サイズがバラつき視覚的に違和感)
-const FIXED_FONT_SIZE = 56;
-const TEXT_AREA_WIDTH = 800; // 1080 - 左右140px ずつのマージン (Instagram 4:5 グリッドクロップ対策)
+// スマホ表示で読めることを優先し、画像上の文字は大きめに固定する。
+// 文章量は生成プロンプト側で短く制限し、ここでは1メッセージを強く見せる。
+const FIXED_FONT_SIZE = 72;
+const TEXT_AREA_WIDTH = 840; // 1080 - 左右120px ずつのマージン (Instagram 4:5 グリッドクロップ対策)
 // 1行の最大文字数 (全角換算)。
-// MAX=12 は厳しすぎて、segmenter の word boundary で意図しない位置 (「教えてくれない」を
-// 「教えてくれ」「ない」で切る等) で切れる事象が発生した。13 まで緩和し、
-// 句読点単体の overflow は +1 文字許容 (= 14 chars max) とする。
-// 14 chars * 56px ≈ 784px ≤ 800px で Satori の auto-wrap も発動しない範囲。
-const MAX_CHARS_PER_LINE = 13;
+// 文字を大きくした分、1行は短くして2行でも読み切れる見出しにする。
+// 句読点単体の overflow は +1 文字許容 (= 12 chars max) とする。
+// 11 chars * 72px ≈ 792px ≤ 840px で Satori の auto-wrap も発動しない範囲。
+const MAX_CHARS_PER_LINE = 11;
 
 // ASCII 半角=0.5, それ以外 (主に日本語全角)=1.0 として視覚的長さを近似
 function visualLength(str) {
@@ -174,7 +173,7 @@ export async function composeOverlayImage(bgImageUrl, overlayText, index = 0, op
     const { companyName } = options;
     const text = (overlayText && overlayText.trim()) || `${companyName || ''}\n最新のトレンド情報をチェック`;
     const fontSize = FIXED_FONT_SIZE;
-    const lineHeight = Math.round(fontSize * 1.5);
+    const lineHeight = Math.round(fontSize * 1.35);
     const effect = getSlideEffect(index);
     const backgroundSrc = await resolveBackgroundImageSrc(bgImageUrl);
     // 日本語を意識した改行を事前計算 (句読点優先で各行に分割)
@@ -230,8 +229,8 @@ export async function composeOverlayImage(bgImageUrl, overlayText, index = 0, op
                 style: {
                     position: 'absolute',
                     top: 0,
-                    left: 140, // 左右マージン 140px → 800px幅 (Instagram 4:5 グリッドクロップ対策)
-                    width: 800,
+                    left: 120, // 左右マージン 120px → 840px幅 (Instagram 4:5 グリッドクロップ対策)
+                    width: TEXT_AREA_WIDTH,
                     height: 1080,
                     display: 'flex',
                     flexDirection: 'column',
