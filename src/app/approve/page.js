@@ -15,6 +15,7 @@ export default function ApprovePage() {
     const [loading, setLoading] = useState(true);
     const [processingIds, setProcessingIds] = useState(new Set());
     const [statusMsg, setStatusMsg] = useState('');
+    const [imageErrors, setImageErrors] = useState({});
 
     const fetchPending = async () => {
         try {
@@ -24,8 +25,10 @@ export default function ApprovePage() {
             const json = await res.json();
             const fetched = json.posts || [];
             setPosts(fetched);
-            // 画像未生成のものがあれば順次生成してstateに反映
-            await generateMissingImages(fetched);
+            // 投稿文を先に表示し、画像は裏側で生成する。
+            // ここで await すると承認画面全体が長時間「読み込み中」になり、離脱ポイントになる。
+            setLoading(false);
+            generateMissingImages(fetched);
         } catch (e) {
             console.error(e);
             setStatusMsg(`読み込みエラー: ${e.message}`);
@@ -49,13 +52,15 @@ export default function ApprovePage() {
         return imageUrls;
     };
 
-    // 画像未生成の投稿について、1件ずつ順番に /api/generate-post-image を叩いて埋める
+    const hasImages = (post) => Array.isArray(post.image_urls) && post.image_urls.length > 0;
+
+    // 画像未生成の投稿について、投稿文の確認を止めずに /api/generate-post-image を裏側で叩いて埋める
     const generateMissingImages = async (list) => {
-        const needsImage = list.filter(p => !Array.isArray(p.image_urls) || p.image_urls.length === 0);
+        const needsImage = list.filter(p => !hasImages(p) && !generatingIds.has(p.id));
 
         // 既に画像があるpostも先にプレビュー合成しておく(再訪問時など)
         for (const p of list) {
-            if (Array.isArray(p.image_urls) && p.image_urls.length > 0 && !composedPreviews[p.id]) {
+            if (hasImages(p) && !composedPreviews[p.id]) {
                 composePreviewsFor(p, p.image_urls).then(composed => {
                     setComposedPreviews(prev => ({ ...prev, [p.id]: composed }));
                 });
@@ -64,16 +69,26 @@ export default function ApprovePage() {
 
         if (needsImage.length === 0) return;
 
-        // 先に全て「生成中」としてマーク(スケルトン表示用)
-        setGeneratingIds(new Set(needsImage.map(p => p.id)));
+        // 先に全て「生成中」としてマーク。投稿文はこの時点で読める。
+        setImageErrors(prev => {
+            const next = { ...prev };
+            needsImage.forEach(p => delete next[p.id]);
+            return next;
+        });
+        setGeneratingIds(prev => {
+            const next = new Set(prev);
+            needsImage.forEach(p => next.add(p.id));
+            return next;
+        });
+        setStatusMsg(`${needsImage.length}件の画像を裏側で生成中です。文章は先に確認できます。画像が揃った投稿から承認できます。`);
+
+        const concurrency = Math.min(2, needsImage.length);
+        let cursor = 0;
+        let processedCount = 0;
         let failedCount = 0;
         let warningCount = 0;
 
-        for (let idx = 0; idx < needsImage.length; idx++) {
-            const p = needsImage[idx];
-            const remain = needsImage.length - idx;
-            const remainSec = Math.max(10, remain * 20);
-            setStatusMsg(`AI画像を生成しています: ${idx + 1} / ${needsImage.length} 件目 (残り約${remainSec}秒)`);
+        const runOne = async (p, idx) => {
             try {
                 const res = await fetch('/api/generate-post-image', {
                     method: 'POST',
@@ -81,37 +96,57 @@ export default function ApprovePage() {
                     body: JSON.stringify({ postId: p.id, variationIndex: idx })
                 });
                 if (!res.ok) {
-                    failedCount++;
                     const errorText = await res.text();
                     console.warn(`画像生成失敗 (${p.id}):`, errorText);
+                    let message = '画像生成に失敗しました。更新すると再試行できます。';
                     try {
                         const errorJson = JSON.parse(errorText);
-                        setStatusMsg(errorJson?.message || '画像生成に失敗しました。投稿案は残しています。更新すると再試行できます。');
+                        message = errorJson?.message || errorJson?.error || message;
                     } catch {
-                        setStatusMsg('画像生成に失敗しました。投稿案は残しています。更新すると再試行できます。');
+                        // plain text error
                     }
-                } else {
-                    const data = await res.json();
-                    if (Array.isArray(data.quality_warnings) && data.quality_warnings.length > 0) {
-                        warningCount++;
-                    }
-                    if (Array.isArray(data.image_urls) && data.image_urls.length > 0) {
-                        setPosts(prev => prev.map(x => x.id === p.id ? { ...x, image_urls: data.image_urls } : x));
-                        // 生成完了後すぐに文字合成プレビューも作る
-                        const composed = await composePreviewsFor(p, data.image_urls);
-                        setComposedPreviews(prev => ({ ...prev, [p.id]: composed }));
-                    }
+                    throw new Error(message);
                 }
+
+                const data = await res.json();
+                if (Array.isArray(data.quality_warnings) && data.quality_warnings.length > 0) {
+                    warningCount++;
+                }
+                if (!Array.isArray(data.image_urls) || data.image_urls.length === 0) {
+                    throw new Error(data.reason || '画像URLが返りませんでした。更新すると再試行できます。');
+                }
+
+                setPosts(prev => prev.map(x => x.id === p.id ? { ...x, image_urls: data.image_urls } : x));
+                // 生成完了後すぐに文字合成プレビューも作る
+                const composed = await composePreviewsFor(p, data.image_urls);
+                setComposedPreviews(prev => ({ ...prev, [p.id]: composed }));
             } catch (err) {
                 console.error('image gen loop:', err);
                 failedCount++;
+                setImageErrors(prev => ({
+                    ...prev,
+                    [p.id]: err?.message || '画像生成に失敗しました。更新すると再試行できます。'
+                }));
+            } finally {
+                processedCount++;
+                setStatusMsg(`画像を裏側で生成中: ${processedCount} / ${needsImage.length} 件完了。文章は先に確認できます。`);
+                setGeneratingIds(prev => {
+                    const s = new Set(prev);
+                    s.delete(p.id);
+                    return s;
+                });
             }
-            setGeneratingIds(prev => {
-                const s = new Set(prev);
-                s.delete(p.id);
-                return s;
-            });
-        }
+        };
+
+        const workers = Array.from({ length: concurrency }, async () => {
+            while (cursor < needsImage.length) {
+                const idx = cursor++;
+                await runOne(needsImage[idx], idx);
+            }
+        });
+
+        await Promise.all(workers);
+
         if (failedCount > 0) {
             setStatusMsg(`${failedCount}件の画像生成に失敗しました。投稿案は残しています。更新すると再試行できます。`);
         } else if (warningCount > 0) {
@@ -132,8 +167,12 @@ export default function ApprovePage() {
     };
 
     const handleApprove = async (post) => {
+        if (!hasImages(post)) {
+            setStatusMsg('この投稿はまだ画像生成中です。文章確認はできますが、承認は画像が揃ってから実行してください。');
+            return;
+        }
         setProcessingIds(prev => new Set(prev).add(post.id));
-        setStatusMsg(`${post.id.slice(0, 8)}... の画像を合成中`);
+        setStatusMsg(`${post.id.slice(0, 8)}... を承認しています`);
         try {
             const composedUrls = await composeAndUpload(post);
             const res = await fetch('/api/batch-approve', {
@@ -183,7 +222,12 @@ export default function ApprovePage() {
     };
 
     const handleApproveAll = async () => {
-        if (!confirm(`${posts.length}件すべてを承認しますか？画像合成のため数十秒かかります。`)) return;
+        const notReadyCount = posts.filter(p => !hasImages(p)).length;
+        if (notReadyCount > 0) {
+            setStatusMsg(`${notReadyCount}件はまだ画像生成中です。全件承認は画像が揃ってから実行してください。`);
+            return;
+        }
+        if (!confirm(`${posts.length}件すべてを承認しますか？`)) return;
         for (const p of [...posts]) {
             await handleApprove(p);
         }
@@ -248,8 +292,7 @@ export default function ApprovePage() {
                         今週の投稿を承認
                     </h1>
                     <p className="text-gray-400 mt-2 text-sm">
-                        AIが自動生成した投稿案を確認し、承認すると自動投稿キューに入ります。
-                        予約時刻までに承認されなかった投稿は自動で承認扱いになります。
+                        投稿文はすぐ確認できます。画像は裏側で生成され、揃った投稿から承認できます。
                     </p>
                 </header>
 
@@ -280,11 +323,11 @@ export default function ApprovePage() {
                                 >
                                     <X size={16} /> 全件却下
                                 </button>
-                                <button
-                                    onClick={handleApproveAll}
-                                    disabled={processingIds.size > 0}
-                                    className="flex items-center gap-2 text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 px-4 py-2 rounded font-bold disabled:opacity-50"
-                                >
+	                                <button
+	                                    onClick={handleApproveAll}
+	                                    disabled={processingIds.size > 0 || generatingIds.size > 0 || posts.some(p => !hasImages(p))}
+	                                    className="flex items-center gap-2 text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 px-4 py-2 rounded font-bold disabled:opacity-50"
+	                                >
                                     <Check size={16} /> 全件承認
                                 </button>
                             </>
@@ -311,6 +354,7 @@ export default function ApprovePage() {
                             // 画像はサーバー側 (Satori) で合成済みなので post.image_urls をそのまま表示
                             const allImages = Array.isArray(post.image_urls) ? post.image_urls : [];
                             const isCarousel = allImages.length > 1;
+                            const imageError = imageErrors[post.id];
                             return (
                                 <div key={post.id} className="bg-gray-900/60 border border-gray-800 rounded-lg overflow-hidden">
                                     <div className="p-4 space-y-4">
@@ -344,12 +388,21 @@ export default function ApprovePage() {
                                                 ))}
                                             </div>
                                         ) : isGeneratingImage ? (
-                                            <div className="bg-gradient-to-br from-purple-900/40 to-pink-900/40 animate-pulse rounded aspect-square max-w-xs flex flex-col items-center justify-center">
+                                            <div className="bg-gradient-to-br from-purple-900/40 to-pink-900/40 animate-pulse rounded aspect-square max-w-xs flex flex-col items-center justify-center px-4 text-center">
                                                 <Loader2 className="animate-spin text-purple-400 mb-2" size={24} />
                                                 <span className="text-xs text-gray-300">AI画像を生成中</span>
+                                                <span className="text-[11px] text-gray-500 mt-1">文章は先に確認できます</span>
+                                            </div>
+                                        ) : imageError ? (
+                                            <div className="bg-red-950/30 border border-red-900/50 rounded aspect-square max-w-xs flex flex-col items-center justify-center px-4 text-center">
+                                                <span className="text-xs text-red-200">画像生成に失敗しました</span>
+                                                <span className="text-[11px] text-red-300/70 mt-1">更新で再試行できます</span>
                                             </div>
                                         ) : (
-                                            <div className="bg-gray-950 rounded aspect-square max-w-xs flex items-center justify-center text-gray-600 text-xs">画像なし</div>
+                                            <div className="bg-gray-950 rounded aspect-square max-w-xs flex flex-col items-center justify-center text-gray-500 text-xs">
+                                                <span>画像準備中</span>
+                                                <span className="text-[11px] text-gray-600 mt-1">文章は先に確認できます</span>
+                                            </div>
                                         )}
 
                                         {/* キャプション */}
@@ -359,14 +412,14 @@ export default function ApprovePage() {
 
                                         {/* 承認/却下ボタン */}
                                         <div className="flex gap-2 pt-2">
-                                            <button
-                                                onClick={() => handleApprove(post)}
-                                                disabled={isProcessing}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 px-3 py-2 rounded font-bold disabled:opacity-50"
-                                            >
-                                                {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                                                承認
-                                            </button>
+	                                            <button
+	                                                onClick={() => handleApprove(post)}
+	                                                disabled={isProcessing || !hasImages(post)}
+	                                                className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 px-3 py-2 rounded font-bold disabled:opacity-50"
+	                                            >
+	                                                {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+	                                                {hasImages(post) ? '承認' : '画像待ち'}
+	                                            </button>
                                             <button
                                                 onClick={() => handleReject(post)}
                                                 disabled={isProcessing}
