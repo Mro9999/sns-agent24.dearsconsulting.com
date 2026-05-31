@@ -6,7 +6,6 @@ import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, OverlayLanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
 import { drawCanvasImage } from '@/lib/canvasHelper';
-import { buildPlatformCaption } from '@/lib/captionUtils';
 import ProMaxInquiryModal from '@/components/ProMaxInquiryModal';
 import ProfileSetupModal from '@/components/features/ProfileSetupModal';
 import { usePostHog } from 'posthog-js/react';
@@ -503,6 +502,12 @@ export default function Home() {
 
         posthog?.capture('batch_generation_started', { platform: platformType, count });
 
+        const pickId = (v) => {
+            if (v == null) return null;
+            if (typeof v === 'string') return v;
+            if (typeof v === 'object') return v.id || v.label || null;
+            return null;
+        };
         const targetLabel = selectedTarget === 'teens' ? '10代' : selectedTarget === 'young_adults' ? '20-30代' : selectedTarget === 'parents' ? 'パパママ' : selectedTarget === 'high_end' ? '富裕層・ハイエンド' : 'ビジネス層';
 
         const cleanProductContext = { ...productContext };
@@ -510,230 +515,44 @@ export default function Home() {
         delete cleanProductContext.baseImage;
         delete cleanProductContext.baseImages;
 
-        let siteContent = null;
-        if (cleanProductContext?.websiteUrl) {
-            try {
-                siteContent = await scrapeWebsite(cleanProductContext.websiteUrl);
-            } catch (err) {
-                console.error("Scraping error:", err);
-            }
-        }
-
         const userProfile = {
-            industry: selectedCategory?.label || '',
+            industry: pickId(selectedCategory) || '',
             targetAudience: targetLabel || '',
             usp: cleanProductContext?.sellingPoint || ''
         };
 
-        // 投稿テーマが「売上達成」「経営者心理」「100年後」などに偏らないよう、
-        // 各角度に主題・方針・禁止語を含めて強制的に分散させる。
-        // また、7 角度のうち最後の "経営者の日常" だけは問いかけ形式を許容、
-        // 他 6 つは問いかけ禁止 (週 1 件までに収めるユーザー要望)。
-        const NO_QUESTION_FORMAT_RULE = "問いかけ形式の見出し・キャプション（『〜ですか？』『〜ではないでしょうか？』『〜と感じませんか？』『〜していますか？』等）は禁止。読者に質問を投げず、『〜です』『〜ます』『〜と判明しました』のような事実伝達・宣言形のですます調で書くこと";
-
-        const varietyAngles = [
-            {
-                theme: "実践ノウハウ・ステップバイステップ",
-                guidance: "今すぐ使える具体的な手法・手順・チェックリストを提示。読者が『今日試してみよう』と思える教育的コンテンツ。",
-                avoid: `「売上達成後の虚しさ」「経営者の心理」「100年後」「未来の自分」のような哲学・心理寄りのテーマ。${NO_QUESTION_FORMAT_RULE}`
-            },
-            {
-                theme: "業界トレンド・データ分析",
-                guidance: "数値・統計・最新動向を用いた客観的な業界解説。具体的な数字や事実ベースで語る。",
-                avoid: `情緒的な表現、「あなたの心は」「本当の願い」のような内省系のフレーズ。${NO_QUESTION_FORMAT_RULE}`
-            },
-            {
-                theme: "顧客の現場課題と解決策",
-                guidance: "顧客が日々ぶつかる具体的な業務課題（人材、集客手法、業務効率、ツール選定 等）と実践的解決策。",
-                avoid: `「売上目標の先」「達成しても満たされない」のような抽象的悩み。${NO_QUESTION_FORMAT_RULE}`
-            },
-            {
-                theme: "業界用語・専門知識の解説",
-                guidance: "読者が『学べた』と感じる、業界専門用語や仕組みの平易な解説。図解的・教科書的な切り口。",
-                avoid: `感情訴求、ポエム調。${NO_QUESTION_FORMAT_RULE}`
-            },
-            {
-                theme: "事例紹介・ケーススタディ",
-                guidance: "業種別の取り組み事例（企業名は伏せて構わない）。具体的な施策・結果・学びを示す。",
-                avoid: `抽象論、「本質」「美学」のような曖昧語。${NO_QUESTION_FORMAT_RULE}`
-            },
-            {
-                theme: "ツール・リソース紹介",
-                guidance: "実際に使える具体的なツール・サービス・参考文献の紹介と活用方法。",
-                avoid: `経営哲学、人生観。${NO_QUESTION_FORMAT_RULE}`
-            },
-            {
-                // この 1 つだけ問いかけ形式を許容 (週 1 件まで自然に問いかけ系を残す)
-                theme: "経営者の日常・人間味のある話題",
-                guidance: "朝のルーティン、読書、業界外の趣味、健康習慣、対話のエピソード等の親しみやすい話題。問いかけ形式は自然な範囲で 1 件まで使用可。",
-                avoid: "売上、KPI、達成、虚しさ、満たされる、燃える、遺す、100年後"
-            }
-        ];
-
-        const results = [];
-
         try {
-            setBatchStatus(`トレンドリサーチ・事前分析を実行中...`);
-            const research = await researchTrends(selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, platformType, cleanProductContext?.location, siteContent, userProfile);
+            setBatchStatus(`サーバー側で1週間分を生成中です... 画面を閉じない方が完了表示を確認できますが、生成自体はサーバー側で進みます。`);
 
-            if (!research) throw new Error("トレンドリサーチに失敗したため処理を中断しました");
-
-            for (let i = 0; i < count; i++) {
-                setBatchStatus(`[${displayPlatform}] ${i + 1}件目を生成中... (${i + 1}/${count})`);
-                
-                try {
-                    // マンネリ防止のため、ループごとに切り口を強制変更
-                    const angle = varietyAngles[i % varietyAngles.length];
-                    const currentPurpose = `${selectedPurpose || '指定なし'}。
-
-【今週の投稿テーマ切り口（必ず厳守）】
-主題: ${angle.theme}
-方針: ${angle.guidance}
-禁止: ${angle.avoid}
-
-【厳守事項】
-- 上記の「主題」「方針」を必ず投稿の中心に据えること。
-- 上記の「禁止」に挙げたフレーズや概念は使わないこと。
-- 1週間分の投稿はそれぞれ全く異なる角度から語る必要があり、特定のキーワード（売上、達成、虚しさ、100年後、燃える、遺す、満たされる など）に偏らせないこと。
-- 抽象的な哲学やポエム調ではなく、読者が具体的な学び・気づき・行動を得られる実用的な内容を優先する。`;
-
-                    // 正しい位置引数でgeneratePostを呼び出す
-                    const resData = await generatePost(
-                        research, 
-                        platformType, 
-                        selectedCategory, 
-                        targetLabel, 
-                        selectedGender, 
-                        selectedBusinessStyle, 
-                        selectedTone, 
-                        selectedLanguage, 
-                        cleanProductContext, 
-                        siteContent, 
-                        platformType === 'instagram' ? 'carousel' : 'single',
-                        userProfile,
-                        currentPurpose,
-                        selectedOverlayLanguage
-                    );
-
-                    // APIレスポンス自体がpostオブジェクト
-                    const post = resData;
-
-                    // ⚡ 画像生成 + オーバーレイ合成はサーバー側で実行する設計に統一
-                    // (以前は client-side で generateImage + drawCanvasImage していたが、CORS / ブラウザキャッシュで
-                    //  オーバーレイ無音失敗の事故が発生したため廃止。/approve ページ初回ロード時に
-                    //  /api/generate-post-image が呼ばれて Imagen 生成 + Satori 合成 + Supabase 保存を一括で行う)
-                    // ここでは image_urls=[] で DB 保存し、画像生成は /approve 側にお任せ。
-                    const imageUrls = [];
-
-                    // 投稿本文＋ハッシュタグを Instagram の 2,200 文字上限内に収めて結合
-                    // (Make.com 経由で "The caption was too long. (36004)" 防止)
-                    const captionBody = (post.caption || post.overlay_copy || '');
-                    const finalCaption = buildPlatformCaption(captionBody, post.hashtags, platformType);
-
-                    // 投稿予約時刻を割り当て（翌日12:00 JSTから1日ずつ）
-                    const schedDate = new Date();
-                    schedDate.setDate(schedDate.getDate() + 1 + i); // 翌日から1日ずつ
-                    schedDate.setHours(12, 0, 0, 0); // 12:00 JST
-
-                    results.push({
-                        platform: platformType,
-                        caption: finalCaption,
-                        image_urls: imageUrls,
-                        scheduled_at: schedDate.toISOString(),
-                        // /approve ページで内容確認に使うため、原文の overlay_copy / carousel_slides /
-                        // image_idea も保存しておく (cron バッチと同じスキーマに揃える)
-                        overlay_copy: post.overlay_copy || null,
-                        carousel_slides: post.carousel_slides || null,
-                        image_idea: post.image_idea || null
-                    });
-                } catch (loopError) {
-                    console.error(`[${displayPlatform}] ${i + 1}件目でエラー発生:`, loopError);
-                    setBatchStatus(`[${displayPlatform}] ${i + 1}件目をスキップします (API制限等)`);
-                    await new Promise(r => setTimeout(r, 10000)); // エラー時は制限回復を狙って長めに待機
-                    continue;
-                }
-
-                // Rate limit対策 (Google API)。画像生成をサーバー側に移行したため待機を 6s→2s に短縮。
-                // (画像生成側の rate-limit は /api/generate-post-image の withRetry で別途吸収される)
-                await new Promise(r => setTimeout(r, 2000));
-            }
-
-            if (results.length === 0) {
-                throw new Error("すべての生成に失敗しました（API通信エラー等の可能性があります）");
-            }
-
-            setBatchStatus(`DBのキューへ保存中... (${results.length}件)`);
-
-            // 手動バッチは Clerk 認証つきの /api/batch-save に流して
-            // user_id 紐付け & status='pending_approval' で保存する。
-            // (旧 /api/admin/queue POST は user_id 抜け & status='queued' で保存していて、
-            //  /approve ページに出てこない & 承認スキップで投稿される重大バグだった)
-            const qRes = await fetch('/api/batch-save', {
+            const qRes = await fetch('/api/batch-generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ posts: results })
+                body: JSON.stringify({
+                    platform: platformType,
+                    category_id: pickId(selectedCategory),
+                    purpose_id: pickId(selectedPurpose),
+                    target_id: pickId(selectedTarget),
+                    gender: selectedGender,
+                    business_style: selectedBusinessStyle,
+                    tone: selectedTone,
+                    language: selectedLanguage,
+                    overlay_language: selectedOverlayLanguage,
+                    format: 'carousel',
+                    product_context: cleanProductContext,
+                    user_profile: userProfile
+                })
             });
 
             if (!qRes.ok) {
-                const errBody = await qRes.text().catch(() => '');
-                throw new Error(`保存用APIでエラーが発生しました (${qRes.status}): ${errBody}`);
+                const errBody = await qRes.json().catch(() => null);
+                throw new Error(errBody?.error || `生成APIでエラーが発生しました (${qRes.status})`);
             }
 
-            // 週次自動バッチ生成用に、成功した生成設定を保存しておく
-            // （承認フロー・ユーザー毎の自動生成で使われる）
-            // selectedCategory等は「ID文字列」としてstateに入っているケースがあるため、
-            // string / object 両対応でIDを取り出す
-            const pickId = (v) => {
-                if (v == null) return null;
-                if (typeof v === 'string') return v;
-                if (typeof v === 'object') return v.id || v.label || null;
-                return null;
-            };
-            try {
-                await fetch('/api/user-settings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        category_id: pickId(selectedCategory),
-                        purpose_id: pickId(selectedPurpose),
-                        target_id: pickId(selectedTarget),
-                        gender: selectedGender,
-                        business_style: selectedBusinessStyle,
-                        tone: selectedTone,
-                        language: selectedLanguage,
-                        overlay_language: selectedOverlayLanguage,
-                        format: selectedFormat,
-                        product_context: cleanProductContext,
-                        user_profile: userProfile,
-                        enabled: true
-                    })
-                });
-            } catch (settingsErr) {
-                console.warn('Failed to save batch settings:', settingsErr);
-            }
+            const data = await qRes.json();
+            const generatedCount = data.count || 0;
+            posthog?.capture('batch_generation_completed', { platform: platformType, count: generatedCount });
 
-            // Make.com への一括転送処理
-            setBatchStatus(`Make.com 自動化システムへ転送中...`);
-            try {
-                const makeRes = await fetch('/api/webhooks/make', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        platform: platformType,
-                        category: selectedCategory,
-                        purpose: selectedPurpose,
-                        posts: results
-                    })
-                });
-                
-                if (!makeRes.ok) {
-                    console.warn("Make.com連携エラー（モックモードの場合は無視可能）");
-                }
-            } catch (makeErr) {
-                console.error("Make webhook failed:", makeErr);
-            }
-
-            setBatchStatus(`完了！ ${results.length}件を自動投稿キューへ予約しました。`);
+            setBatchStatus(`完了！ ${generatedCount}件を承認待ちキューへ保存しました。`);
 
             // 進行中のステータス表示は3秒で消すが、完了カードはユーザーが次のアクションを
             // 取れるよう永続表示する (次回バッチ起動時 or ページ離脱でクリア)
@@ -741,7 +560,7 @@ export default function Home() {
                 setLoading(false);
                 setLoadingProgress(0);
                 setBatchStatus(null);
-                setBatchCompleted({ count: results.length });
+                setBatchCompleted({ count: generatedCount });
             }, 3000);
 
         } catch (error) {
@@ -1001,7 +820,7 @@ export default function Home() {
                                         <span className="text-xs font-bold tracking-widest text-emerald-700">生成完了</span>
                                     </div>
                                     <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">
-                                        {batchCompleted.count}件のキャプションが生成されました
+                                        {batchCompleted.count}件の投稿案が生成されました
                                     </h4>
                                     <p className="text-xs text-gray-600 leading-relaxed mb-4">
                                         次は <strong>承認画面</strong> を開いてください。<br />
