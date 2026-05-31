@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
+import { waitUntil } from '@vercel/functions';
 import { generateWeeklyPostsForSettings } from '@/lib/weeklyBatchGenerator';
 
 const supabase = createClient(
@@ -9,6 +10,7 @@ const supabase = createClient(
 );
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 export const maxDuration = 300;
 
 function pickId(value) {
@@ -26,8 +28,9 @@ function sanitizeProductContext(productContext) {
     return clean;
 }
 
-// Pro Max の「1週間分まとめて生成」をサーバー側で完結させる。
-// ブラウザ側で7件を順番生成すると、タブ停止やスリープで保存前に中断されるため。
+// Pro Max の「1週間分まとめて生成」をサーバー側で開始する。
+// iPhone Safari は長いPOST待機中に Load failed になりやすいため、
+// APIはすぐ202を返し、実生成はVercel waitUntilで継続する。
 export async function POST(req) {
     try {
         const { userId } = await auth();
@@ -77,18 +80,26 @@ export async function POST(req) {
 
         if (settingsError) throw settingsError;
 
-        const count = await generateWeeklyPostsForSettings(settings, {
-            sendEmail: false,
-            logPrefix: '[batch-generate]'
-        });
+        const startedAt = new Date().toISOString();
+        waitUntil(
+            generateWeeklyPostsForSettings(settings, {
+                sendEmail: false,
+                logPrefix: '[batch-generate]'
+            })
+                .then((count) => {
+                    console.log(`[batch-generate] ${userId} background completed: ${count} posts`);
+                })
+                .catch((err) => {
+                    console.error(`[batch-generate] ${userId} background failed:`, err);
+                })
+        );
 
-        if (count === 0) {
-            return NextResponse.json({
-                error: '生成できた投稿がありませんでした。品質チェックまたはAPI制限で全件スキップされた可能性があります。'
-            }, { status: 500 });
-        }
-
-        return NextResponse.json({ success: true, count });
+        return NextResponse.json({
+            success: true,
+            started: true,
+            expected_count: 7,
+            started_at: startedAt
+        }, { status: 202 });
     } catch (error) {
         console.error('[batch-generate] POST error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });

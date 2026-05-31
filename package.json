@@ -16,6 +16,7 @@
         "@sendgrid/mail": "^8.1.6",
         "@stripe/stripe-js": "^4.0.0",
         "@supabase/supabase-js": "^2.99.1",
+        "@vercel/functions": "^3.6.1",
         "@vercel/og": "^0.11.1",
         "call-bound": "^1.0.4",
         "dotenv": "^17.4.0",

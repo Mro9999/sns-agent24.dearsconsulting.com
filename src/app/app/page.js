@@ -492,7 +492,7 @@ export default function Home() {
 
         const count = 7;
         const displayPlatform = 'Instagram';
-        const confirmMsg = `${displayPlatform}向けに${count}件の投稿を連続生成し、予約キューに保存します。\n完了まで数分かかりますが実行しますか？`;
+        const confirmMsg = `${displayPlatform}向けに${count}件の投稿生成を開始します。\n生成はサーバー側で進みます。通常は数分後に承認画面へ表示されます。実行しますか？`;
         if (!confirm(confirmMsg)) return;
 
         setLoading(true);
@@ -522,7 +522,7 @@ export default function Home() {
         };
 
         try {
-            setBatchStatus(`サーバー側で1週間分を生成中です... 画面を閉じない方が完了表示を確認できますが、生成自体はサーバー側で進みます。`);
+            setBatchStatus(`サーバー側で1週間分の生成を開始しています...`);
 
             const qRes = await fetch('/api/batch-generate', {
                 method: 'POST',
@@ -549,10 +549,10 @@ export default function Home() {
             }
 
             const data = await qRes.json();
-            const generatedCount = data.count || 0;
-            posthog?.capture('batch_generation_completed', { platform: platformType, count: generatedCount });
+            const generatedCount = data.count || data.expected_count || count;
+            posthog?.capture('batch_generation_accepted', { platform: platformType, count: generatedCount });
 
-            setBatchStatus(`完了！ ${generatedCount}件を承認待ちキューへ保存しました。`);
+            setBatchStatus(`生成を開始しました。数分後に承認画面で確認できます。`);
 
             // 進行中のステータス表示は3秒で消すが、完了カードはユーザーが次のアクションを
             // 取れるよう永続表示する (次回バッチ起動時 or ページ離脱でクリア)
@@ -560,13 +560,17 @@ export default function Home() {
                 setLoading(false);
                 setLoadingProgress(0);
                 setBatchStatus(null);
-                setBatchCompleted({ count: generatedCount });
+                setBatchCompleted({ count: generatedCount, started: data.started === true });
             }, 3000);
 
         } catch (error) {
             console.error("Batch error:", error);
-            setBatchStatus(`エラーが発生しました: ${error.message}`);
-            alert(`バッチ処理中にエラーが発生しました。\n\n【エラー内容】\n${error.message}\n\nコンソールも合わせてご確認ください。`);
+            const isLoadFailed = /load failed|failed to fetch|network/i.test(error.message || '');
+            const message = isLoadFailed
+                ? '通信が途中で切れました。生成が開始されている可能性があるため、数分後に承認画面を更新してください。'
+                : `エラーが発生しました: ${error.message}`;
+            setBatchStatus(message);
+            alert(`バッチ処理中にエラーが発生しました。\n\n【エラー内容】\n${error.message}\n\n${isLoadFailed ? '数分後に承認画面を開いて、投稿案が作成されていないか確認してください。' : 'コンソールも合わせてご確認ください。'}`);
             setLoading(false);
             setLoadingProgress(0);
             setBatchStatus(null);
@@ -817,15 +821,28 @@ export default function Home() {
                                 <div className="w-full max-w-md bg-gradient-to-br from-emerald-50 via-white to-emerald-50 border-2 border-emerald-300 rounded-2xl shadow-lg px-6 py-5">
                                     <div className="flex items-center gap-2 mb-3">
                                         <CheckCircle2 size={18} className="text-emerald-600" />
-                                        <span className="text-xs font-bold tracking-widest text-emerald-700">生成完了</span>
+                                        <span className="text-xs font-bold tracking-widest text-emerald-700">
+                                            {batchCompleted.started ? '生成受付完了' : '生成完了'}
+                                        </span>
                                     </div>
                                     <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">
-                                        {batchCompleted.count}件の投稿案が生成されました
+                                        {batchCompleted.started
+                                            ? `${batchCompleted.count}件の投稿生成を開始しました`
+                                            : `${batchCompleted.count}件の投稿案が生成されました`}
                                     </h4>
                                     <p className="text-xs text-gray-600 leading-relaxed mb-4">
-                                        次は <strong>承認画面</strong> を開いてください。<br />
-                                        承認画面で<strong>AI画像の生成と文字合成が自動で実行</strong>されます (1件あたり ~30秒)。<br />
-                                        画像生成完了後、内容を確認して承認 → 予約時刻 (毎日 12:00 JST) に自動投稿されます。
+                                        {batchCompleted.started ? (
+                                            <>
+                                                サーバー側で投稿案を作成しています。通常は数分後に<strong>承認画面</strong>へ表示されます。<br />
+                                                すぐ表示されない場合は、少し待ってから承認画面の更新ボタンを押してください。
+                                            </>
+                                        ) : (
+                                            <>
+                                                次は <strong>承認画面</strong> を開いてください。<br />
+                                                承認画面で<strong>AI画像の生成と文字合成が自動で実行</strong>されます (1件あたり ~30秒)。<br />
+                                                画像生成完了後、内容を確認して承認 → 予約時刻 (毎日 12:00 JST) に自動投稿されます。
+                                            </>
+                                        )}
                                     </p>
                                     <a
                                         href="/approve"
@@ -855,7 +872,7 @@ export default function Home() {
                                     <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">1週間分まとめて生成</h4>
                                     <p className="text-xs text-gray-500 leading-relaxed mb-4">
                                         毎週日曜20:00に自動生成されますが、今すぐ手動で再生成することも可能です。<br />
-                                        生成後は「今週の投稿を承認」から内容を確認してください。
+                                        開始後は数分待ってから「今週の投稿を承認」で内容を確認してください。
                                     </p>
                                     <button
                                         onClick={() => handleBatchGenerate('instagram')}
