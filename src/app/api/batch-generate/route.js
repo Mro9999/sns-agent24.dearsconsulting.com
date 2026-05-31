@@ -47,6 +47,22 @@ export async function POST(req) {
             return new NextResponse('Forbidden - Pro Max Plan required', { status: 403 });
         }
 
+        const { count: pendingCount, error: pendingError } = await supabase
+            .from('scheduled_posts')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('status', 'pending_approval');
+
+        if (pendingError) throw pendingError;
+        if ((pendingCount || 0) > 0) {
+            return NextResponse.json({
+                success: true,
+                started: false,
+                already_pending: true,
+                count: pendingCount
+            });
+        }
+
         const body = await req.json().catch(() => null);
         if (!body) {
             return NextResponse.json({ error: 'JSON body required' }, { status: 400 });

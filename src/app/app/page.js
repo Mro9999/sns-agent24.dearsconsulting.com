@@ -10,6 +10,8 @@ import ProMaxInquiryModal from '@/components/ProMaxInquiryModal';
 import ProfileSetupModal from '@/components/features/ProfileSetupModal';
 import { usePostHog } from 'posthog-js/react';
 
+const WEEKLY_BATCH_STARTED_KEY = 'sns-agent24-weekly-generation-started-at';
+
 export default function Home() {
     const { user, isLoaded, isSignedIn } = useUser();
     const { session } = useSession();
@@ -510,6 +512,37 @@ export default function Home() {
         };
         const targetLabel = selectedTarget === 'teens' ? '10代' : selectedTarget === 'young_adults' ? '20-30代' : selectedTarget === 'parents' ? 'パパママ' : selectedTarget === 'high_end' ? '富裕層・ハイエンド' : 'ビジネス層';
 
+        const getPendingApprovalCount = async () => {
+            const res = await fetch('/api/batch-approve', { cache: 'no-store' });
+            if (!res.ok) return 0;
+            const json = await res.json().catch(() => ({}));
+            return Array.isArray(json.posts) ? json.posts.length : 0;
+        };
+
+        const pollUntilPendingPostsAppear = async () => {
+            for (let attempt = 0; attempt < 30; attempt++) {
+                await new Promise(resolve => setTimeout(resolve, attempt === 0 ? 5000 : 10000));
+                const pendingCount = await getPendingApprovalCount();
+                if (pendingCount > 0) {
+                    setBatchCompleted(prev => prev ? {
+                        ...prev,
+                        ready: true,
+                        pendingCount,
+                        started: false
+                    } : prev);
+                    if (typeof window !== 'undefined') {
+                        window.localStorage.removeItem(WEEKLY_BATCH_STARTED_KEY);
+                    }
+                    return;
+                }
+            }
+
+            setBatchCompleted(prev => prev ? {
+                ...prev,
+                timedOut: true
+            } : prev);
+        };
+
         const cleanProductContext = { ...productContext };
         delete cleanProductContext.logoUrl;
         delete cleanProductContext.baseImage;
@@ -552,7 +585,17 @@ export default function Home() {
             const generatedCount = data.count || data.expected_count || count;
             posthog?.capture('batch_generation_accepted', { platform: platformType, count: generatedCount });
 
-            setBatchStatus(`生成を開始しました。数分後に承認画面で確認できます。`);
+            if (typeof window !== 'undefined') {
+                if (data.started === true) {
+                    window.localStorage.setItem(WEEKLY_BATCH_STARTED_KEY, String(Date.now()));
+                } else {
+                    window.localStorage.removeItem(WEEKLY_BATCH_STARTED_KEY);
+                }
+            }
+
+            setBatchStatus(data.already_pending
+                ? `承認待ちの投稿が既にあります。承認画面で確認できます。`
+                : `生成を開始しました。投稿案ができたらこの画面から承認へ進めます。`);
 
             // 進行中のステータス表示は3秒で消すが、完了カードはユーザーが次のアクションを
             // 取れるよう永続表示する (次回バッチ起動時 or ページ離脱でクリア)
@@ -560,8 +603,17 @@ export default function Home() {
                 setLoading(false);
                 setLoadingProgress(0);
                 setBatchStatus(null);
-                setBatchCompleted({ count: generatedCount, started: data.started === true });
+                setBatchCompleted({
+                    count: generatedCount,
+                    started: data.started === true,
+                    ready: data.started !== true,
+                    pendingCount: data.already_pending ? generatedCount : 0
+                });
             }, 3000);
+
+            if (data.started === true) {
+                pollUntilPendingPostsAppear();
+            }
 
         } catch (error) {
             console.error("Batch error:", error);
@@ -821,40 +873,62 @@ export default function Home() {
                                 <div className="w-full max-w-md bg-gradient-to-br from-emerald-50 via-white to-emerald-50 border-2 border-emerald-300 rounded-2xl shadow-lg px-6 py-5">
                                     <div className="flex items-center gap-2 mb-3">
                                         <CheckCircle2 size={18} className="text-emerald-600" />
-                                        <span className="text-xs font-bold tracking-widest text-emerald-700">
-                                            {batchCompleted.started ? '生成受付完了' : '生成完了'}
-                                        </span>
-                                    </div>
-                                    <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">
-                                        {batchCompleted.started
-                                            ? `${batchCompleted.count}件の投稿生成を開始しました`
-                                            : `${batchCompleted.count}件の投稿案が生成されました`}
-                                    </h4>
-                                    <p className="text-xs text-gray-600 leading-relaxed mb-4">
-                                        {batchCompleted.started ? (
-                                            <>
-                                                サーバー側で投稿案を作成しています。通常は数分後に<strong>承認画面</strong>へ表示されます。<br />
-                                                すぐ表示されない場合は、少し待ってから承認画面の更新ボタンを押してください。
-                                            </>
-                                        ) : (
-                                            <>
+	                                        <span className="text-xs font-bold tracking-widest text-emerald-700">
+	                                            {batchCompleted.ready ? '承認できます' : batchCompleted.started ? '生成中' : '生成完了'}
+	                                        </span>
+	                                    </div>
+	                                    <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">
+	                                        {batchCompleted.ready
+	                                            ? `${batchCompleted.pendingCount || batchCompleted.count}件の投稿案を確認できます`
+	                                            : batchCompleted.started
+	                                                ? `${batchCompleted.count}件の投稿案を作成中です`
+	                                            : `${batchCompleted.count}件の投稿案が生成されました`}
+	                                    </h4>
+	                                    <p className="text-xs text-gray-600 leading-relaxed mb-4">
+	                                        {batchCompleted.ready ? (
+	                                            <>
+	                                                次は <strong>承認画面</strong> を開いてください。<br />
+	                                                投稿文はすぐ確認でき、画像は承認画面で裏側生成されます。
+	                                            </>
+	                                        ) : batchCompleted.started ? (
+	                                            <>
+	                                                サーバー側で投稿案を作成しています。<br />
+	                                                ここで少し待つと、承認画面へ進めるボタンが有効になります。
+	                                                {batchCompleted.timedOut && (
+	                                                    <>
+	                                                        <br />時間がかかっています。承認画面を開くと自動更新で確認できます。
+	                                                    </>
+	                                                )}
+	                                            </>
+	                                        ) : (
+	                                            <>
                                                 次は <strong>承認画面</strong> を開いてください。<br />
                                                 承認画面で<strong>AI画像の生成と文字合成が自動で実行</strong>されます (1件あたり ~30秒)。<br />
                                                 画像生成完了後、内容を確認して承認 → 予約時刻 (毎日 12:00 JST) に自動投稿されます。
                                             </>
                                         )}
                                     </p>
-                                    <a
-                                        href="/approve"
-                                        className="w-full px-4 py-3 rounded-full text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 shadow-md"
-                                    >
-                                        <Sparkles size={14} /> 今週の投稿を承認する <ArrowRight size={14} />
-                                    </a>
-                                    <button
-                                        onClick={() => handleBatchGenerate('instagram')}
-                                        disabled={loading}
-                                        className="w-full mt-2 px-4 py-2 rounded-full text-xs text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
-                                    >
+	                                    {batchCompleted.ready || batchCompleted.timedOut ? (
+	                                        <a
+	                                            href="/approve"
+	                                            className="w-full px-4 py-3 rounded-full text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 shadow-md"
+	                                        >
+	                                            <Sparkles size={14} /> 今週の投稿を承認する <ArrowRight size={14} />
+	                                        </a>
+	                                    ) : (
+	                                        <button
+	                                            type="button"
+	                                            disabled
+	                                            className="w-full px-4 py-3 rounded-full text-sm font-bold bg-gray-300 text-gray-500 inline-flex items-center justify-center gap-2"
+	                                        >
+	                                            <RefreshCw size={14} className="animate-spin" /> 投稿案を作成中
+	                                        </button>
+	                                    )}
+	                                    <button
+	                                        onClick={() => handleBatchGenerate('instagram')}
+	                                        disabled={loading || (batchCompleted.started && !batchCompleted.ready)}
+	                                        className="w-full mt-2 px-4 py-2 rounded-full text-xs text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+	                                    >
                                         または、もう一度生成する
                                     </button>
                                 </div>

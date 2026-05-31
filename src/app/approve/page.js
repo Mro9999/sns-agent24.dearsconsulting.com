@@ -8,6 +8,9 @@ import { useRouter } from 'next/navigation';
 
 // 週次自動生成されたpending_approvalな投稿を確認・承認・却下するページ
 // 承認時は現在のブラウザ上でCanvasオーバーレイ合成を実行し、合成済画像を再アップロード
+const WEEKLY_BATCH_STARTED_KEY = 'sns-agent24-weekly-generation-started-at';
+const BATCH_WAIT_MS = 10 * 60 * 1000;
+
 export default function ApprovePage() {
     const { user, isLoaded } = useUser();
     const router = useRouter();
@@ -16,15 +19,35 @@ export default function ApprovePage() {
     const [processingIds, setProcessingIds] = useState(new Set());
     const [statusMsg, setStatusMsg] = useState('');
     const [imageErrors, setImageErrors] = useState({});
+    const [waitingForBatch, setWaitingForBatch] = useState(false);
 
-    const fetchPending = async () => {
+    const hasRecentBatchStart = () => {
+        if (typeof window === 'undefined') return false;
+        const raw = window.localStorage.getItem(WEEKLY_BATCH_STARTED_KEY);
+        const startedAt = raw ? Number(raw) : 0;
+        return Number.isFinite(startedAt) && startedAt > 0 && Date.now() - startedAt < BATCH_WAIT_MS;
+    };
+
+    const fetchPending = async (options = {}) => {
+        const silent = options?.silent === true;
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const res = await fetch('/api/batch-approve');
             if (!res.ok) throw new Error('取得失敗');
             const json = await res.json();
             const fetched = json.posts || [];
             setPosts(fetched);
+            const shouldWait = fetched.length === 0 && hasRecentBatchStart();
+            setWaitingForBatch(shouldWait);
+
+            if (fetched.length > 0 && typeof window !== 'undefined') {
+                window.localStorage.removeItem(WEEKLY_BATCH_STARTED_KEY);
+            }
+
+            if (shouldWait) {
+                setStatusMsg('投稿案を作成中です。承認画面は自動で更新されます。少し待ってください。');
+            }
+
             // 投稿文を先に表示し、画像は裏側で生成する。
             // ここで await すると承認画面全体が長時間「読み込み中」になり、離脱ポイントになる。
             setLoading(false);
@@ -159,6 +182,16 @@ export default function ApprovePage() {
     useEffect(() => {
         if (isLoaded && user) fetchPending();
     }, [isLoaded, user]);
+
+    useEffect(() => {
+        if (!waitingForBatch || !isLoaded || !user) return;
+
+        const timer = setInterval(() => {
+            fetchPending({ silent: true });
+        }, 10000);
+
+        return () => clearInterval(timer);
+    }, [waitingForBatch, isLoaded, user]);
 
     // 承認時: 画像URLはサーバー側 (/api/generate-post-image) で既に合成済みなので
     // そのまま返すだけ。アップロード処理も不要 (Supabase Storage 上に既にある)。
@@ -342,8 +375,18 @@ export default function ApprovePage() {
                     </div>
                 ) : posts.length === 0 ? (
                     <div className="text-center py-16 bg-gray-900/50 rounded-lg border border-gray-800">
-                        <p className="text-gray-400">承認待ちの投稿はありません</p>
-                        <p className="text-gray-600 text-sm mt-2">次の日曜日 20:00 に自動生成が実行されます</p>
+                        {waitingForBatch ? (
+                            <>
+                                <Loader2 className="animate-spin mx-auto mb-3 text-purple-400" />
+                                <p className="text-gray-300">投稿案を作成中です</p>
+                                <p className="text-gray-500 text-sm mt-2">通常は数分以内にここへ表示されます。画面は自動で更新されます。</p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-gray-400">承認待ちの投稿はありません</p>
+                                <p className="text-gray-600 text-sm mt-2">次の日曜日 20:00 に自動生成が実行されます</p>
+                            </>
+                        )}
                     </div>
                 ) : (
                     <div className="space-y-4">
