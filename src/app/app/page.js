@@ -494,7 +494,7 @@ export default function Home() {
 
         const count = 7;
         const displayPlatform = 'Instagram';
-        const confirmMsg = `${displayPlatform}向けに${count}件の投稿生成を開始します。\n生成はサーバー側で進みます。通常は数分後に承認画面へ表示されます。実行しますか？`;
+        const confirmMsg = `${displayPlatform}向けに${count}件の投稿生成を開始します。\n生成はサーバー側で進みます。通常は数分後に確認画面へ表示されます。実行しますか？`;
         if (!confirm(confirmMsg)) return;
 
         setLoading(true);
@@ -611,7 +611,7 @@ export default function Home() {
             }
 
             setBatchStatus(data.already_pending
-                ? `承認待ちの投稿が既にあります。承認画面で確認できます。`
+                ? `確認待ちの投稿が既にあります。確認画面で確認できます。`
                 : `生成を開始しました。投稿案ができたらこの画面から承認へ進めます。`);
 
             // 進行中のステータス表示は3秒で消すが、完了カードはユーザーが次のアクションを
@@ -638,7 +638,7 @@ export default function Home() {
 
             if (isLoadFailed) {
                 posthog?.capture('batch_generation_response_lost', { platform: platformType, count });
-                setBatchStatus('通信が一時的に切れましたが、生成リクエストはサーバーに届いている可能性があります。承認画面で自動確認します。');
+                setBatchStatus('通信が一時的に切れましたが、生成リクエストはサーバーに届いている可能性があります。確認画面で自動確認します。');
                 setTimeout(() => {
                     setLoading(false);
                     setLoadingProgress(0);
@@ -720,7 +720,7 @@ export default function Home() {
                                 className="bg-gradient-to-r from-purple-100 to-pink-100 hover:opacity-80 border border-purple-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
                             >
                                 <Sparkles size={16} className="text-purple-500" />
-                                今週の投稿を承認
+                                今週の投稿を確認
                             </a>
                             <a
                                 href="/dashboard"
@@ -908,7 +908,7 @@ export default function Home() {
                                     <div className="flex items-center gap-2 mb-3">
                                         <CheckCircle2 size={18} className="text-emerald-600" />
 	                                        <span className="text-xs font-bold tracking-widest text-emerald-700">
-	                                            {batchCompleted.ready ? '承認できます' : batchCompleted.started ? '生成中' : '生成完了'}
+	                                            {batchCompleted.ready ? '確認できます' : batchCompleted.started ? '生成中' : '生成完了'}
 	                                        </span>
 	                                    </div>
 	                                    <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">
@@ -921,32 +921,32 @@ export default function Home() {
 	                                    <p className="text-xs text-gray-600 leading-relaxed mb-4">
 	                                        {batchCompleted.ready ? (
 	                                            <>
-	                                                次は <strong>承認画面</strong> を開いてください。<br />
-	                                                投稿文はすぐ確認でき、画像は承認画面で裏側生成されます。
+	                                                次は <strong>確認画面</strong> を開いてください。<br />
+	                                                投稿文はすぐ確認でき、画像は確認画面で裏側生成されます。
 	                                            </>
 	                                        ) : batchCompleted.started ? (
 	                                            <>
 	                                                {batchCompleted.responseLost ? (
 	                                                    <>
 	                                                        画面の通信は切れましたが、生成はサーバー側で進んでいる可能性があります。<br />
-	                                                        承認画面を開くと、投稿案ができるまで自動で確認します。
+	                                                        確認画面を開くと、投稿案ができるまで自動で確認します。
 	                                                    </>
 	                                                ) : (
 	                                                    <>
 	                                                        サーバー側で投稿案を作成しています。<br />
-	                                                        ここで少し待つと、承認画面へ進めるボタンが有効になります。
+	                                                        ここで少し待つと、確認画面へ進めるボタンが有効になります。
 	                                                    </>
 	                                                )}
 	                                                {batchCompleted.timedOut && (
 	                                                    <>
-	                                                        <br />時間がかかっています。承認画面を開くと自動更新で確認できます。
+	                                                        <br />時間がかかっています。確認画面を開くと自動更新で確認できます。
 	                                                    </>
 	                                                )}
 	                                            </>
 	                                        ) : (
 	                                            <>
-                                                次は <strong>承認画面</strong> を開いてください。<br />
-                                                承認画面で<strong>AI画像の生成と文字合成が自動で実行</strong>されます (1件あたり ~30秒)。<br />
+                                                次は <strong>確認画面</strong> を開いてください。<br />
+                                                確認画面で<strong>AI画像の生成と文字合成が自動で実行</strong>されます (1件あたり ~30秒)。<br />
                                                 画像生成完了後、内容を確認して承認 → 予約時刻 (毎日 12:00 JST) に自動投稿されます。
                                             </>
                                         )}
@@ -956,7 +956,7 @@ export default function Home() {
 	                                            href="/approve"
 	                                            className="w-full px-4 py-3 rounded-full text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 shadow-md"
 	                                        >
-	                                            <Sparkles size={14} /> 今週の投稿を承認する <ArrowRight size={14} />
+	                                            <Sparkles size={14} /> 今週の投稿を確認する <ArrowRight size={14} />
 	                                        </a>
 	                                    ) : (
 	                                        <button
@@ -989,7 +989,7 @@ export default function Home() {
                                     <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">1週間分まとめて生成</h4>
                                     <p className="text-xs text-gray-500 leading-relaxed mb-4">
                                         毎週日曜20:00に自動生成されますが、今すぐ手動で再生成することも可能です。<br />
-                                        開始後は数分待ってから「今週の投稿を承認」で内容を確認してください。
+                                        開始後は数分待ってから「今週の投稿を確認」で内容を確認してください。
                                     </p>
                                     <button
                                         onClick={() => handleBatchGenerate('instagram')}

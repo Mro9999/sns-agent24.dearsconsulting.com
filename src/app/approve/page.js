@@ -45,7 +45,7 @@ export default function ApprovePage() {
             }
 
             if (shouldWait) {
-                setStatusMsg('投稿案を作成中です。承認画面は自動で更新されます。少し待ってください。');
+                setStatusMsg('投稿案を作成中です。確認画面は自動で更新されます。少し待ってください。');
             }
 
             // 投稿文を先に表示し、画像は裏側で生成する。
@@ -103,7 +103,7 @@ export default function ApprovePage() {
             needsImage.forEach(p => next.add(p.id));
             return next;
         });
-        setStatusMsg(`${needsImage.length}件の画像を裏側で生成中です。文章は先に確認できます。画像が揃った投稿から承認できます。`);
+        setStatusMsg(`${needsImage.length}件の画像を裏側で生成中です。文章は先に確認できます。画像が揃った投稿から承認ボタンを押せます。`);
 
         // Imagen への同時アクセスを絞る。複数投稿 x カルーセル3枚を同時に走らせると
         // 画像API側の一時失敗が増え、全スライドが代替カードになりやすい。
@@ -421,10 +421,10 @@ export default function ApprovePage() {
                 <header className="mb-8">
                     <h1 className="text-3xl font-bold flex items-center gap-2">
                         <Sparkles className="text-purple-400" />
-                        今週の投稿を承認
+                        今週の投稿を確認
                     </h1>
                     <p className="text-gray-400 mt-2 text-sm">
-                        投稿文はすぐ確認できます。画像は裏側で生成され、揃った投稿から承認できます。
+                        投稿文と画像を確認し、問題なければ各投稿の承認ボタンで投稿キューに入れます。
                     </p>
                 </header>
 
@@ -437,7 +437,7 @@ export default function ApprovePage() {
 
                 <div className="flex items-center justify-between mb-4">
                     <div className="text-sm text-gray-400">
-                        承認待ち: <span className="text-white font-bold">{posts.length}</span> 件
+                        確認待ち: <span className="text-white font-bold">{posts.length}</span> 件
                     </div>
                     <div className="flex gap-2">
                         <button
@@ -489,7 +489,7 @@ export default function ApprovePage() {
                             </>
                         ) : (
                             <>
-                                <p className="text-gray-400">承認待ちの投稿はありません</p>
+                                <p className="text-gray-400">確認待ちの投稿はありません</p>
                                 <p className="text-gray-600 text-sm mt-2">次の日曜日 20:00 に自動生成が実行されます</p>
                             </>
                         )}
