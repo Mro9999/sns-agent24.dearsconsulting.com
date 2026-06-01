@@ -513,10 +513,15 @@ export default function Home() {
         const targetLabel = selectedTarget === 'teens' ? '10代' : selectedTarget === 'young_adults' ? '20-30代' : selectedTarget === 'parents' ? 'パパママ' : selectedTarget === 'high_end' ? '富裕層・ハイエンド' : 'ビジネス層';
 
         const getPendingApprovalCount = async () => {
-            const res = await fetch('/api/batch-approve', { cache: 'no-store' });
-            if (!res.ok) return 0;
-            const json = await res.json().catch(() => ({}));
-            return Array.isArray(json.posts) ? json.posts.length : 0;
+            try {
+                const res = await fetch('/api/batch-approve', { cache: 'no-store' });
+                if (!res.ok) return 0;
+                const json = await res.json().catch(() => ({}));
+                return Array.isArray(json.posts) ? json.posts.length : 0;
+            } catch (err) {
+                console.warn('[batch-generate] pending poll failed:', err?.message || err);
+                return 0;
+            }
         };
 
         const pollUntilPendingPostsAppear = async () => {
@@ -554,30 +559,42 @@ export default function Home() {
             usp: cleanProductContext?.sellingPoint || ''
         };
 
+        const requestPayload = {
+            platform: platformType,
+            category_id: pickId(selectedCategory),
+            purpose_id: pickId(selectedPurpose),
+            target_id: pickId(selectedTarget),
+            gender: selectedGender,
+            business_style: selectedBusinessStyle,
+            tone: selectedTone,
+            language: selectedLanguage,
+            overlay_language: selectedOverlayLanguage,
+            format: 'carousel',
+            product_context: cleanProductContext,
+            user_profile: userProfile
+        };
+
         try {
             setBatchStatus(`サーバー側で1週間分の生成を開始しています...`);
+            if (typeof window !== 'undefined') {
+                // iPhone Safari は他アプリへ移動するとレスポンス受信前に fetch が
+                // "Load failed" になることがある。先に開始マーカーを残し、
+                // 承認画面側で自動確認できるようにする。
+                window.localStorage.setItem(WEEKLY_BATCH_STARTED_KEY, String(Date.now()));
+            }
 
             const qRes = await fetch('/api/batch-generate', {
                 method: 'POST',
+                keepalive: true,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    platform: platformType,
-                    category_id: pickId(selectedCategory),
-                    purpose_id: pickId(selectedPurpose),
-                    target_id: pickId(selectedTarget),
-                    gender: selectedGender,
-                    business_style: selectedBusinessStyle,
-                    tone: selectedTone,
-                    language: selectedLanguage,
-                    overlay_language: selectedOverlayLanguage,
-                    format: 'carousel',
-                    product_context: cleanProductContext,
-                    user_profile: userProfile
-                })
+                body: JSON.stringify(requestPayload)
             });
 
             if (!qRes.ok) {
                 const errBody = await qRes.json().catch(() => null);
+                if (typeof window !== 'undefined') {
+                    window.localStorage.removeItem(WEEKLY_BATCH_STARTED_KEY);
+                }
                 throw new Error(errBody?.error || `生成APIでエラーが発生しました (${qRes.status})`);
             }
 
@@ -618,11 +635,28 @@ export default function Home() {
         } catch (error) {
             console.error("Batch error:", error);
             const isLoadFailed = /load failed|failed to fetch|network/i.test(error.message || '');
-            const message = isLoadFailed
-                ? '通信が途中で切れました。生成が開始されている可能性があるため、数分後に承認画面を更新してください。'
-                : `エラーが発生しました: ${error.message}`;
-            setBatchStatus(message);
-            alert(`バッチ処理中にエラーが発生しました。\n\n【エラー内容】\n${error.message}\n\n${isLoadFailed ? '数分後に承認画面を開いて、投稿案が作成されていないか確認してください。' : 'コンソールも合わせてご確認ください。'}`);
+
+            if (isLoadFailed) {
+                posthog?.capture('batch_generation_response_lost', { platform: platformType, count });
+                setBatchStatus('通信が一時的に切れましたが、生成リクエストはサーバーに届いている可能性があります。承認画面で自動確認します。');
+                setTimeout(() => {
+                    setLoading(false);
+                    setLoadingProgress(0);
+                    setBatchStatus(null);
+                    setBatchCompleted({
+                        count,
+                        started: true,
+                        ready: false,
+                        pendingCount: 0,
+                        responseLost: true
+                    });
+                }, 1500);
+                pollUntilPendingPostsAppear();
+                return;
+            }
+
+            setBatchStatus(`エラーが発生しました: ${error.message}`);
+            alert(`バッチ処理中にエラーが発生しました。\n\n【エラー内容】\n${error.message}\n\nコンソールも合わせてご確認ください。`);
             setLoading(false);
             setLoadingProgress(0);
             setBatchStatus(null);
@@ -892,8 +926,17 @@ export default function Home() {
 	                                            </>
 	                                        ) : batchCompleted.started ? (
 	                                            <>
-	                                                サーバー側で投稿案を作成しています。<br />
-	                                                ここで少し待つと、承認画面へ進めるボタンが有効になります。
+	                                                {batchCompleted.responseLost ? (
+	                                                    <>
+	                                                        画面の通信は切れましたが、生成はサーバー側で進んでいる可能性があります。<br />
+	                                                        承認画面を開くと、投稿案ができるまで自動で確認します。
+	                                                    </>
+	                                                ) : (
+	                                                    <>
+	                                                        サーバー側で投稿案を作成しています。<br />
+	                                                        ここで少し待つと、承認画面へ進めるボタンが有効になります。
+	                                                    </>
+	                                                )}
 	                                                {batchCompleted.timedOut && (
 	                                                    <>
 	                                                        <br />時間がかかっています。承認画面を開くと自動更新で確認できます。
@@ -908,7 +951,7 @@ export default function Home() {
                                             </>
                                         )}
                                     </p>
-	                                    {batchCompleted.ready || batchCompleted.timedOut ? (
+	                                    {batchCompleted.ready || batchCompleted.timedOut || batchCompleted.responseLost ? (
 	                                        <a
 	                                            href="/approve"
 	                                            className="w-full px-4 py-3 rounded-full text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 shadow-md"
