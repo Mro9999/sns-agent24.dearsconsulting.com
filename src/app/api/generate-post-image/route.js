@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import sharp from 'sharp';
 import { generateImage, refineSlideImageHint, auditSlideImage } from '@/lib/apiService';
-import { composeOverlayImage } from '@/lib/serverOverlayHelper';
+import { composeOverlayImage, composeTextOnlySlide } from '@/lib/serverOverlayHelper';
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -16,7 +16,28 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const COMPOSED_BUCKET = 'generated-images';
-const IMAGE_RETRY_LIMIT = 2;
+const IMAGE_RETRY_LIMIT = 1;
+
+async function uploadComposedImage(userId, jpegBuffer) {
+    const fileName = `${userId}/${Date.now()}_composed_${crypto.randomBytes(8).toString('hex')}.jpg`;
+    const { error: upBkErr } = await supabase.storage
+        .from(COMPOSED_BUCKET)
+        .upload(fileName, jpegBuffer, { contentType: 'image/jpeg', upsert: false });
+    if (upBkErr) throw upBkErr;
+    const { data: pub } = supabase.storage.from(COMPOSED_BUCKET).getPublicUrl(fileName);
+    return pub.publicUrl;
+}
+
+async function composeFallbackSlide(userId, overlayText, index, productContext, reason = '') {
+    if (reason) {
+        console.warn(`[generate-post-image] using text-only fallback for slide ${index + 1}: ${reason}`);
+    }
+
+    const jpegBuffer = await composeTextOnlySlide(overlayText, index, {
+        companyName: productContext?.companyName
+    });
+    return await uploadComposedImage(userId, jpegBuffer);
+}
 
 const buildNaturalPhotoConstraints = (slideNumber, totalSlides) => `[Style constraints]
 - Natural documentary/editorial photograph, Instagram-ready 4:5 portrait composition
@@ -226,8 +247,9 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
 
         let imageQualityWarnings = [];
 
-        // 🔍 校閲者役 (Phase 2): 各画像を Gemini Vision で監査し、
-        // 「画像内に文字混入」または「整合性スコア < 60」のスライドを1回だけ再生成
+        // 🔍 校閲者役 (Phase 2): 各画像を Gemini Vision で監査。
+        // 承認画面ではユーザーが必ず目視確認するため、監査結果で投稿全体を止めない。
+        // 以前は問題画像を再生成していたが、画像生成の遅延・失敗を増やすため警告保存に留める。
         if (isCarousel && Array.isArray(post.carousel_slides)) {
             const auditPromises = slideResults.map((url, i) => {
                 if (!url) return Promise.resolve(null);
@@ -237,7 +259,6 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
             const audits = await Promise.all(auditPromises);
 
             const ALIGNMENT_THRESHOLD = 60;
-            const regenIndices = [];
             for (let i = 0; i < audits.length; i++) {
                 const a = audits[i];
                 if (!a || a.skipped) continue;
@@ -245,57 +266,8 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
                     || a.isBlankOrDark === true
                     || a.looksAI === true
                     || (typeof a.alignmentScore === 'number' && a.alignmentScore < ALIGNMENT_THRESHOLD);
-                if (failed) regenIndices.push(i);
-            }
-            if (regenIndices.length > 0) {
-                console.log(`[generate-post-image] audit found ${regenIndices.length} problematic slide(s); regenerating`);
-                const regenPromises = regenIndices.map(async (i) => {
-                    const slide = post.carousel_slides[i];
-                    const hint = refinedHints[i] || slide?.image_hint_en || post.image_idea;
-                    // 再生成時は監査で見つかった問題を抑制する追加注意書きを加える
-                    const auditNote = audits[i].hasText
-                        ? '\n[CRITICAL] The previous attempt contained visible text/letters/signs in the image. ABSOLUTELY NO text of any language in the regenerated image.'
-                        : '\n[CRITICAL] The previous attempt did not align with the slide message. Make the image more specifically tied to the slide concept.';
-                    const retryPrompt = `${hint}${auditNote}
-
-${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
-                    try {
-                        const url = await generateUsableSlideImage({
-                            category,
-                            targetLabel,
-                            slideImageIdea: retryPrompt,
-                            productContext,
-                            platform: post.platform,
-                            slideNumber: i + 1
-                        });
-                        return { i, url };
-                    } catch (err) {
-                        console.error(`[generate-post-image] regen slide ${i} failed:`, err?.message);
-                        return { i, url: null };
-                    }
-                });
-                const regenResults = await Promise.all(regenPromises);
-                for (const r of regenResults) {
-                    if (r.url) slideResults[r.i] = r.url;
-                }
-            }
-
-            const finalAuditPromises = slideResults.map((url, i) => {
-                if (!url) return Promise.resolve(null);
-                const slide = post.carousel_slides[i];
-                return auditSlideImage(url, slide?.overlay_copy || '', slide?.text || '');
-            });
-            const finalAudits = await Promise.all(finalAuditPromises);
-            const finalFailures = [];
-            for (let i = 0; i < finalAudits.length; i++) {
-                const a = finalAudits[i];
-                if (!a || a.skipped) continue;
-                const failed = a.hasText === true
-                    || a.isBlankOrDark === true
-                    || a.looksAI === true
-                    || (typeof a.alignmentScore === 'number' && a.alignmentScore < ALIGNMENT_THRESHOLD);
                 if (failed) {
-                    finalFailures.push({
+                    imageQualityWarnings.push({
                         slide: i + 1,
                         hasText: !!a.hasText,
                         isBlankOrDark: !!a.isBlankOrDark,
@@ -305,26 +277,9 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
                     });
                 }
             }
-
-            if (finalFailures.length > 0) {
-                console.warn('[generate-post-image] final image audit warning; saving for manual review:', JSON.stringify(finalFailures).slice(0, 500));
-                imageQualityWarnings = finalFailures;
+            if (imageQualityWarnings.length > 0) {
+                console.warn('[generate-post-image] image audit warnings; saving for manual review:', JSON.stringify(imageQualityWarnings).slice(0, 500));
             }
-        }
-
-        if (isCarousel) {
-            const missing = slideResults
-                .map((url, i) => url ? null : i + 1)
-                .filter(Boolean);
-            if (missing.length > 0) {
-                throw new Error(`Image generation failed for carousel slide(s): ${missing.join(', ')}`);
-            }
-        }
-
-        const rawUrls = slideResults.filter(Boolean);
-
-        if (rawUrls.length === 0) {
-            throw new Error('Image generation failed for all slides');
         }
 
         // ⚡ サーバーサイド オーバーレイ合成
@@ -332,28 +287,55 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
         // 新設計: Satori (@vercel/og) でサーバー側合成 → 信頼性向上、composedURL を直接 DB に保存
         // 各スライドの overlay_copy は post.carousel_slides[i].overlay_copy / post.overlay_copy
         const composedUrls = [];
-        for (let i = 0; i < rawUrls.length; i++) {
-            const rawUrl = rawUrls[i];
+        for (let i = 0; i < imgCount; i++) {
+            const rawUrl = slideResults[i];
             let overlayText = post.overlay_copy || '';
             if (isCarousel && Array.isArray(post.carousel_slides) && post.carousel_slides[i]?.overlay_copy) {
                 overlayText = post.carousel_slides[i].overlay_copy;
+            }
+
+            if (!rawUrl) {
+                const fallbackUrl = await composeFallbackSlide(
+                    userId,
+                    overlayText,
+                    i,
+                    productContext,
+                    'raw image generation returned no usable URL'
+                );
+                composedUrls.push(fallbackUrl);
+                imageQualityWarnings.push({
+                    slide: i + 1,
+                    fallback: true,
+                    reason: 'raw image generation failed'
+                });
+                continue;
             }
 
             try {
                 const jpegBuffer = await composeOverlayImage(rawUrl, overlayText, i, {
                     companyName: productContext.companyName
                 });
-                const fileName = `${userId}/${Date.now()}_composed_${crypto.randomBytes(8).toString('hex')}.jpg`;
-                const { error: upBkErr } = await supabase.storage
-                    .from(COMPOSED_BUCKET)
-                    .upload(fileName, jpegBuffer, { contentType: 'image/jpeg', upsert: false });
-                if (upBkErr) throw upBkErr;
-                const { data: pub } = supabase.storage.from(COMPOSED_BUCKET).getPublicUrl(fileName);
-                composedUrls.push(pub.publicUrl);
+                composedUrls.push(await uploadComposedImage(userId, jpegBuffer));
             } catch (composeErr) {
                 console.error(`[generate-post-image] overlay compose failed for slide ${i}:`, composeErr);
-                throw composeErr;
+                const fallbackUrl = await composeFallbackSlide(
+                    userId,
+                    overlayText,
+                    i,
+                    productContext,
+                    composeErr?.message || 'overlay compose failed'
+                );
+                composedUrls.push(fallbackUrl);
+                imageQualityWarnings.push({
+                    slide: i + 1,
+                    fallback: true,
+                    reason: composeErr?.message || 'overlay compose failed'
+                });
             }
+        }
+
+        if (composedUrls.length === 0) {
+            throw new Error('Image generation failed and fallback composition failed');
         }
 
         // DBに保存

@@ -263,3 +263,114 @@ export async function composeOverlayImage(bgImageUrl, overlayText, index = 0, op
     const jpegBuffer = await sharp(pngBuffer).jpeg({ quality: 90 }).toBuffer();
     return jpegBuffer;
 }
+
+/**
+ * 外部画像生成が失敗したときのフォールバック。
+ * 写真素材なしでも、スマホで読めるテキスト中心のブランドカードを生成する。
+ *
+ * @param {string} overlayText
+ * @param {number} index
+ * @param {object} [options]
+ * @param {string} [options.companyName]
+ * @returns {Promise<Buffer>}
+ */
+export async function composeTextOnlySlide(overlayText, index = 0, options = {}) {
+    const { companyName } = options;
+    const text = (overlayText && overlayText.trim()) || `${companyName || 'SNS Agent 24'}\n投稿案`;
+    const fontSize = FIXED_FONT_SIZE;
+    const lineHeight = Math.round(fontSize * 1.35);
+    const lines = wrapJapaneseTextLines(text);
+
+    const accentSets = [
+        { bg1: '#070b14', bg2: '#111827', accent: '#7c3aed', glow: 'rgba(124,58,237,0.28)' },
+        { bg1: '#071414', bg2: '#102026', accent: '#0d9488', glow: 'rgba(13,148,136,0.25)' },
+        { bg1: '#120912', bg2: '#241126', accent: '#db2777', glow: 'rgba(219,39,119,0.22)' }
+    ];
+    const theme = accentSets[index % accentSets.length];
+
+    const jsx = React.createElement(
+        'div',
+        {
+            style: {
+                width: 1080,
+                height: 1080,
+                display: 'flex',
+                position: 'relative',
+                background: `linear-gradient(135deg, ${theme.bg1} 0%, ${theme.bg2} 100%)`,
+                overflow: 'hidden',
+                fontFamily: 'NotoSerifJP, NotoSerifJP-Latin, serif'
+            }
+        },
+        React.createElement('div', {
+            style: {
+                position: 'absolute',
+                top: -180,
+                right: -180,
+                width: 520,
+                height: 520,
+                borderRadius: 520,
+                background: theme.glow,
+                filter: 'blur(30px)'
+            }
+        }),
+        React.createElement('div', {
+            style: {
+                position: 'absolute',
+                left: 96,
+                top: 96,
+                width: 160,
+                height: 8,
+                borderRadius: 8,
+                background: theme.accent
+            }
+        }),
+        React.createElement('div', {
+            style: {
+                position: 'absolute',
+                right: 96,
+                bottom: 96,
+                width: 220,
+                height: 220,
+                borderRadius: 220,
+                border: `3px solid ${theme.accent}`,
+                opacity: 0.35
+            }
+        }),
+        React.createElement(
+            'div',
+            {
+                style: {
+                    position: 'absolute',
+                    left: 120,
+                    top: 0,
+                    width: TEXT_AREA_WIDTH,
+                    height: 1080,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#ffffff',
+                    fontSize,
+                    lineHeight: `${lineHeight}px`,
+                    fontWeight: 700,
+                    textAlign: 'center',
+                    textShadow: '4px 4px 26px rgba(0,0,0,0.9)'
+                }
+            },
+            ...lines.map((line, i) => React.createElement(
+                'div',
+                { key: i, style: { whiteSpace: 'nowrap' } },
+                line
+            ))
+        )
+    );
+
+    const og = new ImageResponse(jsx, {
+        width: 1080,
+        height: 1080,
+        fonts: loadFonts()
+    });
+
+    const pngBuffer = Buffer.from(await og.arrayBuffer());
+    return await sharp(pngBuffer).jpeg({ quality: 90 }).toBuffer();
+}
