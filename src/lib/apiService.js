@@ -96,6 +96,7 @@ const RESEARCH_MODEL = 'gemini-2.5-flash';
 const IMAGE_MODEL = 'imagen-4.0-generate-001'; // 最新の画像生成モデル
 
 const STEP_PROMISE_PATTERN = /([3３]\s*(?:つの)?(?:具体的な)?\s*(?:ステップ|手順|工程)|三\s*(?:つの)?(?:具体的な)?\s*(?:ステップ|手順|工程)|[3３]\s*steps?)/i;
+const STEP_EXPLANATION_PROMISE_PATTERN = /(?:以下の)?[3３]\s*(?:つの)?\s*(?:具体的な)?\s*(?:ステップ|手順|工程).{0,16}(?:解説|紹介|お伝え)します|(?:解説|紹介|お伝え)する.{0,16}[3３]\s*(?:つの)?\s*(?:具体的な)?\s*(?:ステップ|手順|工程)/i;
 const STEP_LABEL_PATTERNS = [
     /(?:step|STEP)\s*0?[1１]|ステップ\s*[1１]|手順\s*[1１]|工程\s*[1１]|[1１][.．、:：]/i,
     /(?:step|STEP)\s*0?[2２]|ステップ\s*[2２]|手順\s*[2２]|工程\s*[2２]|[2２][.．、:：]/i,
@@ -120,9 +121,41 @@ const hasCarouselStepMismatch = (post = {}, format = 'single') => {
     return format === 'carousel' && hasStepPromise(post) && !hasExplicitStepSlides(post.carousel_slides);
 };
 
+const extractCaptionStepBlocks = (caption = '') => {
+    const normalized = String(caption || '').replace(/\r\n/g, '\n');
+    const matches = Array.from(normalized.matchAll(/(?:^|\n)\s*([1１2２3３])\s*[.．、:：]\s*([\s\S]*?)(?=\n\s*[1１2２3３]\s*[.．、:：]|\n{2,}|$)/g));
+    return matches.map(match => ({
+        number: match[1],
+        body: String(match[2] || '').trim()
+    }));
+};
+
+const hasDetailedCaptionStepExplanations = (caption = '') => {
+    const blocks = extractCaptionStepBlocks(caption);
+    if (blocks.length < 3) return false;
+
+    return ['1', '2', '3'].every((num, index) => {
+        const block = blocks[index];
+        if (!block) return false;
+        const bodyLines = block.body.split('\n').map(line => line.trim()).filter(Boolean);
+        const compact = block.body.replace(/\s+/g, '');
+        const sentenceCount = (block.body.match(/[。！？!?]/g) || []).length;
+        const hasHowToSignal = /(ために|ことで|まず|次に|具体的には|例えば|ここで|そのため|見直|変え|書き|確認|整理|伝え|選び|比べ|質問|分け|削る|足す|置き換え)/.test(block.body);
+        return compact.length >= 44 && (bodyLines.length >= 2 || sentenceCount >= 2 || hasHowToSignal);
+    });
+};
+
+const hasThinStepExplanationPromise = (post = {}, format = 'single') => {
+    if (format !== 'carousel') return false;
+    const caption = post.caption || '';
+    return STEP_EXPLANATION_PROMISE_PATTERN.test(caption) && !hasDetailedCaptionStepExplanations(caption);
+};
+
 const softenStepPromiseText = (value) => {
     if (typeof value !== 'string') return value;
     return value
+        .replace(/(?:以下の)?[3３]\s*(?:つの)?\s*具体的な\s*(?:ステップ|手順|工程)で(?:解説|紹介|お伝え)します/g, '以下の3つの見直しポイントで整理します')
+        .replace(/(?:以下の)?[3３]\s*(?:つの)?\s*(?:ステップ|手順|工程)で(?:解説|紹介|お伝え)します/g, '以下の3つの見直しポイントで整理します')
         .replace(/[3３]\s*つの\s*具体的な\s*(?:ステップ|手順|工程)で解説します/g, '3つの観点から整理します')
         .replace(/[3３]\s*つの\s*具体的な\s*(?:ステップ|手順|工程)/g, '3つの観点')
         .replace(/三\s*つの\s*具体的な\s*(?:ステップ|手順|工程)/g, '3つの観点')
@@ -153,8 +186,8 @@ const softenCarouselStepPromises = (post = {}) => {
 
 const repairCarouselStepNarrative = async (ai, post, overlayLangLabel) => {
     const repairPrompt = `
-以下のInstagramカルーセルJSONは、キャプションまたはスライド見出しで「3ステップ」と約束しているのに、3枚のスライドが Step 1 / Step 2 / Step 3 として対応していません。
-キャプションと carousel_slides を、読者が本当に3つの手順を読める構成へ修正してください。
+以下のInstagramカルーセルJSONは、キャプションまたはスライド見出しで「3ステップ」「3つの具体的なステップで解説」と約束しているのに、実際には見出しの列挙だけになっている可能性があります。
+キャプションと carousel_slides を、読者が本当に3つの手順を理解できる構成へ修正してください。
 
 厳守ルール:
 - JSONのみで返すこと。
@@ -164,7 +197,8 @@ const repairCarouselStepNarrative = async (ai, post, overlayLangLabel) => {
 - 2枚目 overlay_copy は必ず「2. ...」で始める。
 - 3枚目 overlay_copy は必ず「3. ...」で始める。
 - 各ステップはタイトルだけでなく、顧客体験を再設計するための具体的な行動にする。
-- caption 内で「3つの具体的なステップ」と書く場合は、本文中にも同じ3ステップ名を短く列挙する。
+- caption 内で「解説します」「3つの具体的なステップ」と書く場合は、本文中にも 1 / 2 / 3 の各ステップについて「何をどう変えるか」を1〜2文ずつ書く。タイトル列挙だけは禁止。
+- もし各ステップの説明を書かない構成にするなら、「解説します」「具体的なステップ」という表現を使わず、「3つの見直しポイントで整理します」に言い換える。
 - overlay_copy は各スライド全角24文字以内、最大2行、スマホで読める短さにする。
 - overlay_copy は必ず${overlayLangLabel}のみ。絵文字は禁止。
 - image_hint_en は英語のみで、各ステップの具体的な行動を視覚化する。
@@ -393,6 +427,14 @@ const detectUnsafeCopyIssues = (post = {}, language = 'ja') => {
         });
     }
 
+    if (hasThinStepExplanationPromise(post, Array.isArray(post.carousel_slides) ? 'carousel' : 'single')) {
+        issues.push({
+            type: 'thin_step_explanation',
+            excerpt: getTextExcerpt(post.caption || text, STEP_EXPLANATION_PROMISE_PATTERN),
+            reason: '「3つの具体的なステップで解説」と言いながら、本文がステップ名の列挙だけで説明不足です。'
+        });
+    }
+
     const longOverlay = collectOverlayCopies(post).find(item => overlayVisualLength(item.value) > MAX_OVERLAY_VISUAL_LENGTH);
     if (longOverlay) {
         issues.push({
@@ -426,6 +468,8 @@ ${JSON.stringify(issues)}
 - Instagram向けに、短い文・自然な話しかけ・保存したくなるチェック項目へ書き換える。
 - overlay_copy はスマホで読めるように、全角換算24文字以内、最大2行、1枚1メッセージにする。本文の要約ではなく、読者が止まる短い一言にする。
 - 「ブランド資産」「情緒的価値」「顧客体験」のような抽象語は、必要なら「価格で比べられにくい理由」「買った後に嬉しくなる理由」「お客さんが迷わない導線」などの日常語へ置き換える。
+- caption で「解説します」「3つの具体的なステップ」と書く場合は、1 / 2 / 3 の各項目に、タイトルだけでなく「何をどう変えるか」の説明を1〜2文ずつ入れる。
+- 各ステップを説明しない場合は、「解説します」「具体的なステップ」を使わず、「3つの見直しポイントで整理します」に言い換える。
 
 ユーザー提供コンテキスト:
 - 会社名: ${textContext?.companyName || '未設定'}
@@ -635,6 +679,8 @@ C. image_hint_en は Imagen 画像生成プロンプト用のため、上記設�
 - 「3ステップ」と言いながら、1枚目=問題提起、2枚目=タイトル、3枚目=まとめ のような構成にすることは禁止です。
 - 3枚のうち1枚だけに「3ステップ」と書くことは禁止です。読者が各スライドを見ただけで Step 1 / Step 2 / Step 3 の中身を理解できる構成にしてください。
 - もしスライド構成が「問題提起 → 原因分解 → 解決の方向性」の場合、caption では「3ステップ」と書かず、「3つの観点」「3枚で整理します」のように表現してください。
+- caption で「3つの具体的なステップで解説します」と書く場合、caption 本文にも 1 / 2 / 3 の各ステップについて1〜2文の説明を必ず入れてください。ステップ名だけの列挙は禁止です。
+- 本文で各ステップを説明しない場合は、「解説します」「具体的なステップ」という約束を使わず、「3つの見直しポイントで整理します」にしてください。
 
 # 【超重要】Instagram向けの文体・読みやすさ
 - 提案書、白書、論文、営業資料のような硬い文章は禁止です。
@@ -885,6 +931,8 @@ GOOD: "A realistic product shelf in a small Japanese specialty shop, plain unlab
 - 各見出しは overlay_copy 冒頭に「1.」「2.」「3.」で明記すること。text だけに隠してはいけない。
 - 「3ステップ」と言いながら、スライドが表紙・タイトル・まとめだけで終わる構成は禁止。これはキャプションと画像の不一致として生成失敗です。
 - 3枚構成で問題提起・原因・解決を語るだけなら、「3ステップ」ではなく「3つの観点」「3つの構造」「3枚で整理」と表現すること。
+- caption で「3つの具体的なステップで解説します」と約束するなら、caption 本文にも 1 / 2 / 3 の各ステップについて「何をどう変えるか」の説明を1〜2文ずつ入れること。ステップ名だけの列挙は禁止。
+- 説明を入れない場合は、「解説します」「具体的なステップ」を使わず、「3つの見直しポイントで整理します」に言い換えること。
 
 # 【絶対厳守の禁止事項（架空の事実・イベント・数字の捏造禁止）】
 - **ユーザーから提供されていない「具体的な事実情報」を絶対に創作してはいけません。** 以下は特に頻繁に発生する捏造パターンで、固く禁止します:
@@ -1003,8 +1051,8 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後�
         }
 
         let generatedPost = normalizeGeneratedPostLanguage(extractJSON(response.text), language);
-        if (hasCarouselStepMismatch(generatedPost, format)) {
-            console.warn('[generatePost] carousel step mismatch detected; attempting repair');
+        if (hasCarouselStepMismatch(generatedPost, format) || hasThinStepExplanationPromise(generatedPost, format)) {
+            console.warn('[generatePost] carousel step issue detected; attempting repair');
             try {
                 generatedPost = normalizeGeneratedPostLanguage(
                     await repairCarouselStepNarrative(ai, generatedPost, overlayLangLabel),
@@ -1015,8 +1063,8 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後�
             }
         }
 
-        if (hasCarouselStepMismatch(generatedPost, format)) {
-            console.warn('[generatePost] carousel step mismatch remained after repair; softening step promise');
+        if (hasCarouselStepMismatch(generatedPost, format) || hasThinStepExplanationPromise(generatedPost, format)) {
+            console.warn('[generatePost] carousel step issue remained after repair; softening step promise');
             generatedPost = softenCarouselStepPromises(generatedPost);
         }
 
