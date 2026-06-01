@@ -105,7 +105,9 @@ export default function ApprovePage() {
         });
         setStatusMsg(`${needsImage.length}件の画像を裏側で生成中です。文章は先に確認できます。画像が揃った投稿から承認できます。`);
 
-        const concurrency = Math.min(2, needsImage.length);
+        // Imagen への同時アクセスを絞る。複数投稿 x カルーセル3枚を同時に走らせると
+        // 画像API側の一時失敗が増え、全スライドが代替カードになりやすい。
+        const concurrency = 1;
         let cursor = 0;
         let processedCount = 0;
         let failedCount = 0;
@@ -116,7 +118,7 @@ export default function ApprovePage() {
                 const res = await fetch('/api/generate-post-image', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ postId: p.id, variationIndex: idx })
+                    body: JSON.stringify({ postId: p.id, variationIndex: idx, force: false })
                 });
                 if (!res.ok) {
                     const errorText = await res.text();
@@ -176,6 +178,103 @@ export default function ApprovePage() {
             setStatusMsg('画像生成は完了しました。一部の画像は品質警告があります。必ず目視で確認してから承認してください。');
         } else {
             setStatusMsg('画像生成がすべて完了しました。内容をご確認のうえ承認してください。');
+        }
+    };
+
+    const regenerateImagesForPost = async (post, index = 0, options = {}) => {
+        const showFinalStatus = options?.showFinalStatus !== false;
+        if (!post?.id) return { ok: false, warning: false };
+
+        setGeneratingIds(prev => new Set(prev).add(post.id));
+        setImageErrors(prev => {
+            const next = { ...prev };
+            delete next[post.id];
+            return next;
+        });
+        setComposedPreviews(prev => {
+            const next = { ...prev };
+            delete next[post.id];
+            return next;
+        });
+        if (showFinalStatus) {
+            setStatusMsg(`${post.id.slice(0, 8)}... の画像だけ再生成しています`);
+        }
+
+        try {
+            const res = await fetch('/api/generate-post-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ postId: post.id, variationIndex: index, force: true })
+            });
+            if (!res.ok) {
+                const errorText = await res.text();
+                let message = '画像再生成に失敗しました。少し待ってから再試行してください。';
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    message = errorJson?.message || errorJson?.error || message;
+                } catch {
+                    // plain text error
+                }
+                throw new Error(message);
+            }
+
+            const data = await res.json();
+            if (!Array.isArray(data.image_urls) || data.image_urls.length === 0) {
+                throw new Error(data.reason || '画像URLが返りませんでした。');
+            }
+
+            setPosts(prev => prev.map(x => x.id === post.id ? { ...x, image_urls: data.image_urls } : x));
+            const composed = await composePreviewsFor(post, data.image_urls);
+            setComposedPreviews(prev => ({ ...prev, [post.id]: composed }));
+            const warning = Array.isArray(data.quality_warnings) && data.quality_warnings.length > 0;
+            if (showFinalStatus) {
+                setStatusMsg(warning
+                    ? '画像を再生成しました。一部に品質警告があります。目視確認してください。'
+                    : '画像を再生成しました。内容を確認してください。');
+            }
+            return { ok: true, warning };
+        } catch (err) {
+            console.error('image regenerate:', err);
+            setImageErrors(prev => ({
+                ...prev,
+                [post.id]: err?.message || '画像再生成に失敗しました。少し待ってから再試行してください。'
+            }));
+            if (showFinalStatus) {
+                setStatusMsg(err?.message || '画像再生成に失敗しました。少し待ってから再試行してください。');
+            }
+            return { ok: false, warning: false };
+        } finally {
+            setGeneratingIds(prev => {
+                const s = new Set(prev);
+                s.delete(post.id);
+                return s;
+            });
+        }
+    };
+
+    const handleRegenerateAllImages = async () => {
+        const targets = posts.filter(hasImages);
+        if (targets.length === 0) {
+            setStatusMsg('再生成できる画像がまだありません。画像生成中の投稿は完了を待ってください。');
+            return;
+        }
+        if (!confirm(`${targets.length}件の画像だけ再生成しますか？投稿文はそのまま残ります。`)) return;
+
+        let failedCount = 0;
+        let warningCount = 0;
+        for (let i = 0; i < targets.length; i++) {
+            setStatusMsg(`画像だけ再生成中: ${i + 1} / ${targets.length} 件`);
+            const result = await regenerateImagesForPost(targets[i], i, { showFinalStatus: false });
+            if (!result.ok) failedCount++;
+            if (result.warning) warningCount++;
+        }
+
+        if (failedCount > 0) {
+            setStatusMsg(`${failedCount}件の画像再生成に失敗しました。残った投稿は個別に再生成できます。`);
+        } else if (warningCount > 0) {
+            setStatusMsg('画像を再生成しました。一部に品質警告があります。目視確認してください。');
+        } else {
+            setStatusMsg('すべての画像を再生成しました。内容を確認してください。');
         }
     };
 
@@ -350,8 +449,15 @@ export default function ApprovePage() {
                         {posts.length > 0 && (
                             <>
                                 <button
+                                    onClick={handleRegenerateAllImages}
+                                    disabled={processingIds.size > 0 || generatingIds.size > 0}
+                                    className="flex items-center gap-2 text-sm bg-blue-700 hover:bg-blue-600 px-3 py-2 rounded font-bold disabled:opacity-50"
+                                >
+                                    <RefreshCcw size={14} /> 画像だけ再生成
+                                </button>
+                                <button
                                     onClick={handleRejectAll}
-                                    disabled={processingIds.size > 0}
+                                    disabled={processingIds.size > 0 || generatingIds.size > 0}
                                     className="flex items-center gap-2 text-sm bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded font-bold disabled:opacity-50"
                                 >
                                     <X size={16} /> 全件却下
@@ -448,6 +554,18 @@ export default function ApprovePage() {
                                             </div>
                                         )}
 
+                                        {hasImages(post) && (
+                                            <button
+                                                type="button"
+                                                onClick={() => regenerateImagesForPost(post, 0)}
+                                                disabled={isGeneratingImage || isProcessing}
+                                                className="inline-flex items-center gap-2 text-xs bg-blue-900/70 hover:bg-blue-800 px-3 py-2 rounded disabled:opacity-50"
+                                            >
+                                                {isGeneratingImage ? <Loader2 size={14} className="animate-spin" /> : <RefreshCcw size={14} />}
+                                                画像だけ再生成
+                                            </button>
+                                        )}
+
                                         {/* キャプション */}
                                         <div className="text-sm whitespace-pre-wrap text-gray-200">
                                             {post.caption || '(キャプション無し)'}
@@ -455,17 +573,17 @@ export default function ApprovePage() {
 
                                         {/* 承認/却下ボタン */}
                                         <div className="flex gap-2 pt-2">
-	                                            <button
-	                                                onClick={() => handleApprove(post)}
-	                                                disabled={isProcessing || !hasImages(post)}
-	                                                className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 px-3 py-2 rounded font-bold disabled:opacity-50"
-	                                            >
-	                                                {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-	                                                {hasImages(post) ? '承認' : '画像待ち'}
-	                                            </button>
+		                                            <button
+		                                                onClick={() => handleApprove(post)}
+		                                                disabled={isProcessing || isGeneratingImage || !hasImages(post)}
+		                                                className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 px-3 py-2 rounded font-bold disabled:opacity-50"
+		                                            >
+		                                                {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+		                                                {isGeneratingImage ? '画像再生成中' : (hasImages(post) ? '承認' : '画像待ち')}
+		                                            </button>
                                             <button
                                                 onClick={() => handleReject(post)}
-                                                disabled={isProcessing}
+                                                disabled={isProcessing || isGeneratingImage}
                                                 className="flex-1 flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded disabled:opacity-50"
                                             >
                                                 <X size={16} />

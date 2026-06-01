@@ -49,6 +49,13 @@ const TEXT_AREA_WIDTH = 840; // 1080 - 左右120px ずつのマージン (Instag
 // 11 chars * 72px ≈ 792px ≤ 840px で Satori の auto-wrap も発動しない範囲。
 const MAX_CHARS_PER_LINE = 11;
 
+function sanitizeOverlayText(text) {
+    return String(text || '')
+        .replace(/[□■]/g, '・')
+        .replace(/\s+\n/g, '\n')
+        .trim();
+}
+
 // ASCII 半角=0.5, それ以外 (主に日本語全角)=1.0 として視覚的長さを近似
 function visualLength(str) {
     let len = 0;
@@ -171,7 +178,7 @@ async function resolveBackgroundImageSrc(bgImageUrl) {
  */
 export async function composeOverlayImage(bgImageUrl, overlayText, index = 0, options = {}) {
     const { companyName } = options;
-    const text = (overlayText && overlayText.trim()) || `${companyName || ''}\n最新のトレンド情報をチェック`;
+    const text = sanitizeOverlayText((overlayText && overlayText.trim()) || `${companyName || ''}\n最新のトレンド情報をチェック`);
     const fontSize = FIXED_FONT_SIZE;
     const lineHeight = Math.round(fontSize * 1.35);
     const effect = getSlideEffect(index);
@@ -276,7 +283,7 @@ export async function composeOverlayImage(bgImageUrl, overlayText, index = 0, op
  */
 export async function composeTextOnlySlide(overlayText, index = 0, options = {}) {
     const { companyName } = options;
-    const text = (overlayText && overlayText.trim()) || `${companyName || 'SNS Agent 24'}\n投稿案`;
+    const text = sanitizeOverlayText((overlayText && overlayText.trim()) || `${companyName || 'SNS Agent 24'}\n投稿案`);
     const fontSize = FIXED_FONT_SIZE;
     const lineHeight = Math.round(fontSize * 1.35);
     const lines = wrapJapaneseTextLines(text);

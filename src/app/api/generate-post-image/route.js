@@ -130,15 +130,15 @@ async function generateUsableSlideImage({ category, targetLabel, slideImageIdea,
 }
 
 // 承認画面から呼び出される、1投稿分の画像生成API
-// body: { postId: string, variationIndex: number }
-// 既に image_urls が入っている場合は何もせずに返す（重複生成防止）
+// body: { postId: string, variationIndex: number, force?: boolean }
+// 既に image_urls が入っている場合は通常スキップ。force=true なら画像だけ再生成する。
 export async function POST(req) {
     try {
         const { userId } = await auth();
         if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
         const body = await req.json();
-        const { postId, variationIndex = 0 } = body;
+        const { postId, variationIndex = 0, force = false } = body;
         if (!postId) return NextResponse.json({ error: 'postId is required' }, { status: 400 });
 
         // 対象postを取得（所有者チェック含む）
@@ -152,8 +152,8 @@ export async function POST(req) {
         if (!post) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
         if (post.user_id !== userId) return new NextResponse('Forbidden', { status: 403 });
 
-        // 既に画像がある場合はスキップ
-        if (Array.isArray(post.image_urls) && post.image_urls.length > 0) {
+        // 既に画像がある場合はスキップ。ただし承認画面からの明示的な再生成は許可する。
+        if (!force && Array.isArray(post.image_urls) && post.image_urls.length > 0) {
             return NextResponse.json({ success: true, image_urls: post.image_urls, skipped: true });
         }
 
@@ -198,7 +198,7 @@ export async function POST(req) {
             console.log(`[generate-post-image] refined ${refinedHints.filter(Boolean).length}/${imgCount} slide hints`);
         }
 
-        const imagePromises = [];
+        const slideResults = [];
         for (let i = 0; i < imgCount; i++) {
             // 編集者役が refine した hint を優先、無ければ generatePost 時の image_hint_en にフォールバック
             const slideHintEn = (isCarousel && refinedHints[i])
@@ -227,8 +227,8 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
 ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
             }
 
-            imagePromises.push(
-                generateUsableSlideImage({
+            try {
+                const generatedUrl = await generateUsableSlideImage({
                     category,
                     targetLabel,
                     slideImageIdea,
@@ -236,14 +236,12 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
                     platform: post.platform,
                     slideNumber: i + 1
                 })
-                    .catch(err => {
-                        console.error(`[generate-post-image] slide ${i} image gen failed:`, err);
-                        return null;
-                    })
-            );
+                slideResults.push(generatedUrl);
+            } catch (err) {
+                console.error(`[generate-post-image] slide ${i} image gen failed:`, err);
+                slideResults.push(null);
+            }
         }
-
-        let slideResults = await Promise.all(imagePromises);
 
         let imageQualityWarnings = [];
 

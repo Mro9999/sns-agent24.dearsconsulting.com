@@ -1325,6 +1325,7 @@ If a book or document appears, it must be CLOSED or shown from an angle where an
                     ],
                     parameters: {
                         sampleCount: count,
+                        aspectRatio: '1:1',
                         outputOptions: {
                             mimeType: 'image/jpeg'
                         }
@@ -1354,20 +1355,31 @@ If a book or document appears, it must be CLOSED or shown from an angle where an
                 try {
                     const rawBase64 = pred.bytesBase64Encoded;
                     const buffer = Buffer.from(rawBase64, 'base64');
+                    const isPng = buffer.length >= 8
+                        && buffer[0] === 0x89
+                        && buffer[1] === 0x50
+                        && buffer[2] === 0x4e
+                        && buffer[3] === 0x47
+                        && buffer[4] === 0x0d
+                        && buffer[5] === 0x0a
+                        && buffer[6] === 0x1a
+                        && buffer[7] === 0x0a;
+                    const contentType = isPng ? 'image/png' : 'image/jpeg';
+                    const extension = isPng ? 'png' : 'jpg';
                     
                     const randomString = crypto.randomBytes(16).toString('hex');
-                    const fileName = `${currentUserId}/${Date.now()}_${randomString}.jpg`;
+                    const fileName = `${currentUserId}/${Date.now()}_${randomString}.${extension}`;
                     
                     const { error: uploadError } = await supabaseAdmin.storage
                         .from(BUCKET_NAME)
                         .upload(fileName, buffer, {
-                            contentType: 'image/jpeg',
+                            contentType,
                             upsert: false
                         });
                         
                     if (uploadError) {
                         console.error("Supabase Upload Error:", uploadError);
-                        return `data:image/jpeg;base64,${rawBase64}`; // Fallback to base64 if upload fails
+                        return `data:${contentType};base64,${rawBase64}`; // Fallback to base64 if upload fails
                     }
                     
                     const { data: publicUrlData } = supabaseAdmin.storage
