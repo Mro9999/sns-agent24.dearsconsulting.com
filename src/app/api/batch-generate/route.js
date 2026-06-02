@@ -12,6 +12,7 @@ const supabase = createClient(
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 300;
+const BATCH_REQUEST_TTL_MS = 15 * 60 * 1000;
 
 function pickId(value) {
     if (value == null) return null;
@@ -67,10 +68,45 @@ export async function POST(req) {
         if (!body) {
             return NextResponse.json({ error: 'JSON body required' }, { status: 400 });
         }
+        const clientRequestId = typeof body.client_request_id === 'string' ? body.client_request_id : null;
+
+        if (clientRequestId) {
+            const { data: existingSettings, error: existingSettingsError } = await supabase
+                .from('user_batch_settings')
+                .select('product_context')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+            if (existingSettingsError) throw existingSettingsError;
+
+            const existingContext = existingSettings?.product_context || {};
+            const existingStartedAt = existingContext.__batch_generation_started_at
+                ? new Date(existingContext.__batch_generation_started_at).getTime()
+                : 0;
+            const isSameRecentRequest =
+                existingContext.__batch_request_id === clientRequestId &&
+                Number.isFinite(existingStartedAt) &&
+                Date.now() - existingStartedAt < BATCH_REQUEST_TTL_MS;
+
+            if (isSameRecentRequest) {
+                return NextResponse.json({
+                    success: true,
+                    started: true,
+                    duplicate: true,
+                    expected_count: 7,
+                    started_at: existingContext.__batch_generation_started_at
+                }, { status: 202 });
+            }
+        }
 
         const user = await currentUser();
         const email = user?.emailAddresses?.[0]?.emailAddress || clerkUser.emailAddresses?.[0]?.emailAddress || null;
+        const startedAt = new Date().toISOString();
         const productContext = sanitizeProductContext(body.product_context);
+        if (clientRequestId) {
+            productContext.__batch_request_id = clientRequestId;
+            productContext.__batch_generation_started_at = startedAt;
+        }
 
         const settings = {
             user_id: userId,
@@ -96,7 +132,6 @@ export async function POST(req) {
 
         if (settingsError) throw settingsError;
 
-        const startedAt = new Date().toISOString();
         waitUntil(
             generateWeeklyPostsForSettings(settings, {
                 sendEmail: false,

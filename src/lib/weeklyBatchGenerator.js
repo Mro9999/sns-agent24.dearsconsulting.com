@@ -170,6 +170,8 @@ export async function generateWeeklyPostsForSettings(settings, options = {}) {
     const platformType = 'instagram';
     const selectedFormat = 'carousel';
     const cleanProductContext = { ...(product_context || {}) };
+    delete cleanProductContext.__batch_request_id;
+    delete cleanProductContext.__batch_generation_started_at;
     const userProfile = user_profile || {};
     let siteContent = cleanProductContext?.siteContent || '';
     if (!siteContent && cleanProductContext?.websiteUrl) {

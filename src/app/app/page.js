@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Gem, Lock, Instagram, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History, Smartphone, ArrowRight, ArrowDown, CheckCircle2 } from 'lucide-react';
+import { Gem, Lock, Instagram, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History, Smartphone, ArrowRight, ArrowDown, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, OverlayLanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
@@ -11,6 +11,7 @@ import ProfileSetupModal from '@/components/features/ProfileSetupModal';
 import { usePostHog } from 'posthog-js/react';
 
 const WEEKLY_BATCH_STARTED_KEY = 'sns-agent24-weekly-generation-started-at';
+const WEEKLY_BATCH_PENDING_PAYLOAD_KEY = 'sns-agent24-weekly-generation-payload';
 
 export default function Home() {
     const { user, isLoaded, isSignedIn } = useUser();
@@ -56,6 +57,7 @@ export default function Home() {
     const [terminalLogs, setTerminalLogs] = useState([]); // サイバー風の解析ダミーログ
     const [batchStatus, setBatchStatus] = useState(''); // バッチ生成中の進捗表示用
     const [batchCompleted, setBatchCompleted] = useState(null); // バッチ完了後の永続的な確認カード用 ({ count: number } or null)
+    const [generationRecoveryNotice, setGenerationRecoveryNotice] = useState('');
     
     // パーソナライズされた動的ログの生成関数
     const getDynamicLogs = (category, targetLabel) => {
@@ -172,6 +174,20 @@ export default function Home() {
         usageData.count += 1;
         localStorage.setItem('snsAgent24_usage', JSON.stringify(usageData));
         return true;
+    };
+
+    const refundDailyFreeUsage = () => {
+        if (isPro || typeof window === 'undefined') return;
+        try {
+            const today = new Date().toLocaleDateString('ja-JP');
+            const usageDataStr = localStorage.getItem('snsAgent24_usage');
+            const usageData = usageDataStr ? JSON.parse(usageDataStr) : null;
+            if (!usageData || usageData.date !== today) return;
+            usageData.count = Math.max(0, Number(usageData.count || 0) - 1);
+            localStorage.setItem('snsAgent24_usage', JSON.stringify(usageData));
+        } catch (err) {
+            console.warn('Failed to refund daily usage:', err);
+        }
     };
 
     // エラーログを管理者へ通知する共通関数
@@ -332,6 +348,7 @@ export default function Home() {
             alert("すべての項目を選択してください");
             return;
         }
+        setGenerationRecoveryNotice('');
 
         posthog?.capture('generation_started', {
             format: selectedFormat,
@@ -478,6 +495,18 @@ export default function Home() {
             }, 100);
         } catch (e) {
             console.error(e);
+            const isLoadFailed = /load failed|failed to fetch|network/i.test(e?.message || '');
+            if (isLoadFailed) {
+                refundDailyFreeUsage();
+                posthog?.capture('generation_response_lost', {
+                    format: selectedFormat,
+                    platform: selectedPlatform,
+                    failed_step: currentStep
+                });
+                setGenerationRecoveryNotice('通信が一時的に切れました。iPhoneで他のアプリへ移動した時に起きやすい症状です。入力内容は残っているので、戻ってからもう一度「生成する」を押してください。');
+                reportErrorToAdmin(e, `handleGenerate - mobile/background network interrupted at step: ${currentStep}`);
+                return;
+            }
             alert("エラーが発生しました: " + e.message);
             // 失敗ステップ名を context に含めて管理者に通知 → スタックが空でも切り分け可能
             reportErrorToAdmin(e, `handleGenerate - failed at step: ${currentStep}`);
@@ -560,6 +589,7 @@ export default function Home() {
         };
 
         const requestPayload = {
+            client_request_id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
             platform: platformType,
             category_id: pickId(selectedCategory),
             purpose_id: pickId(selectedPurpose),
@@ -581,11 +611,11 @@ export default function Home() {
                 // "Load failed" になることがある。先に開始マーカーを残し、
                 // 承認画面側で自動確認できるようにする。
                 window.localStorage.setItem(WEEKLY_BATCH_STARTED_KEY, String(Date.now()));
+                window.localStorage.setItem(WEEKLY_BATCH_PENDING_PAYLOAD_KEY, JSON.stringify(requestPayload));
             }
 
             const qRes = await fetch('/api/batch-generate', {
                 method: 'POST',
-                keepalive: true,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestPayload)
             });
@@ -594,6 +624,7 @@ export default function Home() {
                 const errBody = await qRes.json().catch(() => null);
                 if (typeof window !== 'undefined') {
                     window.localStorage.removeItem(WEEKLY_BATCH_STARTED_KEY);
+                    window.localStorage.removeItem(WEEKLY_BATCH_PENDING_PAYLOAD_KEY);
                 }
                 throw new Error(errBody?.error || `生成APIでエラーが発生しました (${qRes.status})`);
             }
@@ -603,6 +634,7 @@ export default function Home() {
             posthog?.capture('batch_generation_accepted', { platform: platformType, count: generatedCount });
 
             if (typeof window !== 'undefined') {
+                window.localStorage.removeItem(WEEKLY_BATCH_PENDING_PAYLOAD_KEY);
                 if (data.started === true) {
                     window.localStorage.setItem(WEEKLY_BATCH_STARTED_KEY, String(Date.now()));
                 } else {
@@ -669,6 +701,64 @@ export default function Home() {
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (!mounted || !isSignedIn || typeof window === 'undefined') return;
+
+        let retrying = false;
+        const retryPendingBatchRequest = async () => {
+            if (retrying) return;
+            const payloadRaw = window.localStorage.getItem(WEEKLY_BATCH_PENDING_PAYLOAD_KEY);
+            const startedRaw = window.localStorage.getItem(WEEKLY_BATCH_STARTED_KEY);
+            const startedAt = startedRaw ? Number(startedRaw) : 0;
+            const isRecent = Number.isFinite(startedAt) && startedAt > 0 && Date.now() - startedAt < 15 * 60 * 1000;
+            if (!payloadRaw || !isRecent) return;
+
+            retrying = true;
+            try {
+                const res = await fetch('/api/batch-generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: payloadRaw
+                });
+                if (!res.ok) return;
+
+                const data = await res.json().catch(() => ({}));
+                window.localStorage.removeItem(WEEKLY_BATCH_PENDING_PAYLOAD_KEY);
+                window.localStorage.setItem(WEEKLY_BATCH_STARTED_KEY, String(Date.now()));
+                posthog?.capture('batch_generation_retry_accepted', {
+                    started: data.started === true,
+                    duplicate: data.duplicate === true
+                });
+
+                setBatchStatus(null);
+                setBatchCompleted({
+                    count: data.count || data.expected_count || 7,
+                    started: data.started !== false,
+                    ready: data.started === false && data.already_pending === true,
+                    pendingCount: data.already_pending ? (data.count || 7) : 0,
+                    responseLost: true
+                });
+            } catch (err) {
+                console.warn('[batch-generate] retry after background failed:', err?.message || err);
+            } finally {
+                retrying = false;
+            }
+        };
+
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') retryPendingBatchRequest();
+        };
+
+        window.addEventListener('pageshow', retryPendingBatchRequest);
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        retryPendingBatchRequest();
+
+        return () => {
+            window.removeEventListener('pageshow', retryPendingBatchRequest);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+        };
+    }, [mounted, isSignedIn, posthog]);
 
     useEffect(() => {
         if (mounted) {
@@ -1207,6 +1297,24 @@ export default function Home() {
                             </div>
                         ) : (
                             <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-500 gap-2">
+                                {generationRecoveryNotice && (
+                                    <div className="w-full mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-left shadow-sm">
+                                        <div className="flex items-start gap-3">
+                                            <AlertTriangle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                                            <div className="flex-1">
+                                                <p className="text-sm font-bold text-amber-900 mb-1">通信が一時的に切れました</p>
+                                                <p className="text-xs text-amber-800 leading-relaxed">{generationRecoveryNotice}</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleGenerate}
+                                                    className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-amber-700 transition-colors"
+                                                >
+                                                    <RefreshCw size={14} /> もう一度生成する
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                                 <CategorySelector selected={{ id: selectedCategory }} onSelect={(c) => setSelectedCategory(c.id)} />
                                 <PurposeSelector selected={selectedPurpose} onSelect={setSelectedPurpose} />
                                 <TargetSelector selected={selectedTarget} onSelect={setSelectedTarget} isPro={isPro} />
