@@ -888,17 +888,61 @@ export default function Home() {
                                 </p>
                             </div>
 
-                            {/* START Button */}
-                            <button
-                                onClick={handleStart}
-                                disabled={!mounted || !isLoaded || !isSignedIn}
-                                className={`w-[280px] h-14 rounded-full overflow-hidden relative group text-xl font-bold tracking-[0.15em] transition-all duration-500 ${!mounted || !isLoaded ? "opacity-0 scale-95" : isSignedIn ? "opacity-100 shadow-[0_10px_35px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_45px_rgba(0,0,0,0.25)] hover:-translate-y-1 cursor-pointer scale-100 bg-slate-900 border border-slate-800" : "opacity-40 cursor-not-allowed grayscale bg-slate-300"}`}
-                                
-                            >
-                                <span className="relative z-10 text-white/95">
-                                    {!mounted || !isLoaded ? '...' : isSignedIn ? 'START' : 'ログインしてください'}
-                                </span>
-                            </button>
+                            <div className={`w-full max-w-3xl mb-2 transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+                                <div className="text-center mb-4">
+                                    <p className="text-xs font-bold tracking-[0.18em] text-slate-400">PLAN ACTION</p>
+                                    <h3 className="text-lg md:text-xl font-bold text-slate-900 mt-1">プラン別にできること</h3>
+                                    <p className="text-xs text-slate-500 mt-2">Pro は1投稿ずつ作成。Pro Max は1週間分をまとめて生成できます。</p>
+                                </div>
+                                <div className={`grid gap-4 ${isProMax ? 'md:grid-cols-2' : 'max-w-md mx-auto'}`}>
+                                    <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-sm px-6 py-5 text-left">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <PenTool size={16} className="text-slate-500" />
+                                                <span className="text-xs font-bold tracking-widest text-slate-500">PRO</span>
+                                            </div>
+                                            <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">単発作成</span>
+                                        </div>
+                                        <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">1投稿ずつ作成</h4>
+                                        <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                                            投稿目的・ターゲット・文体を選び、1件ずつ投稿文と画像を作成します。細かく調整しながら作りたい時はこちらです。
+                                        </p>
+                                        <button
+                                            onClick={handleStart}
+                                            disabled={!mounted || !isLoaded || !isSignedIn}
+                                            className={`w-full px-4 py-3 rounded-full text-sm font-bold transition-all duration-300 inline-flex items-center justify-center gap-2 ${!mounted || !isLoaded ? "opacity-0 scale-95" : isSignedIn ? "opacity-100 shadow-[0_10px_25px_rgba(15,23,42,0.18)] hover:shadow-[0_14px_34px_rgba(15,23,42,0.24)] hover:-translate-y-0.5 cursor-pointer bg-slate-900 text-white" : "opacity-40 cursor-not-allowed grayscale bg-slate-300 text-slate-500"}`}
+                                        >
+                                            <Instagram size={14} />
+                                            {!mounted || !isLoaded ? '...' : isSignedIn ? '1投稿を作成する' : 'ログインしてください'}
+                                            {isSignedIn && <ArrowRight size={14} />}
+                                        </button>
+                                    </div>
+
+                                    {isProMax && !batchStatus && !batchCompleted && (
+                                        <div className="bg-white/90 backdrop-blur-xl border-2 border-pink-200 rounded-2xl shadow-sm px-6 py-5 text-left relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-pink-600"></div>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <Sparkles size={16} className="text-rose-500" />
+                                                    <span className="text-xs font-bold tracking-widest text-rose-500">PRO MAX</span>
+                                                </div>
+                                                <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-full">一括生成</span>
+                                            </div>
+                                            <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">1週間分まとめて生成</h4>
+                                            <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                                                7件の投稿案をサーバー側でまとめて作成します。数分後に確認画面で内容を見て、問題ないものだけ承認できます。
+                                            </p>
+                                            <button
+                                                onClick={() => handleBatchGenerate('instagram')}
+                                                disabled={loading}
+                                                className="w-full px-4 py-3 rounded-full text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                                            >
+                                                <Instagram size={14} /> 1週間分（7投稿）を生成
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Pro Max ユーザー限定: 完了カード（バッチ生成成功直後） */}
@@ -973,30 +1017,6 @@ export default function Home() {
 	                                        className="w-full mt-2 px-4 py-2 rounded-full text-xs text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
 	                                    >
                                         または、もう一度生成する
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Pro Max ユーザー限定: 週次自動投稿を手動でトリガー（未生成 or 完了表示なし状態） */}
-                        {isProMax && !batchStatus && !batchCompleted && (
-                            <div className="w-full flex flex-col items-center mt-12 mb-4">
-                                <div className="w-full max-w-md bg-white/70 backdrop-blur-xl border border-white rounded-2xl shadow-sm px-6 py-5">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <Sparkles size={16} className="text-rose-500" />
-                                        <span className="text-xs font-bold tracking-widest text-gray-500">PRO MAX</span>
-                                    </div>
-                                    <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">1週間分まとめて生成</h4>
-                                    <p className="text-xs text-gray-500 leading-relaxed mb-4">
-                                        毎週日曜20:00に自動生成されますが、今すぐ手動で再生成することも可能です。<br />
-                                        開始後は数分待ってから「今週の投稿を確認」で内容を確認してください。
-                                    </p>
-                                    <button
-                                        onClick={() => handleBatchGenerate('instagram')}
-                                        disabled={loading}
-                                        className="w-full px-4 py-2.5 rounded-full text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 transition-opacity disabled:opacity-50 inline-flex items-center justify-center gap-2"
-                                    >
-                                        <Instagram size={14} /> 1週間分（7投稿）を今すぐ生成
                                     </button>
                                 </div>
                             </div>
