@@ -63,7 +63,7 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
         buildPlanCard('free', {
             name: "Free Plan",
             price: "¥0",
-            period: "/ month",
+            period: "/月",
             features: [
                 "1日3回まで生成可能",
                 "基本的なトレンドリサーチ",
@@ -76,7 +76,7 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
         buildPlanCard('pro', {
             name: "Pro Plan",
             price: billingCycle === 'year' ? "¥29,800" : "¥2,980",
-            period: billingCycle === 'year' ? "/ year" : "/ month",
+            period: billingCycle === 'year' ? "/年" : "/月",
             subtext: billingCycle === 'year' ? "（月あたり約 ¥2,483）" : null,
             badge: billingCycle === 'year' ? "2ヶ月分お得！" : "人気 No.1",
             features: [
@@ -93,7 +93,7 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
         buildPlanCard('promax', {
             name: "Pro Max Plan",
             price: billingCycle === 'year' ? "¥298,000" : "¥29,800",
-            period: billingCycle === 'year' ? "/ year" : "/ month",
+            period: billingCycle === 'year' ? "/年" : "/月",
             subtext: billingCycle === 'year' ? "（月あたり約 ¥24,833）" : "※個別相談制（カスタム設定が必要なため）",
             badge: "エンタープライズ",
             features: [
@@ -124,8 +124,8 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
                 <div className={styles.header}>
                     <h2 className={styles.title}>Plan</h2>
                     <p className={styles.subtitle}>
-                        ビジネスの規模に合わせて選べる2つのプラン。<br />
-                        いつでも解約可能です。
+                        無料お試しから、Pro / Pro Max まで用途に合わせて選べます。<br />
+                        月払い・年払いは下の料金カードに反映されます。
                     </p>
 
                     <div className="mt-8 mb-6 w-full max-w-5xl mx-auto px-2">
@@ -245,18 +245,41 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
                         </div>
                     </div>
 
-                    {/* Billing Cycle Toggle */}
-                    <div className={styles.toggleContainer}>
-                        <span className={`${styles.toggleLabel} ${billingCycle === 'month' ? styles.active : ''}`}>月払い</span>
-                        <div
-                            className={`${styles.toggleSwitch} ${billingCycle === 'year' ? styles.yearActive : ''}`}
-                            onClick={() => setBillingCycle(billingCycle === 'month' ? 'year' : 'month')}
-                        >
-                            <div className={styles.toggleThumb} />
-                        </div>
-                        <span className={`${styles.toggleLabel} ${billingCycle === 'year' ? styles.active : ''}`}>年払い</span>
-                        <span className={styles.discountBadge}>2ヶ月分無料</span>
+                </div>
+
+                <div className={styles.billingPanel}>
+                    <div className={styles.billingText}>
+                        <span className={styles.billingEyebrow}>支払い方法</span>
+                        <h3 className={styles.billingTitle}>下の料金カードに反映されます</h3>
+                        <p className={styles.billingDescription}>
+                            Pro / Pro Max の価格表示を、月払いまたは年払いに切り替えられます。
+                        </p>
                     </div>
+                    <div className={styles.billingOptions} role="tablist" aria-label="支払い方法を選択">
+                        <button
+                            type="button"
+                            role="tab"
+                            aria-selected={billingCycle === 'month'}
+                            className={`${styles.billingOption} ${billingCycle === 'month' ? styles.billingOptionActive : ''}`}
+                            onClick={() => setBillingCycle('month')}
+                        >
+                            <span className={styles.billingOptionTitle}>月払い</span>
+                            <span className={styles.billingOptionNote}>毎月支払う</span>
+                        </button>
+                        <button
+                            type="button"
+                            role="tab"
+                            aria-selected={billingCycle === 'year'}
+                            className={`${styles.billingOption} ${billingCycle === 'year' ? styles.billingOptionActive : ''}`}
+                            onClick={() => setBillingCycle('year')}
+                        >
+                            <span className={styles.billingOptionTitle}>年払い</span>
+                            <span className={styles.billingOptionNote}>2ヶ月分お得</span>
+                        </button>
+                    </div>
+                    <p className={styles.billingStatus}>
+                        現在は <strong>{billingCycle === 'year' ? '年払い' : '月払い'}</strong> の料金を表示しています。
+                    </p>
                 </div>
 
                 <div className={styles.grid}>
@@ -267,6 +290,11 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
                         >
                             {plan.isCurrentPlan && <div className={styles.currentBadge}>現在のプラン</div>}
                             {!plan.isCurrentPlan && plan.badge && <div className={styles.badge}>{plan.badge}</div>}
+                            {plan.planTier !== 'free' && (
+                                <div className={styles.planBillingChip}>
+                                    {billingCycle === 'year' ? '年払いで表示中' : '月払いで表示中'}
+                                </div>
+                            )}
                             <h3 className={styles.planName}>{plan.name}</h3>
                             <div className={styles.priceContainer}>
                                 <span className={styles.price}>{plan.price}</span>
