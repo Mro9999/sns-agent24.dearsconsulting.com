@@ -888,11 +888,13 @@ export default function Home() {
                                 </p>
                             </div>
 
-                            <div className={`w-full max-w-3xl mb-2 transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+                            <div className={`w-full max-w-4xl mb-2 transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                                 <div className="text-center mb-4">
                                     <p className="text-xs font-bold tracking-[0.18em] text-slate-400">PLAN ACTION</p>
-                                    <h3 className="text-lg md:text-xl font-bold text-slate-900 mt-1">プラン別にできること</h3>
-                                    <p className="text-xs text-slate-500 mt-2">Pro は1投稿ずつ作成。Pro Max は1週間分をまとめて生成できます。</p>
+                                    <h3 className="text-lg md:text-xl font-bold text-slate-900 mt-1">作成方法を選ぶ</h3>
+                                    <p className="text-xs text-slate-500 mt-2">
+                                        <strong className="text-slate-700">Pro</strong> は1投稿ずつ作成。<strong className="text-rose-600">Pro Max</strong> はProの単発作成に加えて、1週間分の一括生成もできます。
+                                    </p>
                                 </div>
                                 <div className={`grid gap-4 ${isProMax ? 'md:grid-cols-2' : 'max-w-md mx-auto'}`}>
                                     <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-sm px-6 py-5 text-left">
@@ -901,12 +903,22 @@ export default function Home() {
                                                 <PenTool size={16} className="text-slate-500" />
                                                 <span className="text-xs font-bold tracking-widest text-slate-500">PRO</span>
                                             </div>
-                                            <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">単発作成</span>
+                                            <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">基本機能</span>
                                         </div>
                                         <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">1投稿ずつ作成</h4>
                                         <p className="text-xs text-gray-500 leading-relaxed mb-4">
                                             投稿目的・ターゲット・文体を選び、1件ずつ投稿文と画像を作成します。細かく調整しながら作りたい時はこちらです。
                                         </p>
+                                        <div className="space-y-2 mb-4">
+                                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                                                <CheckCircle2 size={15} className="text-emerald-500 flex-shrink-0" />
+                                                1件ずつ内容を見ながら作成
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                                                <CheckCircle2 size={15} className="text-emerald-500 flex-shrink-0" />
+                                                細かく調整したい投稿に向いています
+                                            </div>
+                                        </div>
                                         <button
                                             onClick={handleStart}
                                             disabled={!mounted || !isLoaded || !isSignedIn}
@@ -926,12 +938,22 @@ export default function Home() {
                                                     <Sparkles size={16} className="text-rose-500" />
                                                     <span className="text-xs font-bold tracking-widest text-rose-500">PRO MAX</span>
                                                 </div>
-                                                <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-full">一括生成</span>
+                                                <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-full">Pro機能 + 一括生成</span>
                                             </div>
-                                            <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">1週間分まとめて生成</h4>
+                                            <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">単発作成も、一括生成も</h4>
                                             <p className="text-xs text-gray-500 leading-relaxed mb-4">
-                                                7件の投稿案をサーバー側でまとめて作成します。数分後に確認画面で内容を見て、問題ないものだけ承認できます。
+                                                Proの1投稿ずつ作成はそのまま使えます。さらに7件の投稿案をサーバー側でまとめて作成できます。
                                             </p>
+                                            <div className="mb-4 rounded-xl border border-rose-100 bg-rose-50/70 px-3 py-3">
+                                                <div className="flex items-center gap-2 text-xs font-bold text-rose-700 mb-2">
+                                                    <CheckCircle2 size={15} className="text-rose-500 flex-shrink-0" />
+                                                    Proの単発作成も利用できます
+                                                </div>
+                                                <div className="flex items-center gap-2 text-xs font-bold text-rose-700">
+                                                    <Sparkles size={15} className="text-rose-500 flex-shrink-0" />
+                                                    さらに1週間分（7投稿）を一括生成できます
+                                                </div>
+                                            </div>
                                             <button
                                                 onClick={() => handleBatchGenerate('instagram')}
                                                 disabled={loading}
