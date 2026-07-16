@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import NextImage from 'next/image';
 import { Gem, Lock, Camera as Instagram, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History, Smartphone, ArrowRight, ArrowDown, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
@@ -51,6 +52,9 @@ export default function Home() {
     const [selectedOverlayLanguage, setSelectedOverlayLanguage] = useState('ja'); // 画像オーバーレイ用の言語（常に単一）
     const [selectedFormat, setSelectedFormat] = useState('carousel'); // デフォルトはカルーセル(5枚)
     const [productContext, setProductContext] = useState({});
+    const loadingPhaseRef = useRef(0);
+    const selectedCategoryRef = useRef(null);
+    const selectedTargetRef = useRef(null);
 
     // UIリッチ化用のステート
     const [loadingProgress, setLoadingProgress] = useState(0); // 0〜99の疑似進捗
@@ -137,6 +141,12 @@ export default function Home() {
     const [loadingPhase, setLoadingPhase] = useState(0);
     const [result, setResult] = useState(null);
     const [checkoutError, setCheckoutError] = useState(null);
+
+    useEffect(() => {
+        loadingPhaseRef.current = loadingPhase;
+        selectedCategoryRef.current = selectedCategory;
+        selectedTargetRef.current = selectedTarget;
+    }, [loadingPhase, selectedCategory, selectedTarget]);
     // Pro Max Plan 個別相談モーダル表示制御
     const [proMaxInquiryOpen, setProMaxInquiryOpen] = useState(false);
     const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
@@ -215,9 +225,6 @@ export default function Home() {
         let progressInterval;
         let logInterval;
 
-        const phaseRef = { current: loadingPhase };
-        phaseRef.current = loadingPhase;
-
         if (loading) {
             // ローディング開始時にプログレスを確実にゼロセット
             setLoadingProgress(0);
@@ -230,7 +237,7 @@ export default function Home() {
                     if (prev >= 99) return 99; // 99%で完全待機（100%になるのは完了時のみ）
 
                     // 現在のloadingPhaseに基づく「目標進行度」
-                    const phaseMax = Math.min((phaseRef.current + 1) * 20, 98);
+                    const phaseMax = Math.min((loadingPhaseRef.current + 1) * 20, 98);
 
                     if (prev < phaseMax) {
                         // 目標に達していなければ通常ペース（1〜3%アップ）で進める
@@ -250,8 +257,9 @@ export default function Home() {
 
             logInterval = setInterval(() => {
                 setTerminalLogs(prev => {
-                    const targetLabel = selectedTarget === 'teens' ? '10代' : selectedTarget === 'young_adults' ? '20-30代' : selectedTarget === 'parents' ? 'パパママ' : selectedTarget === 'high_end' ? '富裕層' : 'ビジネス層';
-                    const dynamicLogs = getDynamicLogs(selectedCategory, targetLabel);
+                    const currentTarget = selectedTargetRef.current;
+                    const targetLabel = currentTarget === 'teens' ? '10代' : currentTarget === 'young_adults' ? '20-30代' : currentTarget === 'parents' ? 'パパママ' : currentTarget === 'high_end' ? '富裕層' : 'ビジネス層';
+                    const dynamicLogs = getDynamicLogs(selectedCategoryRef.current, targetLabel);
                     const randomLog = dynamicLogs[Math.floor(Math.random() * dynamicLogs.length)];
                     const newLog = `> ${randomLog} [${new Date().toISOString().split('T')[1].slice(0, -1)}]`;
                     const updated = [...prev, newLog];
@@ -801,8 +809,16 @@ export default function Home() {
                 <div className="flex items-center gap-4">
                     {mounted && !isPro ? (
                         <button
-                            onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
-                            className="bg-gradient-to-r from-rose-500 to-[#D4A373] hover:from-purple-400 hover:to-indigo-500 text-gray-900 font-bold py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
+                            type="button"
+                            onClick={() => {
+                                if (step !== 0) {
+                                    setStep(0);
+                                    window.setTimeout(() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                                    return;
+                                }
+                                document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            className="min-h-11 bg-gradient-to-r from-rose-500 to-[#D4A373] hover:from-purple-400 hover:to-indigo-500 text-gray-900 font-bold py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all shadow-[0_4px_20px_rgba(0,0,0,0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
                         >
                             <Gem size={16} className="text-[#D4A373]" />
                             Proにアップグレード
@@ -836,7 +852,10 @@ export default function Home() {
                     )}
 
                     {mounted && isLoaded && isSignedIn ? (
-                        <UserButton afterSignOutUrl="/" />
+                        <UserButton
+                            afterSignOutUrl="/"
+                            appearance={{ elements: { avatarBox: "w-11 h-11" } }}
+                        />
                     ) : (
                         <div className="w-8 h-8 rounded-full bg-slate-200 animate-pulse border-2 border-transparent"></div>
                     )}
@@ -1165,7 +1184,7 @@ export default function Home() {
                 {step === 1 && (
                     <div className="w-full max-w-2xl px-4 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="w-full flex items-center mb-8">
-                            <button onClick={() => setStep(0)} disabled={loading} className={`text-slate-800 font-medium hover:text-gray-900 flex items-center gap-1 transition-opacity ${loading ? 'opacity-0 cursor-default' : 'opacity-100'}`}>
+                            <button type="button" onClick={() => setStep(0)} disabled={loading} className={`min-h-11 px-2 -ml-2 text-slate-800 font-medium hover:text-gray-900 flex items-center gap-1 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg ${loading ? 'opacity-0 cursor-default' : 'opacity-100'}`}>
                                 <ChevronLeft size={20} /> <span className="text-sm">戻る</span>
                             </button>
                         </div>
@@ -1347,7 +1366,7 @@ export default function Home() {
                 {step === 2 && result && (
                     <div className="w-full max-w-3xl px-4 flex flex-col items-center animate-in fade-in duration-500">
                         <div className="w-full flex items-center mb-8">
-                            <button onClick={() => { setStep(0); setResult(null); }} className="text-slate-800 font-medium hover:text-gray-900 flex items-center gap-1">
+                            <button type="button" onClick={() => { setStep(0); setResult(null); }} className="min-h-11 px-2 -ml-2 text-slate-800 font-medium hover:text-gray-900 flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg">
                                 <ChevronLeft size={20} /> <span className="text-sm">トップに戻る</span>
                             </button>
                         </div>
@@ -1464,7 +1483,14 @@ export default function Home() {
                                         {result.imageUrls && result.imageUrls.length > 0 ? (
                                             result.imageUrls.map((url, idx) => (
                                                 <div key={idx} className="w-full md:w-[45%] lg:w-[30%] aspect-square bg-[#1a1a1a] rounded-xl overflow-hidden relative shadow-[0_4px_20px_rgba(0,0,0,0.5)] border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] mx-auto">
-                                                    <img src={url} alt={`AI生成画像 ${idx + 1}枚目`} className="w-full h-full object-cover" />
+                                                    <NextImage
+                                                        src={url}
+                                                        alt={`AIが生成した投稿画像 ${idx + 1}枚目`}
+                                                        fill
+                                                        sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
+                                                        className="object-cover"
+                                                        unoptimized
+                                                    />
 
                                                     {selectedFormat === 'carousel' && (
                                                         <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-gray-900 text-xs px-2 py-1 rounded-md font-bold border border-rose-200">
@@ -1701,8 +1727,8 @@ export default function Home() {
                 )}
             </main>
 
-            {/* PRICING SECTION */}
-            <div id="pricing" className="w-full mt-24 mb-12 flex flex-col items-center">
+            {/* 料金比較は作成開始前だけ表示し、入力・結果確認に集中できるようにする */}
+            {step === 0 && <div id="pricing" className="w-full mt-24 mb-12 flex flex-col items-center">
                 {checkoutError && (
                     <div className="bg-red-500/20 border border-red-500 text-red-100 p-4 rounded-lg mb-8 max-w-2xl w-full mx-4 text-center">
                         <p className="font-bold">決済画面への移動に失敗しました</p>
@@ -1716,7 +1742,7 @@ export default function Home() {
                     </div>
                 )}
                 <PricingSection onUpgrade={handleCheckout} isPro={isPro} isProMax={isProMax} />
-            </div>
+            </div>}
 
             {/* Footer */}
             <footer className="w-full text-center pb-8 pt-12 flex flex-col items-center gap-1">
@@ -1727,7 +1753,7 @@ export default function Home() {
                     href="https://dearsconsulting.com/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#E0455B] hover:text-[#FF6B80] text-xs transition-colors"
+                    className="inline-flex min-h-11 items-center px-2 text-[#E0455B] hover:text-[#FF6B80] text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg"
                 >
                     https://dearsconsulting.com/
                 </a>

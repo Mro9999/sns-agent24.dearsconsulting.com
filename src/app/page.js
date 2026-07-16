@@ -1,9 +1,13 @@
 import React from 'react';
 import { Bot, Sparkles, PenTool, ImageIcon, Search, Zap, CheckCircle2, ArrowRight, Camera as Instagram, ChevronRight, ChevronLeft, Globe } from 'lucide-react';
 import Link from 'next/link';
+import { auth } from '@clerk/nextjs/server';
 import PricingSection from '@/components/layout/PricingSection';
 
-export default function LandingPage() {
+export default async function LandingPage() {
+    const { userId } = await auth();
+    const isSignedIn = Boolean(userId);
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#f8f9fa] via-[#fcfafb] to-[#f1f3f5] text-gray-900 font-sans selection:bg-rose-500/20 flex flex-col items-center relative overflow-hidden">
 
@@ -16,18 +20,34 @@ export default function LandingPage() {
                     <span className="font-bold text-lg tracking-wider text-gray-900">SNS Agent<span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-[#D4AF37]">24</span></span>
                 </div>
                 <div className="flex gap-4">
-                    <Link
-                        href="/sign-in"
-                        className="px-5 py-2 rounded-full text-sm font-medium border border-gray-200/50 hover:bg-white/90 border border-slate-200 shadow-sm text-slate-800 transition-colors text-gray-800"
-                    >
-                        ログイン
-                    </Link>
-                    <Link
-                        href="/sign-up"
-                        className="px-5 py-2 rounded-full text-sm font-bold bg-white/80 backdrop-blur-2xl backdrop-blur border border-white shadow-lg text-gray-900 hover:bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-colors hidden sm:block"
-                    >
-                        AIに投稿を作らせてみる
-                    </Link>
+                    {!isSignedIn && <>
+                        <Link
+                            href="/sign-in"
+                            className="inline-flex min-h-11 items-center px-5 py-2 rounded-full text-sm font-medium border border-gray-200/50 hover:bg-white/90 border border-slate-200 shadow-sm text-slate-800 transition-colors text-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                        >
+                            ログイン
+                        </Link>
+                        <Link
+                            href="/sign-up"
+                            className="min-h-11 items-center px-5 py-2 rounded-full text-sm font-bold bg-white/80 backdrop-blur-2xl backdrop-blur border border-white shadow-lg text-gray-900 hover:bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-colors hidden sm:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                        >
+                            AIに投稿を作らせてみる
+                        </Link>
+                    </>}
+                    {isSignedIn && <>
+                        <Link
+                            href="/app"
+                            className="inline-flex min-h-11 items-center px-5 py-2 rounded-full text-sm font-bold bg-white/90 border border-slate-200 shadow-sm text-slate-900 hover:bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                        >
+                            投稿を作る
+                        </Link>
+                        <Link
+                            href="/dashboard"
+                            className="min-h-11 items-center px-5 py-2 rounded-full text-sm font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors hidden sm:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                        >
+                            履歴を見る
+                        </Link>
+                    </>}
                 </div>
             </header>
 
@@ -54,13 +74,24 @@ export default function LandingPage() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                    <Link
-                        href="/sign-up"
-                        className="px-6 py-4 md:px-8 md:py-5 rounded-full text-sm md:text-base font-bold bg-gradient-to-r from-rose-500 to-purple-600 text-white hover:from-rose-400 hover:to-purple-500 transition-all shadow-[0_4px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_8px_30px_rgba(244,63,94,0.4)] hover:-translate-y-1 flex items-center justify-center gap-2"
-                    >
-                        無料で投稿案を1本つくる
-                        <ArrowRight size={18} />
-                    </Link>
+                    {!isSignedIn && (
+                        <Link
+                            href="/sign-up"
+                            className="px-6 py-4 md:px-8 md:py-5 rounded-full text-sm md:text-base font-bold bg-gradient-to-r from-rose-500 to-purple-600 text-white hover:from-rose-400 hover:to-purple-500 transition-all shadow-[0_4px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_8px_30px_rgba(244,63,94,0.4)] hover:-translate-y-1 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                        >
+                            無料で投稿案を1本つくる
+                            <ArrowRight size={18} />
+                        </Link>
+                    )}
+                    {isSignedIn && (
+                        <Link
+                            href="/app"
+                            className="px-6 py-4 md:px-8 md:py-5 rounded-full text-sm md:text-base font-bold bg-gradient-to-r from-rose-500 to-purple-600 text-white hover:from-rose-400 hover:to-purple-500 transition-all shadow-[0_4px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_8px_30px_rgba(244,63,94,0.4)] hover:-translate-y-1 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                        >
+                            投稿を作る
+                            <ArrowRight size={18} />
+                        </Link>
+                    )}
                 </div>
 
                 {/* Micro Features */}
@@ -203,25 +234,35 @@ export default function LandingPage() {
                     </div>
                     <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900"><span className="inline-block">次の投稿づくりを、</span><span className="inline-block">ここから始めましょう。</span></h2>
                     <p className="text-xl text-slate-800 mb-10 w-full max-w-lg text-center">無料アカウントで、企画・文章・画像づくりを1本から試せます。</p>
-                    <Link
-                        href="/sign-in"
-                        className="inline-flex px-10 py-5 rounded-full text-lg font-bold bg-gray-900 text-white shadow-xl hover:shadow-2xl hover:bg-black hover:-translate-y-1 transition-all"
-                    >
-                        無料でログインして開始する
-                    </Link>
+                    {!isSignedIn && (
+                        <Link
+                            href="/sign-in"
+                            className="inline-flex min-h-11 items-center px-10 py-5 rounded-full text-lg font-bold bg-gray-900 text-white shadow-xl hover:shadow-2xl hover:bg-black hover:-translate-y-1 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                        >
+                            無料でログインして開始する
+                        </Link>
+                    )}
+                    {isSignedIn && (
+                        <Link
+                            href="/app"
+                            className="inline-flex min-h-11 items-center px-10 py-5 rounded-full text-lg font-bold bg-gray-900 text-white shadow-xl hover:shadow-2xl hover:bg-black hover:-translate-y-1 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                        >
+                            投稿を作る
+                        </Link>
+                    )}
                 </div>
             </section>
 
             {/* Footer */}
             <footer className="w-full border-t border-gray-200/60 py-12 px-6 flex flex-col items-center justify-center text-center text-sm text-slate-700 font-medium">
-                <Link href="https://dearsconsulting.com" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 mb-4 hover:text-rose-500 transition-colors group">
+                <Link href="https://dearsconsulting.com" target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center justify-center gap-2 mb-2 px-2 hover:text-rose-500 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg">
                     <Globe size={16} className="text-slate-700 font-medium group-hover:text-rose-400 transition-colors" />
                     <span className="font-bold tracking-widest text-slate-600 group-hover:text-rose-500 transition-colors">DEARS CONSULTING</span>
                 </Link>
                 <div className="flex gap-4 mb-6">
-                    <Link href="https://dearsconsulting.com/sns-agent24/" target="_blank" rel="noopener noreferrer" className="hover:text-rose-400 transition-colors">About SNS Agent24</Link>
-                    <span>|</span>
-                    <Link href="https://dearsconsulting.com/otoiawase/" target="_blank" rel="noopener noreferrer" className="hover:text-rose-400 transition-colors">Contact</Link>
+                    <Link href="https://dearsconsulting.com/sns-agent24/" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center px-2 hover:text-rose-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg">About SNS Agent24</Link>
+                    <span aria-hidden="true" className="self-center">|</span>
+                    <Link href="https://dearsconsulting.com/otoiawase/" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center px-2 hover:text-rose-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg">Contact</Link>
                 </div>
                 <p>&copy; {new Date().getFullYear()} DEARS CONSULTING ALL RIGHTS RESERVED.</p>
             </footer>

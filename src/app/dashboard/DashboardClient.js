@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useUser, UserButton } from "@clerk/nextjs";
 import { ChevronLeft, Database, Clock, Copy, Download, Image as ImageIcon, Calendar, ArrowRight, RefreshCw, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
+import NextImage from 'next/image';
 
 export default function DashboardPage() {
     const { user, isLoaded, isSignedIn } = useUser();
@@ -158,10 +159,13 @@ export default function DashboardPage() {
                                     {gen.image_urls && gen.image_urls.length > 0 && (
                                         <div className="mb-4 flex gap-2 overflow-x-auto pb-3 snap-x scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                                             {gen.image_urls.map((url, idx) => (
-                                                <img
+                                                <NextImage
                                                     key={idx}
                                                     src={url}
-                                                    alt="Generated asset"
+                                                    alt={`保存済み投稿画像 ${idx + 1}枚目`}
+                                                    width={96}
+                                                    height={96}
+                                                    unoptimized
                                                     className="w-24 h-24 object-cover rounded-lg border border-white/10 snap-center shrink-0 shadow-md"
                                                 />
                                             ))}

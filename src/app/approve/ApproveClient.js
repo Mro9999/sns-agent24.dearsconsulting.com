@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import NextImage from 'next/image';
 import { useUser } from '@clerk/nextjs';
 import { Check, X, Loader2, Calendar, Sparkles, ArrowLeft, RefreshCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -20,6 +21,7 @@ export default function ApprovePage() {
     const [statusMsg, setStatusMsg] = useState('');
     const [imageErrors, setImageErrors] = useState({});
     const [waitingForBatch, setWaitingForBatch] = useState(false);
+    const fetchPendingRef = useRef(null);
 
     const hasRecentBatchStart = () => {
         if (typeof window === 'undefined') return false;
@@ -59,6 +61,7 @@ export default function ApprovePage() {
             setLoading(false);
         }
     };
+    fetchPendingRef.current = fetchPending;
 
     // どのpostが画像生成中かを追跡(カードにスケルトン表示するため)
     const [generatingIds, setGeneratingIds] = useState(new Set());
@@ -279,14 +282,14 @@ export default function ApprovePage() {
     };
 
     useEffect(() => {
-        if (isLoaded && user) fetchPending();
+        if (isLoaded && user) fetchPendingRef.current?.();
     }, [isLoaded, user]);
 
     useEffect(() => {
         if (!waitingForBatch || !isLoaded || !user) return;
 
         const timer = setInterval(() => {
-            fetchPending({ silent: true });
+            fetchPendingRef.current?.({ silent: true });
         }, 10000);
 
         return () => clearInterval(timer);
@@ -527,7 +530,14 @@ export default function ApprovePage() {
                                                 : "max-w-xs"}>
                                                 {allImages.map((url, idx) => (
                                                     <div key={idx} className="bg-gray-950 rounded overflow-hidden aspect-square relative">
-                                                        <img src={url} alt={`slide ${idx + 1}`} className="w-full h-full object-cover" />
+                                                        <NextImage
+                                                            src={url}
+                                                            alt={`承認待ち投稿の画像 ${idx + 1}枚目`}
+                                                            fill
+                                                            sizes={isCarousel ? "33vw" : "320px"}
+                                                            className="object-cover"
+                                                            unoptimized
+                                                        />
                                                         {isCarousel && (
                                                             <span className="absolute top-1 left-1 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
                                                                 {idx + 1}/{allImages.length}

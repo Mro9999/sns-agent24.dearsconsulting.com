@@ -1,4 +1,5 @@
 import React from 'react';
+import NextImage from 'next/image';
 
 // Icons for PurposeSelector
 const CalendarIcon = () => (
@@ -80,10 +81,12 @@ export function PurposeSelector({ selected, onSelect }) {
                 {purposes.map(({ id, label, Icon, description, example }) => {
                     const isSelected = selected === id;
                     return (
-                        <div
+                        <button
+                            type="button"
                             key={id}
                             onClick={() => onSelect(id)}
-                            className={`relative overflow-hidden rounded-2xl p-5 cursor-pointer border transition-all duration-300 ${isSelected
+                            aria-pressed={isSelected}
+                            className={`relative w-full overflow-hidden rounded-2xl p-5 text-left cursor-pointer border transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ${isSelected
                                 ? "bg-slate-900 border-slate-900 shadow-[0_10px_35px_rgba(0,0,0,0.15)] scale-[1.02]"
                                 : "bg-white/80 backdrop-blur-md border-white/60 shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:border-slate-200"
                                 }`}
@@ -122,7 +125,7 @@ export function PurposeSelector({ selected, onSelect }) {
                                     {isSelected && <CheckIcon />}
                                 </div>
                             </div>
-                        </div>
+                        </button>
                     );
                 })}
             </div>
@@ -147,8 +150,10 @@ export function CategorySelector({ selected, onSelect }) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {categories.map(c => (
                     <button
+                        type="button"
                         key={c.id}
                         onClick={() => onSelect(c)}
+                        aria-pressed={selected?.id === c.id}
                         className={`py-3.5 px-3 rounded-2xl text-sm transition-all border flex items-center justify-center ${selected?.id === c.id ? "bg-slate-900 border-slate-900 text-white shadow-[0_8px_25px_rgba(0,0,0,0.15)] font-bold scale-[1.03]" : "bg-white/80 backdrop-blur-md border-slate-300 shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-slate-600 font-medium hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:text-slate-900 hover:border-slate-400"}`}
                     >
                         {c.label}
@@ -173,9 +178,11 @@ export function FormatSelector({ selected, onSelect, isPro }) {
                     const isDisabled = f.isProOnly && !isPro;
                     return (
                         <button
+                            type="button"
                             key={f.id}
                             disabled={isDisabled}
                             onClick={() => onSelect(f.id)}
+                            aria-pressed={selected === f.id}
                             className={`p-3 md:px-5 md:py-3 rounded-xl md:rounded-full text-sm font-semibold transition-all border flex flex-col items-center justify-center gap-1 ${selected === f.id ? 'bg-indigo-600/30 border-indigo-500 text-gray-900' : 'bg-white border-slate-300 shadow-sm text-slate-500 font-medium hover:border-slate-400 font-medium hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:-translate-y-1 hover:text-rose-600'
                                 } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''} ${f.id === 'video_script' ? 'col-span-2 md:col-span-1' : ''}`}
                         >
@@ -199,16 +206,18 @@ export function TargetSelector({ selected, onSelect, isPro }) {
     ];
     return (
         <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
-            <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">メインターターゲット層</h3>
+            <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">メインターゲット層</h3>
             <div className="flex flex-wrap justify-center gap-3">
                 {targets.map(t => {
                     const isDisabled = t.isProOnly && !isPro;
                     return (
                         <button
+                            type="button"
                             key={t.id}
                             disabled={isDisabled}
                             onClick={() => onSelect(t.id)}
-                            className={`py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm 
+                            aria-pressed={selected === t.id}
+                            className={`min-h-11 py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm 
                                 ${isDisabled ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60' :
                                     selected === t.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' :
                                         'bg-white/80 backdrop-blur-sm border-slate-300 text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-400'}`}
@@ -234,9 +243,11 @@ export function GenderSelector({ selected, onSelect }) {
             <div className="flex justify-center gap-3">
                 {genders.map(g => (
                     <button
+                        type="button"
                         key={g.id}
                         onClick={() => onSelect(g.id)}
-                        className={`py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm ${selected === g.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-sm border-slate-300 text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-400'}`}
+                        aria-pressed={selected === g.id}
+                        className={`min-h-11 py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm ${selected === g.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-sm border-slate-300 text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-400'}`}
                     >
                         {g.label}
                     </button>
@@ -258,9 +269,11 @@ export function BusinessStyleSelector({ selected, onSelect }) {
             <div className="flex flex-wrap justify-center gap-3">
                 {styles.map(s => (
                     <button
+                        type="button"
                         key={s.id}
                         onClick={() => onSelect(s.id)}
-                        className={`py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm ${selected === s.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-sm border-slate-300 text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-400'}`}
+                        aria-pressed={selected === s.id}
+                        className={`min-h-11 py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm ${selected === s.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-sm border-slate-300 text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-400'}`}
                     >
                         {s.label}
                     </button>
@@ -284,9 +297,11 @@ export function ToneSelector({ selected, onSelect }) {
             <div className="flex flex-wrap justify-center gap-2">
                 {tones.map(t => (
                     <button
+                        type="button"
                         key={t.id}
                         onClick={() => onSelect(t.id)}
-                        className={`py-2 px-4 rounded font-medium transition-all text-sm border ${selected === t.id ? 'bg-orange-600/30 border-orange-500 text-gray-900' : 'bg-white/90 border-slate-300 shadow-sm text-slate-800 font-medium hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:border-slate-400 hover:text-slate-900'}`}
+                        aria-pressed={selected === t.id}
+                        className={`min-h-11 py-2 px-4 rounded font-medium transition-all text-sm border ${selected === t.id ? 'bg-orange-600/30 border-orange-500 text-gray-900' : 'bg-white/90 border-slate-300 shadow-sm text-slate-800 font-medium hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:border-slate-400 hover:text-slate-900'}`}
                     >
                         {t.label}
                     </button>
@@ -313,10 +328,12 @@ export function LanguageSelector({ selected, onSelect, isPro }) {
                     const isDisabled = l.isProOnly && !isPro;
                     return (
                         <button
+                            type="button"
                             key={l.id}
                             disabled={isDisabled}
                             onClick={() => onSelect(l.id)}
-                            className={`py-2 px-4 rounded-full font-bold transition-all text-sm border
+                            aria-pressed={selected === l.id}
+                            className={`min-h-11 py-2 px-4 rounded-full font-bold transition-all text-sm border
                                 ${isDisabled ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60' :
                                     selected === l.id ? 'bg-indigo-600/30 border-indigo-500 text-gray-900 shadow-[0_0_15px_rgba(79,70,229,0.3)]' :
                                         'bg-white/80 border-slate-300 text-slate-800 font-medium hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:border-slate-400 hover:text-gray-900'}`}
@@ -346,9 +363,11 @@ export function OverlayLanguageSelector({ selected, onSelect }) {
             <div className="flex flex-wrap justify-center gap-2">
                 {overlayLanguages.map(l => (
                     <button
+                        type="button"
                         key={l.id}
                         onClick={() => onSelect(l.id)}
-                        className={`py-2 px-4 rounded-full font-bold transition-all text-sm border
+                        aria-pressed={selected === l.id}
+                        className={`min-h-11 py-2 px-4 rounded-full font-bold transition-all text-sm border
                             ${selected === l.id ? 'bg-pink-600/30 border-pink-500 text-gray-900 shadow-[0_0_15px_rgba(236,72,153,0.3)]' :
                                 'bg-white/80 border-slate-300 text-slate-800 font-medium hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:border-slate-400 hover:text-gray-900'}`}
                     >
@@ -441,27 +460,29 @@ export function ProductInput({ value = {}, onChange }) {
 
             <div className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-slate-800 font-medium mb-1">自社・店舗名（ブランド名）</label>
+                    <label htmlFor="companyName" className="block text-sm font-medium text-slate-800 mb-1">自社・店舗名（ブランド名）</label>
                     <input
+                        id="companyName"
                         type="text"
                         name="companyName"
                         value={value.companyName || ''}
                         onChange={handleChange}
-                        className="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-gray-900 focus:outline-none focus:border-purple-500 transition-colors"
+                        className="w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                         placeholder="例：SNS Agent24"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-800 font-medium mb-1 flex items-center gap-2">
+                    <label htmlFor="sellingPoint" className="block text-sm font-medium text-slate-800 mb-1 flex items-center gap-2">
                         訴求したいポイントや特徴
                         <span className="bg-pink-500/20 text-rose-500 text-[10px] px-2 py-0.5 rounded border border-pink-500/30">※入力するとAIの精度が大幅に上がります</span>
                     </label>
                     <textarea
+                        id="sellingPoint"
                         name="sellingPoint"
                         value={value.sellingPoint || ''}
                         onChange={handleChange}
-                        className="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-gray-900 focus:outline-none focus:border-purple-500 transition-colors"
+                        className="w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                         rows="3"
                         placeholder="例：無添加のオーガニック素材を使用。20代女性の口コミで話題の新作です。"
                     />
@@ -469,13 +490,14 @@ export function ProductInput({ value = {}, onChange }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-800 font-medium mb-1">地域・ロケーション</label>
+                        <label htmlFor="location" className="block text-sm font-medium text-slate-800 mb-1">地域・ロケーション</label>
                         <input
+                            id="location"
                             type="text"
                             name="location"
                             value={value.location || ''}
                             onChange={handleChange}
-                            className="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-gray-900 focus:outline-none focus:border-purple-500 transition-colors"
+                            className="w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                             placeholder="例：東京都渋谷区"
                         />
                     </div>
@@ -483,31 +505,33 @@ export function ProductInput({ value = {}, onChange }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-800 font-medium mb-1">自社・店舗URL、または参考サイトURL</label>
+                        <label htmlFor="websiteUrl" className="block text-sm font-medium text-slate-800 mb-1">自社・店舗URL、または参考サイトURL</label>
                         <input
+                            id="websiteUrl"
                             type="url"
                             name="websiteUrl"
                             value={value.websiteUrl || ''}
                             onChange={handleChange}
-                            className="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-gray-900 focus:outline-none focus:border-purple-500 transition-colors"
+                            className="w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                             placeholder="https://..."
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-800 font-medium mb-1">SNSリンク（Instagram, X, LINE等）</label>
+                        <label htmlFor="snsUrl" className="block text-sm font-medium text-slate-800 mb-1">SNSリンク（Instagram, X, LINE等）</label>
                         <input
+                            id="snsUrl"
                             type="url"
                             name="snsUrl"
                             value={value.snsUrl || ''}
                             onChange={handleChange}
-                            className="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-gray-900 focus:outline-none focus:border-purple-500 transition-colors"
+                            className="w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                             placeholder="https://instagram.com/..."
                         />
                     </div>
                 </div>
 
                 <div className="bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl mt-4">
-                    <label className="block text-sm font-bold text-blue-300 mb-2 flex flex-col sm:flex-row sm:items-center gap-2">
+                    <label htmlFor="baseImageInput" className="block text-sm font-bold text-blue-700 mb-2 flex flex-col sm:flex-row sm:items-center gap-2">
                         <span>ベース写真・商品画像 <span className="text-gray-700 font-normal text-xs">(推奨)</span></span>
                         <span className="text-slate-800 font-medium font-normal text-xs bg-white/90 border border-slate-200 shadow-sm text-slate-8000 border border-white shadow-lg/80 px-2 py-0.5 rounded border border-gray-700">複数枚（最大5枚）選択可能</span>
                     </label>
@@ -519,16 +543,17 @@ export function ProductInput({ value = {}, onChange }) {
                             accept="image/*"
                             multiple
                             onChange={handleBaseImageUpload}
-                            className="w-full text-sm text-slate-800 font-medium file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500/20 file:text-blue-300 hover:file:bg-blue-500/30 transition-all cursor-pointer"
+                            className="min-h-11 w-full text-sm text-slate-800 font-medium file:mr-4 file:min-h-11 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 transition-all cursor-pointer"
                         />
                     </div>
                     {value.baseImages && value.baseImages.length > 0 && (
-                        <div className="mt-4 p-3 bg-black/50 rounded-lg border border-blue-500/20 shadow-lg">
-                            <p className="text-xs text-slate-800 font-medium mb-3 flex items-center justify-between">
+                        <div className="mt-4 p-3 bg-slate-100 rounded-lg border border-blue-200 shadow-sm">
+                            <p className="text-xs text-slate-700 font-medium mb-3 flex items-center justify-between gap-3">
                                 アップロード済みプレビュー ({value.baseImages.length}/5)
                                 <button
+                                    type="button"
                                     onClick={() => onChange({ ...value, baseImages: [] })}
-                                    className="text-red-400 hover:text-red-300 underline"
+                                    className="min-h-11 px-2 -my-2 text-red-700 hover:text-red-800 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded"
                                 >
                                     すべて削除
                                 </button>
@@ -536,15 +561,17 @@ export function ProductInput({ value = {}, onChange }) {
                             <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                                 {value.baseImages.map((imgBase64, idx) => (
                                     <div key={idx} className="relative group shrink-0">
-                                        <img src={imgBase64} alt={`Preview ${idx + 1}`} className="h-24 w-24 object-cover rounded border border-gray-600 shadow-md" />
+                                        <NextImage src={imgBase64} alt={`アップロードした商品画像 ${idx + 1}枚目`} width={96} height={96} unoptimized className="h-24 w-24 object-cover rounded border border-gray-600 shadow-md" />
                                         <button
+                                            type="button"
                                             onClick={() => removeBaseImage(idx)}
-                                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-gray-900 rounded-full text-xs flex items-center justify-center opacity-80 hover:opacity-100 hover:scale-110 transition-all shadow-lg"
+                                            aria-label={`アップロードした商品画像 ${idx + 1}枚目を削除`}
+                                            className="absolute -top-3 -right-3 w-11 h-11 bg-red-600 text-white rounded-full text-sm flex items-center justify-center opacity-95 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 transition-all shadow-lg"
                                             title="この画像を削除"
                                         >
                                             ✕
                                         </button>
-                                        <span className="absolute bottom-1 left-1 bg-black/70 text-gray-900 text-[10px] px-1.5 rounded">{idx + 1}</span>
+                                        <span className="absolute bottom-1 left-1 bg-black/75 text-white text-[10px] px-1.5 rounded">{idx + 1}</span>
                                     </div>
                                 ))}
                             </div>
@@ -553,7 +580,7 @@ export function ProductInput({ value = {}, onChange }) {
                 </div>
 
                 <div className="bg-white/60 backdrop-blur-md border border-slate-200/60 p-5 md:p-6 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all">
-                    <label className="block text-sm font-extrabold text-slate-800 mb-2">
+                    <label htmlFor="logoImageInput" className="block text-sm font-extrabold text-slate-800 mb-2">
                         ブランドロゴ・透かし画像 (任意) <span className="text-slate-500 font-medium ml-2 text-xs">※自動で軽量化されます</span>
                     </label>
                     <div className="flex items-center gap-4">
@@ -617,14 +644,16 @@ export function ProductInput({ value = {}, onChange }) {
                         />
                         {value.logoUrl && (
                             <div className="h-12 w-12 shrink-0 rounded-full overflow-hidden border-2 border-rose-200 relative group bg-white/90 border border-slate-200 shadow-sm text-slate-8000 border border-white shadow-lg/80">
-                                <img src={value.logoUrl} alt="Logo" className="h-full w-full object-cover" />
+                                <NextImage src={value.logoUrl} alt="アップロードしたブランドロゴ" fill sizes="48px" unoptimized className="object-cover" />
                                 <button
+                                    type="button"
+                                    aria-label="ブランドロゴを削除"
                                     onClick={() => {
                                         onChange({ ...value, logoUrl: null });
                                         const input = document.getElementById('logoImageInput');
                                         if (input) input.value = '';
                                     }}
-                                    className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold"
+                                    className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 transition-opacity text-xs font-bold"
                                 >
                                     削除
                                 </button>
