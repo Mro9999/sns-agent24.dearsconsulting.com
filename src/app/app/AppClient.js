@@ -1352,34 +1352,38 @@ export default function Home() {
                             生成が完了しました！
                         </h2>
 
-                        <div className="w-full bg-white/90 border border-slate-200 shadow-sm text-slate-8000 border border-white shadow-lg/80 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-2xl p-6 mb-6">
-                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-[#D4A373]">
+                        <p role="note" className="mb-6 w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
+                            AIが公開情報をもとに作成した参考案です。数値や固有情報は、投稿前に一次情報をご確認ください。
+                        </p>
+
+                        <div className="mb-6 w-full rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+                            <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900">
                                 <BrainCircuit size={20} /> 3D AIトレンドリサーチ
                             </h3>
 
                             <div className="space-y-4">
                                 <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-4 rounded-xl border border-white shadow-lg/5">
-                                    <h4 className="text-sm font-bold text-gray-200 mb-2 flex items-center gap-2">
-                                        <Globe size={16} className="text-slate-800 font-medium" /> ① 世の中の大きなトレンド
+                                    <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
+                                        <Globe size={16} className="text-rose-600" /> ① 世の中の大きなトレンド
                                     </h4>
                                     <p className="text-slate-800 font-medium text-sm leading-relaxed">{result.research.insight_macro}</p>
                                 </div>
                                 <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-4 rounded-xl border border-white shadow-lg/5">
-                                    <h4 className="text-sm font-bold text-gray-200 mb-2 flex items-center gap-2">
-                                        <Building size={16} className="text-slate-800 font-medium" /> ② 業界内でのトレンド
+                                    <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
+                                        <Building size={16} className="text-rose-600" /> ② 業界内でのトレンド
                                     </h4>
                                     <p className="text-slate-800 font-medium text-sm leading-relaxed">{result.research.insight_industry}</p>
                                 </div>
                                 <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-4 rounded-xl border border-white shadow-lg/5">
-                                    <h4 className="text-sm font-bold text-gray-200 mb-2 flex items-center gap-2">
-                                        <Target size={16} className="text-slate-800 font-medium" /> ③ ターゲット層のトレンド
+                                    <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
+                                        <Target size={16} className="text-rose-600" /> ③ ターゲット層のトレンド
                                     </h4>
                                     <p className="text-slate-800 font-medium text-sm leading-relaxed">{result.research.insight_target}</p>
                                 </div>
 
-                                <div className="mt-6 bg-blue-900/20 p-5 rounded-xl border border-blue-500/30">
-                                    <h4 className="text-sm font-bold text-blue-300 mb-2 flex items-center gap-2">
-                                        <Lightbulb size={16} className="text-[#D4A373]" /> 統合インサイト（今回のアプローチ方針）
+                                <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-5">
+                                    <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-blue-950">
+                                        <Lightbulb size={16} className="text-blue-700" /> 統合インサイト（今回のアプローチ方針）
                                     </h4>
                                     <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
                                         {result.research.insight_summary}
@@ -1388,9 +1392,9 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <div className="w-full bg-white/90 border border-slate-200 shadow-sm text-slate-8000 border border-white shadow-lg/80 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-2xl p-6 mb-6">
-                            <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-green-400">
-                                <PenTool size={20} /> 生成されたキャプション {selectedFormat === 'video_script' && '（投稿文用）'}
+                        <div className="mb-6 w-full rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+                            <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
+                                <PenTool size={20} className="text-rose-600" /> 生成されたキャプション {selectedFormat === 'video_script' && '（投稿文用）'}
                             </h3>
                             <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg/5 p-4 rounded-xl mb-4 text-sm leading-relaxed whitespace-pre-wrap">
                                 {result.post.caption}
@@ -1405,17 +1409,17 @@ export default function Home() {
                                     posthog?.capture('content_copied', { format: selectedFormat });
                                     alert('コピーしました！');
                                 }}
-                                className="w-full py-3 bg-white/60 backdrop-blur-xl hover:bg-white/20 rounded-lg text-sm font-bold flex flex-row items-center justify-center gap-2 transition-colors"
+                                className="flex w-full flex-row items-center justify-center gap-2 rounded-lg bg-slate-900 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
                             >
                                 <Copy size={16} /> キャプションをコピー
                             </button>
                         </div>
 
-                        <div className="w-full bg-white/90 border border-slate-200 shadow-sm text-slate-8000 border border-white shadow-lg/80 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-2xl p-6 mb-8">
+                        <div className="mb-8 w-full rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
                             {selectedFormat === 'video_script' ? (
                                 <>
-                                    <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-orange-400">
-                                        <ImageIcon size={20} /> ショート動画台本 (TikTok / Reels / Shorts)
+                                    <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
+                                        <ImageIcon size={20} className="text-rose-600" /> ショート動画台本 (TikTok / Reels / Shorts)
                                     </h3>
                                     <p className="text-xs text-slate-600 mb-4">{result.post.image_idea}</p>
 
@@ -1446,8 +1450,8 @@ export default function Home() {
                                 </>
                             ) : (
                                 <>
-                                    <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-orange-400">
-                                        <ImageIcon size={20} /> {selectedFormat === 'carousel' ? 'カルーセル用 画像一覧' : 'AI生成画像'}
+                                    <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
+                                        <ImageIcon size={20} className="text-rose-600" /> {selectedFormat === 'carousel' ? 'カルーセル用 画像一覧' : 'AI生成画像'}
                                     </h3>
                                     <p className="text-xs text-slate-600 mb-4">{result.post.image_idea}</p>
 
@@ -1456,7 +1460,7 @@ export default function Home() {
                                         {result.imageUrls && result.imageUrls.length > 0 ? (
                                             result.imageUrls.map((url, idx) => (
                                                 <div key={idx} className="w-full md:w-[45%] lg:w-[30%] aspect-square bg-[#1a1a1a] rounded-xl overflow-hidden relative shadow-[0_4px_20px_rgba(0,0,0,0.5)] border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] mx-auto">
-                                                    <img src={url} alt={`Generated ${idx + 1}`} className="w-full h-full object-cover" />
+                                                    <img src={url} alt={`AI生成画像 ${idx + 1}枚目`} className="w-full h-full object-cover" />
 
                                                     {selectedFormat === 'carousel' && (
                                                         <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-gray-900 text-xs px-2 py-1 rounded-md font-bold border border-rose-200">

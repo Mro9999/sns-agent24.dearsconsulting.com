@@ -22,6 +22,9 @@ const appearance = {
         headerSubtitle: 'text-slate-600',
         formButtonPrimary: 'bg-slate-950 hover:bg-slate-800 normal-case',
         footer: 'bg-transparent',
+        footerAction: 'flex-nowrap',
+        footerActionText: 'shrink-0',
+        footerActionLink: 'whitespace-nowrap',
     },
 };
 

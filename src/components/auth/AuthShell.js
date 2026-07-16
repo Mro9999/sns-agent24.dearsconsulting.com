@@ -22,7 +22,7 @@ export default function AuthShell({ eyebrow, title, description, children }) {
                         </div>
 
                         <p className="mb-3 text-sm font-bold tracking-wide text-rose-500">{eyebrow}</p>
-                        <h1 className="max-w-xl text-3xl font-extrabold leading-tight text-slate-900 sm:text-4xl">{title}</h1>
+                        <p className="max-w-xl text-3xl font-extrabold leading-tight text-slate-900 sm:text-4xl">{title}</p>
                         <p className="mt-5 max-w-xl text-base leading-8 text-slate-600">{description}</p>
 
                         <ul className="mt-8 space-y-3 text-sm font-medium text-slate-700">

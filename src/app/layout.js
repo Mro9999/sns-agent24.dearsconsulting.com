@@ -5,6 +5,8 @@ import { PHProvider } from '../providers/PHProvider'
 
 const localization = {
     ...jaJP,
+    // Clerk の日本語リソースで未翻訳のままになっている登録用プレースホルダーを補完する。
+    formFieldInputPlaceholder__signUpPassword: 'パスワードを作成',
     signIn: {
         ...jaJP.signIn,
         start: {
