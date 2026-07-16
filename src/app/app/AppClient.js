@@ -22,14 +22,19 @@ export default function Home() {
 
     const [serverIsPro, setServerIsPro] = useState(null);
     const [serverIsProMax, setServerIsProMax] = useState(null);
+    const [billingAttentionRequired, setBillingAttentionRequired] = useState(false);
+    const [billingPortalAvailable, setBillingPortalAvailable] = useState(null);
+    const [portalError, setPortalError] = useState('');
     useEffect(() => {
         if (isSignedIn) {
             fetch('/api/user/status')
                 .then(res => res.json())
                 .then(data => {
                     console.log("Strict Backend Check:", data);
-                    if (data.isPro) setServerIsPro(true);
-                    if (data.isProMax) setServerIsProMax(true);
+                    setServerIsPro(Boolean(data.isPro));
+                    setServerIsProMax(Boolean(data.isProMax));
+                    setBillingAttentionRequired(Boolean(data.billingAttentionRequired));
+                    setBillingPortalAvailable(Boolean(data.billingPortalAvailable));
                 })
                 .catch(console.error);
         }
@@ -325,12 +330,19 @@ export default function Home() {
 
     const handlePortal = async () => {
         try {
+            setPortalError('');
             posthog?.capture('portal_opened');
             const res = await fetch('/api/portal', { method: 'POST' });
-            const data = await res.json();
-            if (data.url) window.location.href = data.url;
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.error || '管理画面を開けませんでした');
+            }
+            if (!data.url) {
+                throw new Error('管理画面のURLを取得できませんでした');
+            }
+            window.location.href = data.url;
         } catch (e) {
-            alert("管理画面への移動に失敗しました");
+            setPortalError('プラン管理画面を開けませんでした。時間をおいてもう一度お試しください。');
             if (e.message !== "ログインが必要です。") {
                 reportErrorToAdmin(e, "handlePortal - カスタマーポータル遷移時");
             }
@@ -855,10 +867,11 @@ export default function Home() {
                             </a>
                             <button
                                 onClick={handlePortal}
-                                className="bg-white/60 backdrop-blur-xl hover:bg-white/20 border border-rose-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
+                                disabled={billingPortalAvailable === false}
+                                className="bg-white/60 backdrop-blur-xl hover:bg-white/20 border border-rose-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all disabled:cursor-default disabled:opacity-80"
                             >
                                 <Gem size={16} className="text-[#D4A373]" />
-                                Proプラン管理
+                                {billingPortalAvailable === false ? '運営者アカウント' : 'Proプラン管理'}
                             </button>
                         </div>
                     ) : (
@@ -875,6 +888,40 @@ export default function Home() {
                     )}
                 </div>
             </header>
+
+            {mounted && billingAttentionRequired && isPro && (
+                <section
+                    role="alert"
+                    aria-labelledby="billing-attention-title"
+                    className="mx-auto mt-3 flex w-[calc(100%-2rem)] max-w-4xl flex-col gap-4 rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-amber-950 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+                >
+                    <div className="flex items-start gap-3">
+                        <AlertTriangle className="mt-0.5 shrink-0 text-amber-600" size={22} aria-hidden="true" />
+                        <div>
+                            <p id="billing-attention-title" className="font-bold">お支払い方法をご確認ください</p>
+                            <p className="mt-1 text-sm leading-relaxed">
+                                現在は引き続き利用できます。継続して使えるよう、カード情報をご確認ください。
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={handlePortal}
+                        className="min-h-11 shrink-0 rounded-full bg-amber-900 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2"
+                    >
+                        支払い方法を確認
+                    </button>
+                </section>
+            )}
+
+            {mounted && portalError && (
+                <p
+                    role="alert"
+                    className="mx-auto mt-3 w-[calc(100%-2rem)] max-w-4xl rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+                >
+                    {portalError}
+                </p>
+            )}
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col items-center mt-12 px-4 w-full">

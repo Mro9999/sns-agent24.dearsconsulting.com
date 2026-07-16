@@ -57,6 +57,8 @@ export async function GET() {
         const clerk = await clerkClient();
         const user = await clerk.users.getUser(userId);
         let role = user.publicMetadata?.role;
+        let billingAttentionRequired = user.privateMetadata?.stripeBillingAttentionRequired === true;
+        let billingPortalAvailable = Boolean(user.privateMetadata?.stripeCustomerId);
         const email = user.emailAddresses[0]?.emailAddress;
         const adminAccessEmails = [
             process.env.ADMIN_EMAIL,
@@ -86,6 +88,8 @@ export async function GET() {
                 const paidSubscription = await findPaidSubscription(user);
                 if (paidSubscription) {
                     role = paidSubscription.role;
+                    billingAttentionRequired = paidSubscription.status === 'past_due';
+                    billingPortalAvailable = true;
                     const periodEnd = paidSubscription.periodEnd
                         ? new Date(paidSubscription.periodEnd * 1000).toISOString()
                         : null;
@@ -116,6 +120,8 @@ export async function GET() {
         return NextResponse.json({ 
             isPro: role === 'pro' || role === 'promax' || role === 'admin',
             isProMax: role === 'promax' || role === 'admin',
+            billingAttentionRequired: role !== 'admin' && billingAttentionRequired,
+            billingPortalAvailable,
             role: role,
             email: email
         });
