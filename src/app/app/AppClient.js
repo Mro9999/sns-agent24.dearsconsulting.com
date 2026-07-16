@@ -62,6 +62,7 @@ export default function Home() {
     const [batchStatus, setBatchStatus] = useState(''); // バッチ生成中の進捗表示用
     const [batchCompleted, setBatchCompleted] = useState(null); // バッチ完了後の永続的な確認カード用 ({ count: number } or null)
     const [generationRecoveryNotice, setGenerationRecoveryNotice] = useState('');
+    const [generationError, setGenerationError] = useState(null);
 
     // パーソナライズされた動的ログの生成関数
     const getDynamicLogs = (category, targetLabel) => {
@@ -352,8 +353,13 @@ export default function Home() {
     };
 
     const handleGenerate = async () => {
+        setGenerationError(null);
         if (!selectedCategory || !selectedPurpose || !selectedTarget || !selectedGender || !selectedBusinessStyle || !selectedTone || !selectedFormat) {
-            alert("すべての項目を選択してください");
+            setGenerationError({
+                title: '未選択の項目があります',
+                message: 'すべての項目を選択してから、もう一度「生成する」を押してください。'
+            });
+            window.setTimeout(() => document.getElementById('generation-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
             return;
         }
         setGenerationRecoveryNotice('');
@@ -369,8 +375,12 @@ export default function Home() {
         const maxLimit = getDailyFreeLimit();
         if (!checkLimitAndRecord()) {
             posthog?.capture('free_limit_hit', { daily_limit: maxLimit, platform: selectedPlatform });
-            alert(`本日の無料生成枠（${maxLimit}回）を使い切りました。\n引き続き無制限でご利用いただくには、Proプランへのアップグレードをご検討ください！`);
-            document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+            setGenerationError({
+                title: '本日の無料生成枠を使い切りました',
+                message: `無料プランは1日${maxLimit}回まで生成できます。明日もう一度お試しいただくか、無制限で使えるProプランをご確認ください。`,
+                showUpgrade: true
+            });
+            window.setTimeout(() => document.getElementById('generation-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
             return;
         }
 
@@ -519,7 +529,11 @@ export default function Home() {
                 reportErrorToAdmin(e, `handleGenerate - mobile/background network interrupted at step: ${currentStep}`);
                 return;
             }
-            alert("エラーが発生しました: " + e.message);
+            setGenerationError({
+                title: '生成を完了できませんでした',
+                message: e?.message || '時間をおいて、もう一度お試しください。'
+            });
+            window.setTimeout(() => document.getElementById('generation-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
             // 失敗ステップ名を context に含めて管理者に通知 → スタックが空でも切り分け可能
             reportErrorToAdmin(e, `handleGenerate - failed at step: ${currentStep}`);
         } finally {
@@ -1349,9 +1363,39 @@ export default function Home() {
                                 <LanguageSelector selected={selectedLanguage} onSelect={setSelectedLanguage} isPro={isPro} />
                                 <ProductInput value={productContext} onChange={setProductContext} />
 
-                                <div className="mt-8 mb-16">
+                                <div className="mt-8 mb-16 flex w-full flex-col items-center gap-4">
+                                    {generationError && (
+                                        <div
+                                            id="generation-error"
+                                            role="alert"
+                                            aria-live="assertive"
+                                            className="w-full rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-left shadow-sm"
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <AlertTriangle size={20} className="mt-0.5 flex-shrink-0 text-rose-600" aria-hidden="true" />
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-bold text-rose-950">{generationError.title}</p>
+                                                    <p className="mt-1 text-sm leading-relaxed text-rose-800">{generationError.message}</p>
+                                                    {generationError.showUpgrade && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setStep(0);
+                                                                window.setTimeout(() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                                                            }}
+                                                            className="mt-3 inline-flex min-h-11 items-center rounded-full bg-slate-900 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                                                        >
+                                                            料金プランを見る
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                     <button
+                                        type="button"
                                         onClick={handleGenerate}
+                                        aria-describedby={generationError ? 'generation-error' : undefined}
                                         className="w-[320px] h-16 rounded-full overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.25)] hover:scale-105 hover:-translate-y-1 transition-all duration-300 text-white font-extrabold tracking-widest text-lg flex items-center justify-center gap-3 bg-slate-900 border border-slate-700/50"
                                     >
                                         <Sparkles size={22} className="text-white" />
