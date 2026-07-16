@@ -1,15 +1,10 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin as supabase } from '@/lib/supabaseAdmin';
 import crypto from 'crypto';
 import sharp from 'sharp';
 import { generateImage, refineSlideImageHint, auditSlideImage } from '@/lib/apiService';
 import { composeOverlayImage, composeTextOnlySlide } from '@/lib/serverOverlayHelper';
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
 
 export const dynamic = "force-dynamic";
 // 画像生成 (Imagen) + 各スライドの overlay 合成 (Satori) で時間がかかるため maxDuration を伸ばす

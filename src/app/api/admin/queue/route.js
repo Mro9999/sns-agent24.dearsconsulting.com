@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabaseAdmin as supabase } from '@/lib/supabaseAdmin';
 
 // Make.comからの認証用シークレット。未設定ならfail closed。
 const ADMIN_SECRET = process.env.ADMIN_QUEUE_SECRET;

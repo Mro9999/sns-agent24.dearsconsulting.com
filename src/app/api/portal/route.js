@@ -12,15 +12,21 @@ export async function POST(req) {
 
         // Get user's Stripe Customer ID from Clerk metadata
         const user = await currentUser();
+        if (!user) {
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
         const stripeCustomerId = user.privateMetadata.stripeCustomerId;
 
         const reqUrl = new URL(req.url);
         const origin = reqUrl.origin;
 
         if (!stripeCustomerId) {
+            if (user.publicMetadata?.role === 'admin') {
+                return NextResponse.json({ error: 'Admin accounts do not use the billing portal' }, { status: 400 });
+            }
             // ローカル開発中のWebhook未到達などで「Stripe顧客IDがないのにProになっている」エラー状態（Ghost Pro）の場合の自己修復
             console.log("No Stripe Customer ID found. Auto-healing ghost pro user.");
-            const clerk = clerkClient();
+            const clerk = await clerkClient();
             await clerk.users.updateUserMetadata(userId, {
                 publicMetadata: { role: null }
             });

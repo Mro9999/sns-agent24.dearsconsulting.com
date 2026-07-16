@@ -5,7 +5,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 
 export async function POST(req) {
     const body = await req.text();
-    const signature = headers().get("Stripe-Signature"); // await headers() if Next 15? No, kept simple.
+    const signature = (await headers()).get("Stripe-Signature");
 
     let event;
 
@@ -20,7 +20,7 @@ export async function POST(req) {
     }
 
     const session = event.data.object;
-    const clerk = clerkClient();
+    const clerk = await clerkClient();
 
     if (event.type === "checkout.session.completed") {
         const subscription = await stripe.subscriptions.retrieve(

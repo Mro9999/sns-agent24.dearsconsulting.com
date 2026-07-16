@@ -88,7 +88,10 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
                 "商用利用完全OK"
             ],
             upgradeText: "Proにアップグレード",
-            action: () => onUpgrade ? onUpgrade(billingCycle, 'pro') : window.location.href = '/app'
+            action: () => {
+                if (onUpgrade) return onUpgrade(billingCycle, 'pro');
+                window.location.assign('/app');
+            }
         }),
         buildPlanCard('promax', {
             name: "Pro Max Plan",
@@ -233,11 +236,11 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
                                                 <span className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 shadow-sm">
                                                     <Check size={12} className="text-white" strokeWidth={3} />
                                                 </span>
-                                                <span className="text-gray-800">品質 <span className="font-black text-gray-900">最新AI最高水準</span></span>
+                                                <span className="text-gray-800">品質 <span className="font-black text-gray-900">最新AIで生成・編集</span></span>
                                             </div>
                                         </div>
                                         <p className="text-[11px] text-gray-700 font-medium mt-4 pt-4 border-t border-rose-200 leading-relaxed">
-                                            プロ同等の品質を維持しながら<br />時間と資金をコア業務へ集中
+                                            投稿案の作成時間を減らしながら<br />大切な業務へ集中
                                         </p>
                                     </div>
                                 </div>

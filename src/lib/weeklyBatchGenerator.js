@@ -1,11 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin as supabase } from '@/lib/supabaseAdmin';
 import { researchTrends, generatePost, factCheckPost, scrapeWebsite } from '@/lib/apiService';
 import { buildPlatformCaption, PLATFORM_CAPTION_LIMITS } from '@/lib/captionUtils';
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
 
 const APP_BASE_URL = 'https://sns-agent24.dearsconsulting.com';
 

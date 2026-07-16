@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
-import { getAuth } from '@clerk/nextjs/server';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { auth } from '@clerk/nextjs/server';
 import crypto from 'crypto';
 
 export async function POST(req) {
     try {
-        const { userId } = getAuth(req);
+        const { userId } = await auth();
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
+        const supabaseAdmin = getSupabaseAdmin();
         if (!supabaseAdmin) {
             console.error("Supabase Admin client is not configured.");
             return new NextResponse("Database configuration error", { status: 500 });
@@ -30,9 +31,20 @@ export async function POST(req) {
         }
         
         const mimeType = base64Parts[0].split(':')[1] || 'image/jpeg';
-        const ext = mimeType.split('/')[1] || 'jpg';
+        const allowedTypes = new Map([
+            ['image/jpeg', 'jpg'],
+            ['image/png', 'png'],
+            ['image/webp', 'webp'],
+        ]);
+        const ext = allowedTypes.get(mimeType);
+        if (!ext) {
+            return new NextResponse('Unsupported image type', { status: 415 });
+        }
         const rawBase64 = base64Parts[1];
         const buffer = Buffer.from(rawBase64, 'base64');
+        if (buffer.length === 0 || buffer.length > 10 * 1024 * 1024) {
+            return new NextResponse('Image must be 10MB or smaller', { status: 413 });
+        }
 
         const BUCKET_NAME = 'generated-images';
 

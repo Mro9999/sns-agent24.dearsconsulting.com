@@ -1,19 +1,13 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { authorizeCronRequest } from '@/lib/server/cronAuth';
 
 export const dynamic = "force-dynamic";// Vercel Cron ジョブとして定期実行される（毎週月曜日を想定）
 // 例: GET /api/cron/weekly-ideas
 export async function GET(req) {
     try {
-        // 1. Cronの認証（意図しない第三者からの実行を防ぐ）
-        // Vercel Cronは実行時に Authorization ヘッダーに CRON_SECRET を付与する設定が可能
-        const authHeader = req.headers.get('authorization');
-        // もしローカルテスト用などで CRON_SECRET が未設定の場合はスルー（本番では必ず設定する想定）
-        if (process.env.CRON_SECRET) {
-            if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-                return new NextResponse('Unauthorized', { status: 401 });
-            }
-        }
+        const authError = authorizeCronRequest(req);
+        if (authError) return authError;
 
         console.log("Starting weekly cron job: Generating universal trends...");
 

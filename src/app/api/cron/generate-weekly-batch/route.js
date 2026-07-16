@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin as supabase } from '@/lib/supabaseAdmin';
 import { generateWeeklyPostsForSettings } from '@/lib/weeklyBatchGenerator';
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import { authorizeCronRequest } from '@/lib/server/cronAuth';
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300; // Vercel Hobby の最大5分
@@ -19,13 +15,8 @@ export const maxDuration = 300; // Vercel Hobby の最大5分
 
 export async function GET(req) {
     try {
-        // Cron認証
-        const authHeader = req.headers.get('authorization');
-        if (process.env.CRON_SECRET) {
-            if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-                return new NextResponse('Unauthorized', { status: 401 });
-            }
-        }
+        const authError = authorizeCronRequest(req);
+        if (authError) return authError;
 
         console.log('[generate-weekly-batch] 開始');
 

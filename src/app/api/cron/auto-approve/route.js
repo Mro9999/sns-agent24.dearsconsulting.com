@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import { supabaseAdmin as supabase } from '@/lib/supabaseAdmin';
+import { authorizeCronRequest } from '@/lib/server/cronAuth';
 
 export const dynamic = "force-dynamic";
 
@@ -17,13 +13,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req) {
     try {
-        // Cron認証
-        const authHeader = req.headers.get('authorization');
-        if (process.env.CRON_SECRET) {
-            if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-                return new NextResponse('Unauthorized', { status: 401 });
-            }
-        }
+        const authError = authorizeCronRequest(req);
+        if (authError) return authError;
 
         // 予約時刻が「今から30分以内」に来る、かつ pending_approval な投稿を取得
         const cutoff = new Date(Date.now() + 30 * 60 * 1000).toISOString();

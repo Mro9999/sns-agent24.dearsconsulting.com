@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
 import { TwitterApi } from 'twitter-api-v2';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import { supabaseAdmin as supabase } from '@/lib/supabaseAdmin';
+import { authorizeCronRequest } from '@/lib/server/cronAuth';
 
 export const dynamic = "force-dynamic";
 
@@ -13,13 +9,8 @@ export const dynamic = "force-dynamic";
 // 予約時刻が来た X (Twitter) の queued 投稿を1件取得して投稿する
 export async function GET(req) {
     try {
-        // 1. Cron 認証（Vercelが付与する Bearer トークンで認証）
-        const authHeader = req.headers.get('authorization');
-        if (process.env.CRON_SECRET) {
-            if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-                return new NextResponse('Unauthorized', { status: 401 });
-            }
-        }
+        const authError = authorizeCronRequest(req);
+        if (authError) return authError;
 
         // 2. X API クライアントを作成（OAuth 1.0a User Context）
         if (!process.env.X_CONSUMER_KEY || !process.env.X_ACCESS_TOKEN) {

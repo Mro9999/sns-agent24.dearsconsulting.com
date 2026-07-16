@@ -16,17 +16,14 @@ export async function POST(req) {
 
         const reqBody = await req.json().catch(() => ({}));
         const { interval = 'month', tier = 'pro' } = reqBody;
+        if (!['month', 'year'].includes(interval) || tier !== 'pro') {
+            return NextResponse.json({ error: 'Unsupported plan selection' }, { status: 400 });
+        }
 
         let priceId;
-        if (tier === 'promax') {
-            priceId = interval === 'year' 
-                ? process.env.STRIPE_PRICE_ID_PROMAX_YEARLY
-                : process.env.STRIPE_PRICE_ID_PROMAX_MONTHLY;
-        } else {
-            priceId = interval === 'year'
-                ? process.env.STRIPE_PRICE_ID_YEARLY
-                : (process.env.STRIPE_PRICE_ID_MONTHLY || process.env.STRIPE_PRICE_ID);
-        }
+        priceId = interval === 'year'
+            ? process.env.STRIPE_PRICE_ID_YEARLY
+            : (process.env.STRIPE_PRICE_ID_MONTHLY || process.env.STRIPE_PRICE_ID);
 
         if (!priceId) {
             console.error("Missing Stripe Price ID for tier:", tier, "interval:", interval);
@@ -48,7 +45,7 @@ export async function POST(req) {
             ],
             success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${origin}/app`,
-            customer_email: user.emailAddresses[0].emailAddress,
+            customer_email: user.emailAddresses[0]?.emailAddress,
             metadata: {
                 userId: userId,
                 planTier: tier

@@ -12,7 +12,8 @@ export default function ProMaxInquiryModal({ isOpen, onClose, defaultEmail = '',
         email: defaultEmail,
         phone: '',
         business_description: '',
-        inquiry_details: ''
+        inquiry_details: '',
+        company_website: '',
     });
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
@@ -66,11 +67,11 @@ export default function ProMaxInquiryModal({ isOpen, onClose, defaultEmail = '',
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl my-8 max-h-[90vh] overflow-y-auto">
+            <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl my-8 max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="pro-max-dialog-title">
                 <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
                     <div className="flex items-center gap-2">
                         <Sparkles size={18} className="text-rose-500" />
-                        <h2 className="font-bold text-gray-900">Pro Max Plan 個別相談</h2>
+                        <h2 id="pro-max-dialog-title" className="font-bold text-gray-900">Pro Max Plan 個別相談</h2>
                     </div>
                     <button
                         type="button"
@@ -107,9 +108,22 @@ export default function ProMaxInquiryModal({ isOpen, onClose, defaultEmail = '',
                             Pro Max Plan はお客様の事業特性に合わせたカスタム設定をご提供するため、個別相談からご契約までをお受けしております。まずは以下のフォームよりご連絡ください。
                         </p>
 
-                        <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">会社名 <span className="text-rose-500">*</span></label>
+                        <div className="hidden" aria-hidden="true">
+                            <label htmlFor="company_website">ウェブサイト</label>
                             <input
+                                id="company_website"
+                                type="text"
+                                value={form.company_website}
+                                onChange={handleChange('company_website')}
+                                tabIndex={-1}
+                                autoComplete="off"
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="company_name" className="block text-xs font-bold text-gray-700 mb-1">会社名 <span className="text-rose-500">*</span></label>
+                            <input
+                                id="company_name"
                                 type="text"
                                 value={form.company_name}
                                 onChange={handleChange('company_name')}
@@ -120,8 +134,9 @@ export default function ProMaxInquiryModal({ isOpen, onClose, defaultEmail = '',
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">お名前 <span className="text-rose-500">*</span></label>
+                            <label htmlFor="contact_name" className="block text-xs font-bold text-gray-700 mb-1">お名前 <span className="text-rose-500">*</span></label>
                             <input
+                                id="contact_name"
                                 type="text"
                                 value={form.contact_name}
                                 onChange={handleChange('contact_name')}
@@ -132,8 +147,9 @@ export default function ProMaxInquiryModal({ isOpen, onClose, defaultEmail = '',
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">メールアドレス <span className="text-rose-500">*</span></label>
+                            <label htmlFor="inquiry_email" className="block text-xs font-bold text-gray-700 mb-1">メールアドレス <span className="text-rose-500">*</span></label>
                             <input
+                                id="inquiry_email"
                                 type="email"
                                 value={form.email}
                                 onChange={handleChange('email')}
@@ -144,8 +160,9 @@ export default function ProMaxInquiryModal({ isOpen, onClose, defaultEmail = '',
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">電話番号</label>
+                            <label htmlFor="inquiry_phone" className="block text-xs font-bold text-gray-700 mb-1">電話番号</label>
                             <input
+                                id="inquiry_phone"
                                 type="tel"
                                 value={form.phone}
                                 onChange={handleChange('phone')}
@@ -155,8 +172,9 @@ export default function ProMaxInquiryModal({ isOpen, onClose, defaultEmail = '',
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">事業内容</label>
+                            <label htmlFor="business_description" className="block text-xs font-bold text-gray-700 mb-1">事業内容</label>
                             <textarea
+                                id="business_description"
                                 value={form.business_description}
                                 onChange={handleChange('business_description')}
                                 rows={2}
@@ -166,8 +184,9 @@ export default function ProMaxInquiryModal({ isOpen, onClose, defaultEmail = '',
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-gray-700 mb-1">ご相談内容</label>
+                            <label htmlFor="inquiry_details" className="block text-xs font-bold text-gray-700 mb-1">ご相談内容</label>
                             <textarea
+                                id="inquiry_details"
                                 value={form.inquiry_details}
                                 onChange={handleChange('inquiry_details')}
                                 rows={4}
@@ -177,7 +196,7 @@ export default function ProMaxInquiryModal({ isOpen, onClose, defaultEmail = '',
                         </div>
 
                         {error && (
-                            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg px-3 py-2">
+                            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg px-3 py-2" role="alert">
                                 {error}
                             </div>
                         )}

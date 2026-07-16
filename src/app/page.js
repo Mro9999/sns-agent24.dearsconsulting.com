@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Sparkles, PenTool, ImageIcon, Search, Zap, CheckCircle2, ArrowRight, Instagram, ChevronRight, ChevronLeft, Globe } from 'lucide-react';
+import { Bot, Sparkles, PenTool, ImageIcon, Search, Zap, CheckCircle2, ArrowRight, Camera as Instagram, ChevronRight, ChevronLeft, Globe } from 'lucide-react';
 import Link from 'next/link';
 import PricingSection from '@/components/layout/PricingSection';
 
@@ -36,21 +36,21 @@ export default function LandingPage() {
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-tr from-rose-300/40 via-purple-300/30 to-orange-200/40 blur-[100px] rounded-full pointer-events-none -z-10"></div>
 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-tight drop-shadow-sm text-gray-900">
-                    <span className="inline-block">センスも、時間も、<span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-purple-400 to-[#D4A373]">担当者も、</span></span><br />
+                    <span className="inline-block">SNS投稿を、<span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-purple-400 to-[#D4A373]">もっと迷わず、</span></span><br />
                     <span className="inline-block">
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-purple-400 to-[#D4A373]">
-                            もう要りません。
+                            もっと続けやすく。
                         </span>
                     </span><br className="hidden md:block" />
                     <span className="inline-block text-3xl md:text-4xl lg:text-5xl mt-4 text-gray-700 font-bold">
-                        投稿の『正解』はデータが知っています。
+                        企画・文章・画像を、ひとつの流れで。
                     </span>
                 </h1>
 
                 <p className="text-lg md:text-xl text-slate-800 max-w-2xl mx-auto mb-12 leading-relaxed">
-                    <span className="inline-block">最新のトレンドリサーチから、</span><span className="inline-block">ターゲットの深層心理を突く</span><span className="inline-block">キャプション構築、</span><br className="hidden md:block" />
-                    <span className="inline-block">そしてオリジナル画像との</span><span className="inline-block">完全自動合成まで。</span><span className="inline-block">1分待つだけで</span><span className="inline-block">プロの仕事が完了します。</span><br className="hidden md:block" />
-                    <span className="inline-block">圧倒的なROI（費用対効果）を実現する</span><span className="inline-block">次世代SNS運用エージェント。</span>
+                    <span className="inline-block">最新のトレンドリサーチから、</span><span className="inline-block">ターゲットに届く</span><span className="inline-block">キャプション構築、</span><br className="hidden md:block" />
+                    <span className="inline-block">オリジナル画像の生成まで。</span><span className="inline-block">少ない入力で、</span><span className="inline-block">投稿案づくりをまとめて支援します。</span><br className="hidden md:block" />
+                    <span className="inline-block">日々のSNS運用を、</span><span className="inline-block">無理なく続けるためのAIエージェントです。</span>
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -58,7 +58,7 @@ export default function LandingPage() {
                         href="/app"
                         className="px-6 py-4 md:px-8 md:py-5 rounded-full text-sm md:text-base font-bold bg-gradient-to-r from-rose-500 to-purple-600 text-white hover:from-rose-400 hover:to-purple-500 transition-all shadow-[0_4px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_8px_30px_rgba(244,63,94,0.4)] hover:-translate-y-1 flex items-center justify-center gap-2"
                     >
-                        今すぐあなたのビジネスの投稿を1本、AIに作らせてみる
+                        無料で投稿案を1本つくる
                         <ArrowRight size={18} />
                     </Link>
                 </div>
@@ -66,7 +66,7 @@ export default function LandingPage() {
                 {/* Micro Features */}
                 <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mt-12 text-sm text-slate-600 font-medium">
                     <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-rose-400" /> クレジットカード登録不要</div>
-                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-rose-400" /> 所要時間わずか60秒</div>
+                    <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-rose-400" /> 最初の入力は約60秒</div>
                     <div className="flex items-center gap-2"><CheckCircle2 size={16} className="text-rose-400" /> スマホ完結デザイン</div>
                 </div>
             </section>
@@ -91,7 +91,7 @@ export default function LandingPage() {
             <section className="w-full bg-transparent border-y border-gray-200 py-24 relative overflow-hidden flex flex-col items-center justify-center">
                 <div className="w-full max-w-6xl mx-auto px-6 relative z-10 flex flex-col items-center justify-center">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">圧倒的な品質を生み出す<br />3つの魔法</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">投稿案づくりを支える<br />3つの機能</h2>
                         <p className="text-slate-600">SNS運用に必要なすべてのクリエイティブをシームレスに統合</p>
                     </div>
 
@@ -101,9 +101,9 @@ export default function LandingPage() {
                             <div className="w-14 h-14 bg-rose-100 rounded-2xl flex items-center justify-center mb-6 border border-rose-200 group-hover:scale-110 transition-transform">
                                 <Search className="text-rose-500" size={26} />
                             </div>
-                            <h3 className="text-xl font-bold mb-3 text-gray-900">競合が気づいていない<br />「顧客の本音」を発見</h3>
+                            <h3 className="text-xl font-bold mb-3 text-gray-900">いまの関心を調べて<br />投稿の切り口を提案</h3>
                             <p className="text-slate-800 leading-relaxed text-sm">
-                                ターゲット市場の最新トレンドをGoogle検索でリアルタイム取得。表面的なAIポエムではなく、実データに基づいた刺さる切り口となるインサイト（隠れた欲求や不満）を提案します。
+                                ターゲット市場の最新トレンドをGoogle検索で調査。事業情報と公開情報をもとに、投稿で扱うテーマや伝え方の候補を提案します。
                             </p>
                         </div>
                         {/* Feature 2 */}
@@ -111,9 +111,9 @@ export default function LandingPage() {
                             <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 border border-purple-200 group-hover:scale-110 transition-transform">
                                 <PenTool className="text-purple-500" size={26} />
                             </div>
-                            <h3 className="text-xl font-bold mb-3 text-gray-900">悩む時間をゼロにする、<br />プロ水準の提案</h3>
+                            <h3 className="text-xl font-bold mb-3 text-gray-900">用途に合わせた<br />投稿フォーマット</h3>
                             <p className="text-slate-800 leading-relaxed text-sm">
-                                1枚構成、スワイプ必須の5枚カルーセル、ショート動画台本まで、用途に合わせた文章フォーマットで出力。保存や来店（コンバージョン）を促すCTA（行動喚起）まで計算されています。
+                                1枚投稿、5枚カルーセル、ショート動画台本まで、用途に合わせた形式で出力。読者に次の行動を案内する文章までまとめて作成します。
                             </p>
                         </div>
                         {/* Feature 3 */}
@@ -121,9 +121,9 @@ export default function LandingPage() {
                             <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center mb-6 border border-orange-200 group-hover:scale-110 transition-transform">
                                 <ImageIcon className="text-orange-500" size={26} />
                             </div>
-                            <h3 className="text-xl font-bold mb-3 text-gray-900">画像不要。完全手ぶらで<br />プロ級のクリエイティブ</h3>
+                            <h3 className="text-xl font-bold mb-3 text-gray-900">画像がなくても<br />投稿素材まで作成</h3>
                             <p className="text-slate-800 leading-relaxed text-sm">
-                                写真を用意する必要さえありません。AIが文脈に合った最適な背景画像を自動生成し、さらにプロのデザイナーのように視認性の高い文字配置を自動合成します。
+                                写真を用意できないときは、投稿内容に合わせた背景画像をAIで生成。読みやすさに配慮した文字入り画像として仕上げます。
                             </p>
                         </div>
                     </div>
@@ -179,11 +179,11 @@ export default function LandingPage() {
                             <p className="mb-4">実は、ターゲット層の深層心理で「今すぐ解決したい痛み」にアプローチできていないのが原因かもしれません。</p>
                             <p className="mb-4 text-rose-500 font-bold">【本日のインサイト（気付き）】</p>
                             <ul className="mb-4 pl-4 border-l-2 border-rose-300 space-y-2">
-                                <li>・ユーザーの70%は最初の1枚で離脱する</li>
+                                <li>・最初の1枚で続きを見たくなる理由をつくる</li>
                                 <li>・「有益な情報」ではなく「共感」を求めている</li>
                                 <li>・保存を促す明確なCTA（行動喚起）が欠けている</li>
                             </ul>
-                            <p className="mb-4">これらを自動で分析し、最適な文脈で投稿を作成するのが『SNS Agent24』。もう悩む必要はありません。</p>
+                            <p className="mb-4">これらの観点を整理し、投稿案づくりを支えるのが『SNS Agent24』。最後は内容を確認して、そのまま活用できます。</p>
                             <p className="mb-4 text-slate-700 font-medium">...<br />#SNS運用 #マーケティング #集客ノウハウ</p>
                         </div>
                     </div>
@@ -201,8 +201,8 @@ export default function LandingPage() {
                     <div className="w-20 h-20 bg-gradient-to-br from-rose-500 to-[#D4A373] rounded-full mx-auto flex items-center justify-center mb-8 shadow-[0_10px_30px_rgba(244,63,94,0.3)]">
                         <Zap size={36} className="text-white drop-shadow-md" />
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900"><span className="inline-block">SNS運用を、</span><span className="inline-block">次の次元へ。</span></h2>
-                    <p className="text-xl text-slate-800 mb-10 w-full max-w-lg text-center">今すぐ無料アカウントを作成し、AIの手による革新的なクリエイティブを体験してください。</p>
+                    <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900"><span className="inline-block">次の投稿づくりを、</span><span className="inline-block">ここから始めましょう。</span></h2>
+                    <p className="text-xl text-slate-800 mb-10 w-full max-w-lg text-center">無料アカウントで、企画・文章・画像づくりを1本から試せます。</p>
                     <Link
                         href="/app"
                         className="inline-flex px-10 py-5 rounded-full text-lg font-bold bg-gray-900 text-white shadow-xl hover:shadow-2xl hover:bg-black hover:-translate-y-1 transition-all"

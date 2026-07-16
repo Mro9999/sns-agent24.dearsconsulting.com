@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req) {
     try {
-        const { userId } = auth();
+        const { userId } = await auth();
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
@@ -11,8 +11,8 @@ export async function POST(req) {
         const body = await req.json();
         const { industry, targetAudience, usp } = body;
 
-        // Clerk v5 API: clerkClient() returns the client instance
-        await clerkClient().users.updateUserMetadata(userId, {
+        const clerk = await clerkClient();
+        await clerk.users.updateUserMetadata(userId, {
             publicMetadata: {
                 industry,
                 targetAudience,

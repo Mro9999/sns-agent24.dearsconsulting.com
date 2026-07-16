@@ -2,7 +2,7 @@
 // src/lib/apiService.js
 import { GoogleGenAI } from '@google/genai';
 import { auth } from '@clerk/nextjs/server';
-import { supabaseAdmin } from './supabaseAdmin';
+import { getSupabaseAdmin } from './supabaseAdmin';
 import crypto from 'crypto';
 
 // 注: "use server" ファイルでは async 関数以外を export できないため、
@@ -1393,6 +1393,10 @@ If a book or document appears, it must be CLOSED or shown from an angle where an
         // Base64エンコードされた画像の配列を取得してData URIに変換
         if (data && data.predictions && data.predictions.length > 0) {
             const BUCKET_NAME = 'generated-images';
+            const supabaseAdmin = getSupabaseAdmin();
+            if (!supabaseAdmin) {
+                throw new Error('Supabase storage is not configured');
+            }
             let currentUserId = 'anonymous';
             try {
                 const clerkAuth = await auth();

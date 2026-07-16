@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import { waitUntil } from '@vercel/functions';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +9,16 @@ export const dynamic = "force-dynamic";
 const ADMIN_EMAIL = 'maeda@dearsconsulting.com';
 const FROM_EMAIL = 'notifications@dearsconsulting.com';
 const APP_NAME = 'SNS Agent 24';
+const inquiryTimestamps = new Map();
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
 
 async function sendAdminNotification(inquiry) {
     if (!process.env.SENDGRID_API_KEY) {
@@ -26,13 +32,13 @@ async function sendAdminNotification(inquiry) {
 <body style="font-family: system-ui, sans-serif; padding: 24px; color: #111;">
   <h2 style="margin:0 0 16px; color:#d62976;">Pro Max Plan 新規相談申込</h2>
   <table style="border-collapse: collapse; width: 100%; max-width: 560px;">
-    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold; width:140px;">会社名</td><td style="padding:8px 12px;">${inquiry.company_name || '-'}</td></tr>
-    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold;">お名前</td><td style="padding:8px 12px;">${inquiry.contact_name || '-'}</td></tr>
-    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold;">メール</td><td style="padding:8px 12px;">${inquiry.email || '-'}</td></tr>
-    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold;">電話</td><td style="padding:8px 12px;">${inquiry.phone || '（未記入）'}</td></tr>
-    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold;">事業内容</td><td style="padding:8px 12px; white-space: pre-wrap;">${inquiry.business_description || '（未記入）'}</td></tr>
-    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold;">相談内容</td><td style="padding:8px 12px; white-space: pre-wrap;">${inquiry.inquiry_details || '（未記入）'}</td></tr>
-    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold;">Clerk User ID</td><td style="padding:8px 12px; font-family: monospace; font-size: 12px;">${inquiry.user_id || '（未ログイン）'}</td></tr>
+    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold; width:140px;">会社名</td><td style="padding:8px 12px;">${escapeHtml(inquiry.company_name || '-')}</td></tr>
+    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold;">お名前</td><td style="padding:8px 12px;">${escapeHtml(inquiry.contact_name || '-')}</td></tr>
+    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold;">メール</td><td style="padding:8px 12px;">${escapeHtml(inquiry.email || '-')}</td></tr>
+    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold;">電話</td><td style="padding:8px 12px;">${escapeHtml(inquiry.phone || '（未記入）')}</td></tr>
+    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold;">事業内容</td><td style="padding:8px 12px; white-space: pre-wrap;">${escapeHtml(inquiry.business_description || '（未記入）')}</td></tr>
+    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold;">相談内容</td><td style="padding:8px 12px; white-space: pre-wrap;">${escapeHtml(inquiry.inquiry_details || '（未記入）')}</td></tr>
+    <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold;">Clerk User ID</td><td style="padding:8px 12px; font-family: monospace; font-size: 12px;">${escapeHtml(inquiry.user_id || '（未ログイン）')}</td></tr>
     <tr><td style="padding:8px 12px; background:#f6f6f6; font-weight:bold;">受信日時</td><td style="padding:8px 12px;">${new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}</td></tr>
   </table>
   <p style="margin-top:20px; font-size:13px; color:#666;">Supabase: pro_max_inquiries テーブルにも記録済みです。</p>
@@ -68,7 +74,7 @@ async function sendAutoReply(inquiry) {
   <div style="max-width: 600px; margin: 0 auto; background:#ffffff; border:1px solid #e5e5e5; border-radius: 8px; padding: 32px;">
     <h1 style="font-size: 20px; margin: 0 0 20px; color:#1a1a1a; font-weight: bold;">Pro Max Plan お問い合わせを承りました</h1>
 
-    <p style="line-height: 1.8; margin: 0 0 16px;">${inquiry.contact_name} 様</p>
+    <p style="line-height: 1.8; margin: 0 0 16px;">${escapeHtml(inquiry.contact_name)} 様</p>
 
     <p style="line-height: 1.8; margin: 0 0 16px;">
       この度は、SNS Agent 24 Pro Max Plan につきまして<br>
@@ -90,10 +96,10 @@ async function sendAutoReply(inquiry) {
     <div style="background:#f6f6f6; border-left: 3px solid #d62976; padding: 16px 20px; margin: 24px 0; border-radius: 4px;">
       <p style="margin:0 0 8px; font-size: 13px; color:#666; font-weight:bold;">お問い合わせ内容（受付控え）</p>
       <table style="width:100%; font-size: 13px; color:#333;">
-        <tr><td style="padding:4px 0; width: 80px; color:#888;">会社名</td><td>${inquiry.company_name || '-'}</td></tr>
-        <tr><td style="padding:4px 0; color:#888;">お名前</td><td>${inquiry.contact_name || '-'}</td></tr>
-        <tr><td style="padding:4px 0; color:#888;">メール</td><td>${inquiry.email || '-'}</td></tr>
-        <tr><td style="padding:4px 0; color:#888;">電話</td><td>${inquiry.phone || '（未記入）'}</td></tr>
+        <tr><td style="padding:4px 0; width: 80px; color:#888;">会社名</td><td>${escapeHtml(inquiry.company_name || '-')}</td></tr>
+        <tr><td style="padding:4px 0; color:#888;">お名前</td><td>${escapeHtml(inquiry.contact_name || '-')}</td></tr>
+        <tr><td style="padding:4px 0; color:#888;">メール</td><td>${escapeHtml(inquiry.email || '-')}</td></tr>
+        <tr><td style="padding:4px 0; color:#888;">電話</td><td>${escapeHtml(inquiry.phone || '（未記入）')}</td></tr>
       </table>
     </div>
 
@@ -133,6 +139,13 @@ async function sendAutoReply(inquiry) {
 
 export async function POST(req) {
     try {
+        const clientId = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+        const now = Date.now();
+        const previous = inquiryTimestamps.get(clientId) || 0;
+        if (now - previous < 60_000) {
+            return NextResponse.json({ error: '送信間隔を空けてもう一度お試しください' }, { status: 429 });
+        }
+
         // ログイン必須ではないが、ログイン済みならuser_idを記録
         let userId = null;
         try {
@@ -151,6 +164,10 @@ export async function POST(req) {
             business_description,
             inquiry_details
         } = body || {};
+
+        if (body?.company_website) {
+            return NextResponse.json({ success: true });
+        }
 
         // バリデーション
         if (!company_name || !contact_name || !email) {
@@ -171,6 +188,11 @@ export async function POST(req) {
             status: 'new'
         };
 
+        const supabase = getSupabaseAdmin();
+        if (!supabase) {
+            return NextResponse.json({ error: 'お問い合わせ受付を一時的に利用できません' }, { status: 503 });
+        }
+
         const { data, error } = await supabase
             .from('pro_max_inquiries')
             .insert(record)
@@ -178,12 +200,12 @@ export async function POST(req) {
             .maybeSingle();
 
         if (error) throw error;
+        inquiryTimestamps.set(clientId, now);
 
-        // 通知メール送信（非同期で並列に）
-        Promise.all([
+        waitUntil(Promise.all([
             sendAdminNotification({ ...record, user_id: userId }),
             sendAutoReply(record)
-        ]).catch(e => console.error('[pro-max-inquiry] メール送信エラー（非致命）:', e));
+        ]).catch(e => console.error('[pro-max-inquiry] メール送信エラー（非致命）:', e)));
 
         return NextResponse.json({ success: true, id: data?.id });
     } catch (error) {

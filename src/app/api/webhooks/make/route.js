@@ -3,12 +3,13 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 
 export async function POST(req) {
     try {
-        const { userId } = auth();
+        const { userId } = await auth();
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        const user = await clerkClient().users.getUser(userId);
+        const clerk = await clerkClient();
+        const user = await clerk.users.getUser(userId);
         const role = user.publicMetadata?.role;
         const isAdmin = role === 'admin';
         const isProMax = role === 'promax' || isAdmin;

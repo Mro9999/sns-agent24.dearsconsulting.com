@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
-import { getAuth } from '@clerk/nextjs/server';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { auth } from '@clerk/nextjs/server';
 
 // 新規生成履歴の保存（POST）
 export async function POST(req) {
     try {
-        const { userId } = getAuth(req);
+        const { userId } = await auth();
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
+        const supabaseAdmin = getSupabaseAdmin();
         if (!supabaseAdmin) {
             console.error("Supabase Admin client is not configured.");
             return new NextResponse("Database configuration error", { status: 500 });
@@ -45,11 +46,12 @@ export async function POST(req) {
 // 過去の生成履歴の取得（GET）
 export async function GET(req) {
     try {
-        const { userId } = getAuth(req);
+        const { userId } = await auth();
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
+        const supabaseAdmin = getSupabaseAdmin();
         if (!supabaseAdmin) {
             console.error("Supabase Admin client is not configured.");
             return new NextResponse("Database configuration error", { status: 500 });
