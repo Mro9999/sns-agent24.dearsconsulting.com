@@ -9,7 +9,8 @@ export async function GET() {
         }
         
         // bypass JWT cache and fetch directly from Clerk DB
-        const user = await clerkClient().users.getUser(userId);
+        const clerk = await clerkClient();
+        const user = await clerk.users.getUser(userId);
         const role = user.publicMetadata?.role;
         const email = user.emailAddresses[0]?.emailAddress;
 

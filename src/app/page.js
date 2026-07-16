@@ -17,13 +17,13 @@ export default function LandingPage() {
                 </div>
                 <div className="flex gap-4">
                     <Link
-                        href="/app"
+                        href="/sign-in"
                         className="px-5 py-2 rounded-full text-sm font-medium border border-gray-200/50 hover:bg-white/90 border border-slate-200 shadow-sm text-slate-800 transition-colors text-gray-800"
                     >
                         ログイン
                     </Link>
                     <Link
-                        href="/app"
+                        href="/sign-up"
                         className="px-5 py-2 rounded-full text-sm font-bold bg-white/80 backdrop-blur-2xl backdrop-blur border border-white shadow-lg text-gray-900 hover:bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-colors hidden sm:block"
                     >
                         AIに投稿を作らせてみる
@@ -55,7 +55,7 @@ export default function LandingPage() {
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                     <Link
-                        href="/app"
+                        href="/sign-up"
                         className="px-6 py-4 md:px-8 md:py-5 rounded-full text-sm md:text-base font-bold bg-gradient-to-r from-rose-500 to-purple-600 text-white hover:from-rose-400 hover:to-purple-500 transition-all shadow-[0_4px_20px_rgba(244,63,94,0.3)] hover:shadow-[0_8px_30px_rgba(244,63,94,0.4)] hover:-translate-y-1 flex items-center justify-center gap-2"
                     >
                         無料で投稿案を1本つくる
@@ -204,7 +204,7 @@ export default function LandingPage() {
                     <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900"><span className="inline-block">次の投稿づくりを、</span><span className="inline-block">ここから始めましょう。</span></h2>
                     <p className="text-xl text-slate-800 mb-10 w-full max-w-lg text-center">無料アカウントで、企画・文章・画像づくりを1本から試せます。</p>
                     <Link
-                        href="/app"
+                        href="/sign-in"
                         className="inline-flex px-10 py-5 rounded-full text-lg font-bold bg-gray-900 text-white shadow-xl hover:shadow-2xl hover:bg-black hover:-translate-y-1 transition-all"
                     >
                         無料でログインして開始する

@@ -1,6 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     serverExternalPackages: ['@google/genai', 'stripe'],
+    async rewrites() {
+        return [
+            {
+                source: '/clerk-assets/clerk.browser.js',
+                destination: 'https://clerk.dearsconsulting.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js',
+            },
+            {
+                source: '/clerk-assets/:asset*',
+                destination: 'https://clerk.dearsconsulting.com/npm/@clerk/ui@1.25.4/dist/:asset*',
+            },
+        ];
+    },
     async headers() {
         return [{
             source: '/(.*)',

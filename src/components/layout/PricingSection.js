@@ -90,7 +90,7 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
             upgradeText: "Proにアップグレード",
             action: () => {
                 if (onUpgrade) return onUpgrade(billingCycle, 'pro');
-                window.location.assign('/app');
+                window.location.assign('/sign-up');
             }
         }),
         buildPlanCard('promax', {

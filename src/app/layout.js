@@ -44,8 +44,16 @@ export default function RootLayout({ children }) {
     return (
         <ClerkProvider
             localization={localization}
+            // ClerkのCDNスクリプトだけを同一オリジンで配信し、
+            // コンテンツブロッカーによる認証UIの読込失敗を避ける。
+            __internal_clerkJSUrl="/clerk-assets/clerk.browser.js"
+            __internal_clerkUIUrl="/clerk-assets/ui.browser.js"
             signInUrl="/sign-in"
             signUpUrl="/sign-up"
+            signInFallbackRedirectUrl="/app"
+            signUpFallbackRedirectUrl="/app"
+            signInForceRedirectUrl="/app"
+            signUpForceRedirectUrl="/app"
             afterSignOutUrl="/"
         >
             <html lang="ja" data-scroll-behavior="smooth">

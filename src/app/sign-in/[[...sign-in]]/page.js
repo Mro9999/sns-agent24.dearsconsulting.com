@@ -1,5 +1,6 @@
 import { SignIn } from '@clerk/nextjs';
 import AuthShell from '@/components/auth/AuthShell';
+import AuthLoadingFallback from '@/components/auth/AuthLoadingFallback';
 
 export const metadata = {
     title: 'ログイン',
@@ -37,6 +38,9 @@ export default function SignInPage() {
                 path="/sign-in"
                 signUpUrl="/sign-up"
                 fallbackRedirectUrl="/app"
+                forceRedirectUrl="/app"
+                signUpForceRedirectUrl="/app"
+                fallback={<AuthLoadingFallback mode="sign-in" />}
             />
         </AuthShell>
     );
