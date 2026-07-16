@@ -4,6 +4,7 @@ import { GoogleGenAI } from '@google/genai';
 import { auth } from '@clerk/nextjs/server';
 import { getSupabaseAdmin } from './supabaseAdmin';
 import crypto from 'crypto';
+import { findUnsupportedMetricMatch, removeUnsupportedNumericClaims } from './copySafety.mjs';
 
 // 注: "use server" ファイルでは async 関数以外を export できないため、
 // maxDuration はここに置けない (Next.js の制約)。Server Action のタイムアウトは
@@ -218,15 +219,6 @@ ${JSON.stringify(post)}
     return extractJSON(response.text, post);
 };
 
-const RESULT_METRIC_CONTEXT = '(売上|EC売上|広告費|CVR|CPA|ROAS|LTV|客単価|顧客満足度|問い合わせ|問合せ|申込|申し込み|成約率|離脱率|継続率|リピート率|利益|粗利|予約数|集客|フォロワー|再購入|購入率|解約率)';
-const RESULT_CHANGE_CONTEXT = '(削減|改善|増加|向上|短縮|伸び|上昇|低下|達成|実現|成功|改善)';
-const UNSUPPORTED_METRIC_PATTERNS = [
-    new RegExp(`${RESULT_METRIC_CONTEXT}.{0,24}(\\d+(?:\\.\\d+)?\\s*(?:%|％|倍)|[0-9０-９]+割|半数|約半数)`, 'i'),
-    new RegExp(`(\\d+(?:\\.\\d+)?\\s*(?:%|％|倍)|[0-9０-９]+割|半数|約半数).{0,24}${RESULT_METRIC_CONTEXT}`, 'i'),
-    new RegExp(`(\\d+(?:\\.\\d+)?\\s*(?:%|％|倍)).{0,24}${RESULT_CHANGE_CONTEXT}`, 'i'),
-    new RegExp(`(?:ある調査|調査では|データでは|研究では|レポートでは|市場データ).{0,36}\\d+(?:\\.\\d+)?\\s*(?:%|％|倍)`, 'i')
-];
-const SOURCE_HINT_PATTERN = /(出典|によると|省|庁|機構|協会|白書|調査20\d{2}|20\d{2}年版|令和[0-9０-９]+年)/;
 const UNSUPPORTED_PROOF_PATTERNS = [
     /(?:私たち|当社|弊社|DEARS\s*CONSULTING).{0,36}(?:実際に支援|支援した|伴走支援|伴走した|実現しました|改善しました|成果|事例)/i,
     /(?:クライアント|顧客企業|導入企業|支援先).{0,36}(?:売上|広告費|成果|改善|増加|削減|実践|実現|成功)/i,
@@ -381,15 +373,13 @@ const detectUnsafeCopyIssues = (post = {}, language = 'ja') => {
         }
     }
 
-    for (const pattern of UNSUPPORTED_METRIC_PATTERNS) {
-        if (pattern.test(text) && !SOURCE_HINT_PATTERN.test(text)) {
-            issues.push({
-                type: 'unsupported_metric',
-                excerpt: getTextExcerpt(text, pattern),
-                reason: '出典なしの成果数値・割合・倍率に見えるため、虚偽広告リスクがあります。'
-            });
-            break;
-        }
+    const unsupportedMetric = findUnsupportedMetricMatch(text);
+    if (unsupportedMetric) {
+        issues.push({
+            type: 'unsupported_metric',
+            excerpt: getTextExcerpt(text, unsupportedMetric.pattern),
+            reason: '出典なしの成果数値・割合・健康関連の具体数値に見えるため、誤情報・虚偽広告リスクがあります。'
+        });
     }
 
     if (language === 'ja' && (ENGLISH_TRANSLATION_PATTERN.test(text) || LONG_ENGLISH_SENTENCE_PATTERN.test(text))) {
@@ -589,7 +579,7 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
             console.log(`[researchTrends:flash] cache: ${cached}/${total} tok (${hitRate}% hit)`);
         }
 
-        return extractJSON(response.text);
+        return removeUnsupportedNumericClaims(extractJSON(response.text));
     } catch (error) {
         console.error("researchTrends error:", error);
         throw new Error("トレンドリサーチに失敗しました。");
@@ -1080,6 +1070,12 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後�
             } catch (repairError) {
                 console.error('[generatePost] unsafe copy repair failed:', repairError?.message || repairError);
             }
+        }
+
+        if (qualityIssues.length > 0) {
+            console.warn('[generatePost] unsafe numeric claim remained after repair; applying deterministic removal');
+            generatedPost = removeUnsupportedNumericClaims(generatedPost);
+            qualityIssues = detectUnsafeCopyIssues(generatedPost, language);
         }
 
         if (qualityIssues.length > 0) {

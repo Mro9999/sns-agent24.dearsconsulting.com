@@ -412,6 +412,10 @@ export default function Home() {
             // 2. キャプション生成 (言語指定・フォーマット指定・ユーザープロフィールを追加)
             currentStep = 'generatePost';
             const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, cleanProductContext, siteContent, selectedFormat, userProfile, selectedPurpose, selectedOverlayLanguage);
+            if (post?.quality_blocked) {
+                refundDailyFreeUsage();
+                throw new Error('生成内容が安全基準を満たさなかったため表示を停止しました。無料生成回数は戻しています。もう一度お試しください。');
+            }
             setLoadingPhase(2); // 2: "デザインを作成中..."
             await new Promise(resolve => setTimeout(resolve, 300)); // ReactのUI再レンダリングを確実に行わせるための待機
 

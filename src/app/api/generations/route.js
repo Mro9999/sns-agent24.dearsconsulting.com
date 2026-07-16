@@ -2,25 +2,30 @@ import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { auth } from '@clerk/nextjs/server';
 
+const jsonError = (message, status) => NextResponse.json(
+    { error: message },
+    { status, headers: { 'Cache-Control': 'no-store' } }
+);
+
 // 新規生成履歴の保存（POST）
 export async function POST(req) {
     try {
         const { userId } = await auth();
         if (!userId) {
-            return new NextResponse("Unauthorized", { status: 401 });
+            return jsonError('Unauthorized', 401);
         }
 
         const supabaseAdmin = getSupabaseAdmin();
         if (!supabaseAdmin) {
             console.error("Supabase Admin client is not configured.");
-            return new NextResponse("Database configuration error", { status: 500 });
+            return jsonError('Database configuration error', 500);
         }
 
         const body = await req.json();
         const { platform, caption, imageUrls } = body;
 
         if (!platform) {
-            return new NextResponse("Platform is required", { status: 400 });
+            return jsonError('Platform is required', 400);
         }
 
         const { data, error } = await supabaseAdmin
@@ -33,28 +38,28 @@ export async function POST(req) {
 
         if (error) {
             console.error("Supabase Insert Error:", error);
-            return new NextResponse("Database error", { status: 500 });
+            return jsonError('Database error', 500);
         }
 
         return NextResponse.json(data);
     } catch (error) {
         console.error("Error saving generation:", error);
-        return new NextResponse("Internal Error", { status: 500 });
+        return jsonError('Internal error', 500);
     }
 }
 
 // 過去の生成履歴の取得（GET）
-export async function GET(req) {
+export async function GET() {
     try {
         const { userId } = await auth();
         if (!userId) {
-            return new NextResponse("Unauthorized", { status: 401 });
+            return jsonError('Unauthorized', 401);
         }
 
         const supabaseAdmin = getSupabaseAdmin();
         if (!supabaseAdmin) {
             console.error("Supabase Admin client is not configured.");
-            return new NextResponse("Database configuration error", { status: 500 });
+            return jsonError('Database configuration error', 500);
         }
 
         // 該当ユーザーの履歴を作成日時の降順（最新順）で最大50件取得
@@ -67,12 +72,12 @@ export async function GET(req) {
 
         if (error) {
             console.error("Supabase Select Error:", error);
-            return new NextResponse("Database error", { status: 500 });
+            return jsonError('Database error', 500);
         }
 
-        return NextResponse.json(data || []);
+        return NextResponse.json(data || [], { headers: { 'Cache-Control': 'no-store' } });
     } catch (error) {
         console.error("Error fetching generations:", error);
-        return new NextResponse("Internal Error", { status: 500 });
+        return jsonError('Internal error', 500);
     }
 }

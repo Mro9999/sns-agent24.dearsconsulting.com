@@ -1,31 +1,44 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useUser, UserButton } from "@clerk/nextjs";
-import { ChevronLeft, Database, Clock, Copy, Download, Image as ImageIcon, Video, Calendar, ArrowRight } from 'lucide-react';
+import { ChevronLeft, Database, Clock, Copy, Download, Image as ImageIcon, Calendar, ArrowRight, RefreshCw, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
     const { user, isLoaded, isSignedIn } = useUser();
     const [generations, setGenerations] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
+
+    const loadGenerations = useCallback(async () => {
+        setIsLoading(true);
+        setLoadError('');
+
+        try {
+            const response = await fetch('/api/generations', { cache: 'no-store' });
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                throw new Error(data?.error || '履歴を取得できませんでした。');
+            }
+
+            setGenerations(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error('Error fetching history:', error);
+            setLoadError('生成履歴を読み込めませんでした。時間をおいて、もう一度お試しください。');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         if (isLoaded && isSignedIn) {
-            fetch('/api/generations')
-                .then(res => res.json())
-                .then(data => {
-                    setGenerations(data);
-                    setIsLoading(false);
-                })
-                .catch(err => {
-                    console.error("Error fetching history:", err);
-                    setIsLoading(false);
-                });
+            loadGenerations();
         } else if (isLoaded && !isSignedIn) {
             // Not signed in
             setIsLoading(false);
         }
-    }, [isLoaded, isSignedIn]);
+    }, [isLoaded, isSignedIn, loadGenerations]);
 
     if (!isLoaded || (isLoaded && !isSignedIn)) {
         return (
@@ -101,6 +114,19 @@ export default function DashboardPage() {
                 {isLoading ? (
                     <div className="flex justify-center items-center py-32">
                         <div className="animate-spin border-4 border-purple-500 border-t-transparent rounded-full w-12 h-12"></div>
+                    </div>
+                ) : loadError ? (
+                    <div role="alert" className="text-center py-16 bg-red-500/5 rounded-2xl border border-red-400/20 animate-in zoom-in duration-500">
+                        <AlertTriangle size={48} className="text-red-300 mx-auto mb-4" aria-hidden="true" />
+                        <h3 className="text-lg font-bold text-gray-100 mb-2">履歴を読み込めませんでした</h3>
+                        <p className="text-gray-400 text-sm mb-6">{loadError}</p>
+                        <button
+                            type="button"
+                            onClick={loadGenerations}
+                            className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white px-6 py-3 rounded-full font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-400"
+                        >
+                            <RefreshCw size={18} aria-hidden="true" /> もう一度読み込む
+                        </button>
                     </div>
                 ) : generations.length === 0 ? (
                     <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/5 animate-in zoom-in duration-500">

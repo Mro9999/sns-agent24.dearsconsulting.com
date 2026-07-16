@@ -6,7 +6,8 @@
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
-        "lint": "eslint ."
+        "lint": "eslint .",
+        "test:copy-safety": "node --test src/lib/copySafety.test.mjs"
     },
     "dependencies": {
         "@clerk/localizations": "^4.13.4",
