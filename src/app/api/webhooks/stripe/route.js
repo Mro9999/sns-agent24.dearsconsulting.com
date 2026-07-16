@@ -2,6 +2,99 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { clerkClient } from "@clerk/nextjs/server";
+import {
+    resolveSubscriptionAccess,
+    subscriptionPriceIdsFromEnv
+} from "@/lib/subscriptionAccess.mjs";
+
+const SUBSCRIPTION_EVENTS = new Set([
+    "customer.subscription.created",
+    "customer.subscription.updated",
+    "customer.subscription.deleted",
+    "customer.subscription.paused",
+    "customer.subscription.resumed"
+]);
+
+const INVOICE_EVENTS = new Set([
+    "invoice.paid",
+    "invoice.payment_succeeded",
+    "invoice.payment_failed"
+]);
+
+function stripeObjectId(value) {
+    return typeof value === "string" ? value : value?.id;
+}
+
+function periodEndIso(periodEnd) {
+    return periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
+}
+
+async function synchronizeSubscriptionAccess(
+    subscription,
+    clerk,
+    { billingAttentionRequired, fallbackUserId = null } = {}
+) {
+    const userId = subscription.metadata?.userId || fallbackUserId;
+    if (!userId) {
+        console.warn(`[stripe-webhook] ignored ${subscription.id}: Clerk userId is missing`);
+        return { ignored: true, reason: "missing_user_id" };
+    }
+
+    const access = resolveSubscriptionAccess(
+        subscription,
+        subscriptionPriceIdsFromEnv(process.env)
+    );
+
+    // 同じStripeアカウント内の別商品ではSNS Agent24の権限を変更しない。
+    if (!access.recognized) {
+        console.warn(`[stripe-webhook] ignored ${subscription.id}: unrecognized price ${access.priceId || "none"}`);
+        return { ignored: true, reason: "unrecognized_price", userId };
+    }
+
+    const user = await clerk.users.getUser(userId);
+    const savedSubscriptionId = user.privateMetadata?.stripeSubscriptionId;
+    const currentRole = user.publicMetadata?.role;
+
+    // 古い契約の終了イベントが、より新しい有効契約の権限を落とさないようにする。
+    if (
+        !access.accessEnabled &&
+        savedSubscriptionId &&
+        savedSubscriptionId !== subscription.id &&
+        ["pro", "promax", "admin"].includes(currentRole)
+    ) {
+        console.warn(`[stripe-webhook] ignored stale inactive subscription ${subscription.id}`);
+        return { ignored: true, reason: "stale_inactive_subscription", userId };
+    }
+
+    const nextRole = currentRole === "admin" ? "admin" : access.role;
+    await clerk.users.updateUserMetadata(userId, {
+        publicMetadata: {
+            ...user.publicMetadata,
+            role: nextRole
+        },
+        privateMetadata: {
+            ...user.privateMetadata,
+            stripeSubscriptionId: subscription.id,
+            stripeCustomerId: stripeObjectId(subscription.customer) || null,
+            stripePriceId: access.priceId,
+            stripeSubscriptionStatus: access.status,
+            stripeCurrentPeriodEnd: periodEndIso(access.periodEnd),
+            stripeBillingAttentionRequired:
+                billingAttentionRequired ?? access.status === "past_due"
+        }
+    });
+
+    console.log(
+        `[stripe-webhook] synchronized user ${userId.slice(-8)}: ${access.status} -> ${nextRole || "free"}`
+    );
+    return { ...access, ignored: false, role: nextRole, userId };
+}
+
+async function retrieveSubscription(subscription) {
+    const subscriptionId = stripeObjectId(subscription);
+    if (!subscriptionId) return null;
+    return stripe.subscriptions.retrieve(subscriptionId);
+}
 
 export async function POST(req) {
     const body = await req.text();
@@ -19,39 +112,24 @@ export async function POST(req) {
         return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 });
     }
 
-    const session = event.data.object;
     const clerk = await clerkClient();
 
     if (event.type === "checkout.session.completed") {
-        const subscription = await stripe.subscriptions.retrieve(
-            session.subscription
-        );
-
-        if (!session?.metadata?.userId) {
-            return new NextResponse("User ID is missing in session metadata", { status: 400 });
+        const session = event.data.object;
+        const subscription = await retrieveSubscription(session.subscription);
+        if (!subscription) {
+            console.warn(`[stripe-webhook] ignored checkout ${session.id}: subscription is missing`);
+            return new NextResponse(null, { status: 200 });
         }
 
-        const priceId = subscription.items.data[0].price.id;
-
-        // プランを判定
-        const isProMax =
-            priceId === process.env.STRIPE_PRICE_ID_PROMAX_MONTHLY ||
-            priceId === process.env.STRIPE_PRICE_ID_PROMAX_YEARLY;
-
-        const assignedRole = isProMax ? 'promax' : 'pro';
-        await clerk.users.updateUserMetadata(session.metadata.userId, {
-            privateMetadata: {
-                stripeSubscriptionId: subscription.id,
-                stripeCustomerId: subscription.customer,
-                stripePriceId: priceId,
-                stripeCurrentPeriodEnd: new Date(
-                    subscription.current_period_end * 1000
-                ),
-            },
-            publicMetadata: {
-                role: assignedRole
-            }
-        });
+        const access = await synchronizeSubscriptionAccess(
+            subscription,
+            clerk,
+            { fallbackUserId: session.metadata?.userId }
+        );
+        if (access.ignored) {
+            return new NextResponse(null, { status: 200 });
+        }
 
         // スプレッドシート側の「有料プラン登録日時(E列)」をアップデート
         if (process.env.GOOGLE_SCRIPT_URL) {
@@ -62,7 +140,7 @@ export async function POST(req) {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'update',
-                        userId: session.metadata.userId,
+                        userId: access.userId,
                         date: date
                     })
                 });
@@ -80,8 +158,8 @@ export async function POST(req) {
                 const customerName = session.customer_details?.name || '不明';
                 const amount = session.amount_total ? `¥${session.amount_total.toLocaleString()}` : '不明';
 
-                const planName = isProMax ? 'Pro Maxプラン' : 'Proプラン';
-                const emailContent = `SNS Agent24で${planName}の新規サブスクリプション契約が完了しました。\n\nお名前: ${customerName}\nメールアドレス: ${customerEmail}\n決済金額: ${amount}\nユーザーID (Clerk): ${session.metadata.userId}\nStripe顧客ID: ${subscription.customer}\n契約日時: ${new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}`;
+                const planName = access.role === 'promax' ? 'Pro Maxプラン' : 'Proプラン';
+                const emailContent = `SNS Agent24で${planName}の新規サブスクリプション契約が完了しました。\n\nお名前: ${customerName}\nメールアドレス: ${customerEmail}\n決済金額: ${amount}\nユーザーID (Clerk): ${access.userId}\nStripe顧客ID: ${stripeObjectId(subscription.customer)}\n契約日時: ${new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}`;
 
                 const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
                     method: 'POST',
@@ -108,20 +186,19 @@ export async function POST(req) {
         }
     }
 
-    if (event.type === "customer.subscription.deleted") {
+    if (SUBSCRIPTION_EVENTS.has(event.type)) {
         const subscription = event.data.object;
-        const userId = subscription.metadata?.userId;
+        await synchronizeSubscriptionAccess(subscription, clerk);
+    }
 
-        if (userId) {
-            await clerk.users.updateUserMetadata(userId, {
-                privateMetadata: {
-                    stripeSubscriptionId: null,
-                    stripePriceId: null,
-                    stripeCurrentPeriodEnd: null,
-                },
-                publicMetadata: {
-                    role: null
-                }
+    if (INVOICE_EVENTS.has(event.type)) {
+        const invoice = event.data.object;
+        const subscriptionReference = invoice.subscription
+            || invoice.parent?.subscription_details?.subscription;
+        const subscription = await retrieveSubscription(subscriptionReference);
+        if (subscription) {
+            await synchronizeSubscriptionAccess(subscription, clerk, {
+                billingAttentionRequired: event.type === "invoice.payment_failed"
             });
         }
     }

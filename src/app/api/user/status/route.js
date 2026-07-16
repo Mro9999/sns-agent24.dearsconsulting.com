@@ -1,39 +1,13 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-
-const PAID_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing', 'past_due']);
-
-function roleForPrice(priceId) {
-    if (!priceId) return null;
-
-    if (
-        priceId === process.env.STRIPE_PRICE_ID_PROMAX_MONTHLY ||
-        priceId === process.env.STRIPE_PRICE_ID_PROMAX_YEARLY
-    ) {
-        return 'promax';
-    }
-
-    if (
-        priceId === process.env.STRIPE_PRICE_ID_MONTHLY ||
-        priceId === process.env.STRIPE_PRICE_ID_YEARLY ||
-        priceId === process.env.STRIPE_PRICE_ID
-    ) {
-        return 'pro';
-    }
-
-    return null;
-}
-
-function subscriptionPeriodEnd(subscription) {
-    const itemPeriodEnds = subscription.items?.data
-        ?.map((item) => item.current_period_end)
-        .filter(Boolean) || [];
-
-    return subscription.current_period_end || Math.max(0, ...itemPeriodEnds);
-}
+import {
+    resolveSubscriptionAccess,
+    subscriptionPriceIdsFromEnv
+} from '@/lib/subscriptionAccess.mjs';
 
 async function findPaidSubscription(user) {
+    const priceIds = subscriptionPriceIdsFromEnv(process.env);
     const customerIds = new Set();
     const savedCustomerId = user.privateMetadata?.stripeCustomerId;
     if (savedCustomerId) customerIds.add(savedCustomerId);
@@ -55,18 +29,16 @@ async function findPaidSubscription(user) {
         });
 
         for (const subscription of subscriptions.data) {
-            if (!PAID_SUBSCRIPTION_STATUSES.has(subscription.status)) continue;
-
-            const priceId = subscription.items?.data?.[0]?.price?.id;
-            const role = roleForPrice(priceId);
-            if (!role) continue;
+            const access = resolveSubscriptionAccess(subscription, priceIds);
+            if (!access.recognized || !access.accessEnabled) continue;
 
             matches.push({
                 customerId,
-                priceId,
-                role,
+                priceId: access.priceId,
+                role: access.role,
                 subscription,
-                periodEnd: subscriptionPeriodEnd(subscription)
+                periodEnd: access.periodEnd,
+                status: access.status
             });
         }
     }
@@ -128,7 +100,9 @@ export async function GET() {
                             stripeSubscriptionId: paidSubscription.subscription.id,
                             stripeCustomerId: paidSubscription.customerId,
                             stripePriceId: paidSubscription.priceId,
-                            stripeCurrentPeriodEnd: periodEnd
+                            stripeSubscriptionStatus: paidSubscription.status,
+                            stripeCurrentPeriodEnd: periodEnd,
+                            stripeBillingAttentionRequired: paidSubscription.status === 'past_due'
                         }
                     });
                     console.log(`[user-status] restored paid access for user ${userId.slice(-8)} as ${role}`);
