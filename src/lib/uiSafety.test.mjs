@@ -29,3 +29,9 @@ test('料金比較もmainランドマークの内側に含まれる', () => {
 
     assert.ok(mainStart >= 0 && pricing > mainStart && mainEnd > pricing);
 });
+
+test('対応プラットフォームは押せない表示カードとして案内する', () => {
+    assert.match(appSource, /対応プラットフォーム: Instagram/);
+    assert.match(appSource, /投稿作成は下の「作成方法を選ぶ」から進めます/);
+    assert.doesNotMatch(appSource, /onClick=\{\(\) => setSelectedPlatform\('instagram'\)\}/);
+});
