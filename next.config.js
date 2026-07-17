@@ -1,6 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     serverExternalPackages: ['@google/genai', 'stripe'],
+    // @vercel/og は Next.js 内部の実行ファイルを動的に読み込むため、
+    // Node File Trace が検出できない場合がある。画像合成Routeだけへ明示的に同梱する。
+    outputFileTracingIncludes: {
+        '/api/generate-post-image': [
+            './node_modules/next/dist/compiled/@vercel/og/**/*',
+        ],
+    },
     async rewrites() {
         return [
             {
