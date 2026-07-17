@@ -11,6 +11,7 @@
         "test:billing": "node --test src/lib/subscriptionAccess.test.mjs",
         "test:account-status": "node --test src/lib/accountPlan.test.mjs",
         "test:links": "node --test src/lib/linkSafety.test.mjs",
+        "test:ui-safety": "node --test src/lib/uiSafety.test.mjs",
         "test:vercel-trace": "node scripts/verify-vercel-trace.mjs"
     },
     "dependencies": {

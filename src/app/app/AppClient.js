@@ -1248,6 +1248,18 @@ export default function Home() {
                             </button>
                         </div>
 
+                        <div className="mb-8 w-full text-center">
+                            <p className="mb-2 text-xs font-bold tracking-[0.2em] text-rose-600">POST SETUP</p>
+                            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
+                                {loading ? '投稿を生成しています' : '投稿の条件を入力'}
+                            </h1>
+                            {!loading && (
+                                <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                                    入力内容はこの端末に自動保存されます。前回の続きから、必要な項目だけ変更できます。
+                                </p>
+                            )}
+                        </div>
+
                         {loading ? (
                             <div className="w-full flex flex-col items-center justify-center py-6 animate-in fade-in zoom-in duration-700">
                                 {/* インジケーター＆スピナー部分 */}
@@ -1284,9 +1296,9 @@ export default function Home() {
                                     <div className="absolute top-1/2 -right-4 w-1 h-1 bg-purple-400 rounded-full shadow-[0_0_8px_#a855f7] animate-pulse"></div>
                                 </div>
 
-                                <h3 className="text-xl font-black tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 mb-8 animate-pulse text-center drop-shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                                <h2 className="text-xl font-black tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 mb-8 animate-pulse text-center drop-shadow-[0_0_15px_rgba(6,182,212,0.4)]">
                                     AI SYNC IN PROGRESS
-                                </h3>
+                                </h2>
 
                                 <div className="w-full flex border h-4 mt-8 rounded-full border-rose-200">
                                     <div className="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-full transition-all duration-300 ease-out shadow-[0_0_15px_rgba(168,85,247,0.8)]" style={{ width: `${loadingProgress}%` }}></div>
@@ -1460,43 +1472,43 @@ export default function Home() {
                             </button>
                         </div>
 
-                        <h2 className="text-2xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+                        <h1 className="text-2xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
                             生成が完了しました！
-                        </h2>
+                        </h1>
 
                         <p role="note" className="mb-6 w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
                             AIが公開情報をもとに作成した参考案です。数値や固有情報は、投稿前に一次情報をご確認ください。
                         </p>
 
                         <div className="mb-6 w-full rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
-                            <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900">
+                            <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900">
                                 <BrainCircuit size={20} /> 3D AIトレンドリサーチ
-                            </h3>
+                            </h2>
 
                             <div className="space-y-4">
                                 <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-4 rounded-xl border border-white shadow-lg/5">
-                                    <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
+                                    <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
                                         <Globe size={16} className="text-rose-600" /> ① 世の中の大きなトレンド
-                                    </h4>
+                                    </h3>
                                     <p className="text-slate-800 font-medium text-sm leading-relaxed">{result.research.insight_macro}</p>
                                 </div>
                                 <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-4 rounded-xl border border-white shadow-lg/5">
-                                    <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
+                                    <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
                                         <Building size={16} className="text-rose-600" /> ② 業界内でのトレンド
-                                    </h4>
+                                    </h3>
                                     <p className="text-slate-800 font-medium text-sm leading-relaxed">{result.research.insight_industry}</p>
                                 </div>
                                 <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-4 rounded-xl border border-white shadow-lg/5">
-                                    <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
+                                    <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
                                         <Target size={16} className="text-rose-600" /> ③ ターゲット層のトレンド
-                                    </h4>
+                                    </h3>
                                     <p className="text-slate-800 font-medium text-sm leading-relaxed">{result.research.insight_target}</p>
                                 </div>
 
                                 <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-5">
-                                    <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-blue-950">
+                                    <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-blue-950">
                                         <Lightbulb size={16} className="text-blue-700" /> 統合インサイト（今回のアプローチ方針）
-                                    </h4>
+                                    </h3>
                                     <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
                                         {result.research.insight_summary}
                                     </p>
@@ -1505,9 +1517,9 @@ export default function Home() {
                         </div>
 
                         <div className="mb-6 w-full rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
-                            <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
+                            <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
                                 <PenTool size={20} className="text-rose-600" /> 生成されたキャプション {selectedFormat === 'video_script' && '（投稿文用）'}
-                            </h3>
+                            </h2>
                             <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg/5 p-4 rounded-xl mb-4 text-sm leading-relaxed whitespace-pre-wrap">
                                 {result.post.caption}
                                 {'\n\n'}
@@ -1530,9 +1542,9 @@ export default function Home() {
                         <div className="mb-8 w-full rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
                             {selectedFormat === 'video_script' ? (
                                 <>
-                                    <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
+                                    <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
                                         <ImageIcon size={20} className="text-rose-600" /> ショート動画台本 (TikTok / Reels / Shorts)
-                                    </h3>
+                                    </h2>
                                     <p className="text-xs text-slate-600 mb-4">{result.post.image_idea}</p>
 
                                     <div className="space-y-4">
@@ -1543,7 +1555,7 @@ export default function Home() {
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <h5 className="text-[10px] font-bold text-slate-800 font-medium mb-1">【映像・音声】</h5>
+                                                        <h3 className="text-[10px] font-bold text-slate-800 font-medium mb-1">【映像・音声】</h3>
                                                         <p className="text-sm font-medium text-gray-900 mb-2 max-w-full">
                                                             <span className="text-blue-500 font-bold">[音声] </span>{script.audio}
                                                         </p>
@@ -1551,9 +1563,9 @@ export default function Home() {
                                                             <span className="text-slate-600 font-bold">[映像] </span>{script.visual}
                                                         </p>
                                                     </div>
-                                                    <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-8000 p-3 rounded-lg border border-white shadow-lg/5">
-                                                        <h5 className="text-[10px] font-bold text-slate-800 font-medium mb-1">【画面テロップ】</h5>
-                                                        <p className="text-sm font-bold text-center text-yellow-300 drop-shadow-md py-4">{script.text_overlay}</p>
+                                                    <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-3 rounded-lg border border-white shadow-lg/5">
+                                                        <h3 className="text-[10px] font-bold text-slate-800 font-medium mb-1">【画面テロップ】</h3>
+                                                        <p className="text-sm font-bold text-center text-slate-900 py-4">{script.text_overlay}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1562,9 +1574,9 @@ export default function Home() {
                                 </>
                             ) : (
                                 <>
-                                    <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
+                                    <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
                                         <ImageIcon size={20} className="text-rose-600" /> {selectedFormat === 'carousel' ? 'カルーセル用 画像一覧' : 'AI生成画像'}
-                                    </h3>
+                                    </h2>
                                     <p className="text-xs text-slate-600 mb-4">{result.post.image_idea}</p>
 
                                     {/* 複数枚画像コンテナ (スマホでは縦積み100%幅、PC等ではFlex横並び) */}
@@ -1582,7 +1594,7 @@ export default function Home() {
                                                     />
 
                                                     {selectedFormat === 'carousel' && (
-                                                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-gray-900 text-xs px-2 py-1 rounded-md font-bold border border-rose-200">
+                                                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md font-bold border border-rose-200">
                                                             {idx + 1}枚目
                                                         </div>
                                                     )}
@@ -1742,7 +1754,7 @@ export default function Home() {
                                                 }
                                             }
                                         }}
-                                        className="w-full py-3 mt-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 rounded-lg text-sm font-bold flex flex-row items-center justify-center gap-2 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-full py-3 mt-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 rounded-lg text-sm font-bold text-white flex flex-row items-center justify-center gap-2 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 focus-visible:ring-offset-2"
                                     >
                                         <Download size={16} /> {selectedFormat === 'carousel' ? 'すべての画像をダウンロード' : '画像をダウンロード'}
                                     </button>
@@ -1755,27 +1767,27 @@ export default function Home() {
                         </div>
 
                         {/* フォローアップ導線（Next Action） */}
-                        <div className="w-full bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 rounded-2xl p-6 mb-8 shadow-[0_0_30px_rgba(99,102,241,0.15)] relative overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-700 delay-500 fill-mode-both">
+                        <div className="w-full bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl p-6 mb-8 shadow-[0_0_30px_rgba(99,102,241,0.12)] relative overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-700 delay-500 fill-mode-both">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
                             <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl -ml-8 -mb-8 pointer-events-none"></div>
 
                             <div className="relative z-10">
-                                <h3 className="text-xl font-bold mb-2 flex items-center justify-center gap-2 text-gray-900">
+                                <h2 className="text-xl font-bold mb-2 flex items-center justify-center gap-2 text-slate-900">
                                     <Rocket size={24} className="text-slate-500" /> 次にやること（Next Action）
-                                </h3>
-                                <p className="text-center text-indigo-200 text-sm mb-6">
+                                </h2>
+                                <p className="text-center text-slate-700 text-sm mb-6">
                                     AIが生成した最高のコンテンツを、今すぐ世界に届けましょう！
                                 </p>
 
                                 <div className="space-y-3 mb-6 max-w-lg mx-auto">
                                     <div className="flex items-center gap-3 bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-3 rounded-xl">
                                         <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm">1</div>
-                                        <div className="flex-1 text-sm text-gray-200">画像をダウンロードする</div>
+                                        <div className="flex-1 text-sm text-slate-800">画像をダウンロードする</div>
                                         <Download size={16} className="text-slate-600" />
                                     </div>
                                     <div className="flex items-center gap-3 bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-3 rounded-xl">
                                         <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm">2</div>
-                                        <div className="flex-1 text-sm text-gray-200">キャプションとハッシュタグをコピーする</div>
+                                        <div className="flex-1 text-sm text-slate-800">キャプションとハッシュタグをコピーする</div>
                                         <Copy size={16} className="text-slate-600" />
                                     </div>
                                     <div className="flex items-center gap-3 bg-indigo-500/20 border border-indigo-500/30 p-3 rounded-xl shadow-[0_0_15px_rgba(99,102,241,0.2)]">
@@ -1814,8 +1826,6 @@ export default function Home() {
                         </div>
                     </div>
                 )}
-            </main>
-
             {/* 料金比較は作成開始前だけ表示し、入力・結果確認に集中できるようにする */}
             {step === 0 && <div id="pricing" className="w-full mt-24 mb-12 flex flex-col items-center">
                 {checkoutError && (
@@ -1837,6 +1847,7 @@ export default function Home() {
                     billingPortalAvailable={billingPortalAvailable === true}
                 />
             </div>}
+            </main>
 
             {/* Footer */}
             <footer className="w-full text-center pb-8 pt-12 flex flex-col items-center gap-1">

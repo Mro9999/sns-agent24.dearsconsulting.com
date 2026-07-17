@@ -74,7 +74,7 @@ const purposes = [
 export function PurposeSelector({ selected, onSelect }) {
     return (
         <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
-            <h3 className="text-2xl md:text-3xl font-extrabold mb-1 text-center text-slate-800 tracking-tight">この投稿の目的を選んでください</h3>
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-1 text-center text-slate-800 tracking-tight">この投稿の目的を選んでください</h2>
             <p className="text-center text-sm md:text-base text-slate-500 font-medium mb-8">目的を選ぶと、AIが最適なコンテンツ戦略に切り替えます</p>
 
             <div className="flex flex-col gap-3">
@@ -109,7 +109,7 @@ export function PurposeSelector({ selected, onSelect }) {
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-xs text-slate-800 font-medium m-0">
+                                    <p className={`text-xs font-medium m-0 ${isSelected ? 'text-slate-200' : 'text-slate-700'}`}>
                                         {description}
                                     </p>
                                     {isSelected && (
@@ -146,7 +146,7 @@ export function CategorySelector({ selected, onSelect }) {
     ];
     return (
         <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
-            <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">業種・カテゴリ</h3>
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">業種・カテゴリ</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {categories.map(c => (
                     <button
@@ -154,7 +154,7 @@ export function CategorySelector({ selected, onSelect }) {
                         key={c.id}
                         onClick={() => onSelect(c)}
                         aria-pressed={selected?.id === c.id}
-                        className={`py-3.5 px-3 rounded-2xl text-sm transition-all border flex items-center justify-center ${selected?.id === c.id ? "bg-slate-900 border-slate-900 text-white shadow-[0_8px_25px_rgba(0,0,0,0.15)] font-bold scale-[1.03]" : "bg-white/80 backdrop-blur-md border-slate-300 shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-slate-600 font-medium hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:text-slate-900 hover:border-slate-400"}`}
+                        className={`py-3.5 px-3 rounded-2xl text-sm transition-all border flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ${selected?.id === c.id ? "bg-slate-900 border-slate-900 text-white shadow-[0_8px_25px_rgba(0,0,0,0.15)] font-bold scale-[1.03]" : "bg-white/80 backdrop-blur-md border-slate-300 shadow-[0_4px_15px_rgba(0,0,0,0.03)] text-slate-600 font-medium hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-1 hover:text-slate-900 hover:border-slate-400"}`}
                     >
                         {c.label}
                     </button>
@@ -172,7 +172,7 @@ export function FormatSelector({ selected, onSelect, isPro }) {
     ];
     return (
         <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
-            <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">投稿フォーマット</h3>
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">投稿フォーマット</h2>
             <div className="grid grid-cols-2 md:flex md:flex-wrap justify-center gap-3 w-full">
                 {formats.map(f => {
                     const isDisabled = f.isProOnly && !isPro;
@@ -183,7 +183,7 @@ export function FormatSelector({ selected, onSelect, isPro }) {
                             disabled={isDisabled}
                             onClick={() => onSelect(f.id)}
                             aria-pressed={selected === f.id}
-                            className={`p-3 md:px-5 md:py-3 rounded-xl md:rounded-full text-sm font-semibold transition-all border flex flex-col items-center justify-center gap-1 ${selected === f.id ? 'bg-indigo-600/30 border-indigo-500 text-gray-900' : 'bg-white border-slate-300 shadow-sm text-slate-500 font-medium hover:border-slate-400 font-medium hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:-translate-y-1 hover:text-rose-600'
+                            className={`p-3 md:px-5 md:py-3 rounded-xl md:rounded-full text-sm font-semibold transition-all border flex flex-col items-center justify-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ${selected === f.id ? 'bg-indigo-600/30 border-indigo-500 text-gray-900' : 'bg-white border-slate-300 shadow-sm text-slate-500 font-medium hover:border-slate-400 font-medium hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:-translate-y-1 hover:text-rose-600'
                                 } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''} ${f.id === 'video_script' ? 'col-span-2 md:col-span-1' : ''}`}
                         >
                             <span>{f.label}</span>
@@ -206,7 +206,7 @@ export function TargetSelector({ selected, onSelect, isPro }) {
     ];
     return (
         <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
-            <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">メインターゲット層</h3>
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">メインターゲット層</h2>
             <div className="flex flex-wrap justify-center gap-3">
                 {targets.map(t => {
                     const isDisabled = t.isProOnly && !isPro;
@@ -217,7 +217,7 @@ export function TargetSelector({ selected, onSelect, isPro }) {
                             disabled={isDisabled}
                             onClick={() => onSelect(t.id)}
                             aria-pressed={selected === t.id}
-                            className={`min-h-11 py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm 
+                            className={`min-h-11 py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2
                                 ${isDisabled ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60' :
                                     selected === t.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' :
                                         'bg-white/80 backdrop-blur-sm border-slate-300 text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-400'}`}
@@ -239,15 +239,15 @@ export function GenderSelector({ selected, onSelect }) {
     ];
     return (
         <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
-            <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">ターゲットの性別</h3>
-            <div className="flex justify-center gap-3">
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">ターゲットの性別</h2>
+            <div className="flex flex-wrap justify-center gap-3">
                 {genders.map(g => (
                     <button
                         type="button"
                         key={g.id}
                         onClick={() => onSelect(g.id)}
                         aria-pressed={selected === g.id}
-                        className={`min-h-11 py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm ${selected === g.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-sm border-slate-300 text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-400'}`}
+                        className={`min-h-11 whitespace-nowrap py-2.5 px-5 sm:px-6 rounded-full text-sm font-bold transition-all border shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ${selected === g.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-sm border-slate-300 text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-400'}`}
                     >
                         {g.label}
                     </button>
@@ -265,7 +265,7 @@ export function BusinessStyleSelector({ selected, onSelect }) {
     ];
     return (
         <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
-            <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">ビジネスの形態</h3>
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">ビジネスの形態</h2>
             <div className="flex flex-wrap justify-center gap-3">
                 {styles.map(s => (
                     <button
@@ -273,7 +273,7 @@ export function BusinessStyleSelector({ selected, onSelect }) {
                         key={s.id}
                         onClick={() => onSelect(s.id)}
                         aria-pressed={selected === s.id}
-                        className={`min-h-11 py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm ${selected === s.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-sm border-slate-300 text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-400'}`}
+                        className={`min-h-11 py-2.5 px-6 rounded-full text-sm font-bold transition-all border shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ${selected === s.id ? 'bg-slate-900 border-slate-900 text-white shadow-[0_6px_20px_rgba(0,0,0,0.15)] scale-105' : 'bg-white/80 backdrop-blur-sm border-slate-300 text-slate-600 hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:text-slate-900 hover:border-slate-400'}`}
                     >
                         {s.label}
                     </button>
@@ -293,7 +293,7 @@ export function ToneSelector({ selected, onSelect }) {
     ];
     return (
         <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
-            <h3 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">投稿のトーン＆マナー</h3>
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-8 text-center text-slate-800 tracking-tight">投稿のトーン＆マナー</h2>
             <div className="flex flex-wrap justify-center gap-2">
                 {tones.map(t => (
                     <button
@@ -301,7 +301,7 @@ export function ToneSelector({ selected, onSelect }) {
                         key={t.id}
                         onClick={() => onSelect(t.id)}
                         aria-pressed={selected === t.id}
-                        className={`min-h-11 py-2 px-4 rounded font-medium transition-all text-sm border ${selected === t.id ? 'bg-orange-600/30 border-orange-500 text-gray-900' : 'bg-white/90 border-slate-300 shadow-sm text-slate-800 font-medium hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:border-slate-400 hover:text-slate-900'}`}
+                        className={`min-h-11 py-2 px-4 rounded font-medium transition-all text-sm border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ${selected === t.id ? 'bg-orange-600/30 border-orange-500 text-gray-900' : 'bg-white/90 border-slate-300 shadow-sm text-slate-800 font-medium hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:border-slate-400 hover:text-slate-900'}`}
                     >
                         {t.label}
                     </button>
@@ -321,7 +321,7 @@ export function LanguageSelector({ selected, onSelect, isPro }) {
     ];
     return (
         <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
-            <h3 className="text-2xl md:text-3xl font-extrabold mb-3 text-center text-slate-800 tracking-tight">キャプション言語（インバウンド対応）</h3>
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-3 text-center text-slate-800 tracking-tight">キャプション言語（インバウンド対応）</h2>
             <p className="text-xs text-center text-slate-600 mb-6">投稿文・ハッシュタグ・スライド本文の言語。長文なので多言語併記OK。</p>
             <div className="flex flex-wrap justify-center gap-2">
                 {languages.map(l => {
@@ -333,7 +333,7 @@ export function LanguageSelector({ selected, onSelect, isPro }) {
                             disabled={isDisabled}
                             onClick={() => onSelect(l.id)}
                             aria-pressed={selected === l.id}
-                            className={`min-h-11 py-2 px-4 rounded-full font-bold transition-all text-sm border
+                            className={`min-h-11 py-2 px-4 rounded-full font-bold transition-all text-sm border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2
                                 ${isDisabled ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60' :
                                     selected === l.id ? 'bg-indigo-600/30 border-indigo-500 text-gray-900 shadow-[0_0_15px_rgba(79,70,229,0.3)]' :
                                         'bg-white/80 border-slate-300 text-slate-800 font-medium hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:border-slate-400 hover:text-gray-900'}`}
@@ -358,7 +358,7 @@ export function OverlayLanguageSelector({ selected, onSelect }) {
     ];
     return (
         <div className="w-full max-w-3xl mx-auto mb-10 p-6 md:p-10 bg-white/60 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-[0_8px_30px_rgba(0,0,0,0.03)]">
-            <h3 className="text-2xl md:text-3xl font-extrabold mb-3 text-center text-slate-800 tracking-tight">画像内テキストの言語</h3>
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-3 text-center text-slate-800 tracking-tight">画像内テキストの言語</h2>
             <p className="text-xs text-center text-slate-600 mb-6">画像オーバーレイ（写真上の文字）に使う言語。視認性のため必ず1言語のみ。</p>
             <div className="flex flex-wrap justify-center gap-2">
                 {overlayLanguages.map(l => (
@@ -367,7 +367,7 @@ export function OverlayLanguageSelector({ selected, onSelect }) {
                         key={l.id}
                         onClick={() => onSelect(l.id)}
                         aria-pressed={selected === l.id}
-                        className={`min-h-11 py-2 px-4 rounded-full font-bold transition-all text-sm border
+                        className={`min-h-11 py-2 px-4 rounded-full font-bold transition-all text-sm border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2
                             ${selected === l.id ? 'bg-pink-600/30 border-pink-500 text-gray-900 shadow-[0_0_15px_rgba(236,72,153,0.3)]' :
                                 'bg-white/80 border-slate-300 text-slate-800 font-medium hover:shadow-[0_6px_15px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 hover:border-slate-400 hover:text-gray-900'}`}
                     >
@@ -456,7 +456,7 @@ export function ProductInput({ value = {}, onChange }) {
 
     return (
         <div className="w-full max-w-2xl mb-8 bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-6 rounded-2xl border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
-            <h3 className="text-xl font-bold mb-6 text-center text-gray-900">詳細情報（任意・推奨）</h3>
+            <h2 className="text-xl font-bold mb-6 text-center text-gray-900">詳細情報（任意・推奨）</h2>
 
             <div className="space-y-4">
                 <div>
@@ -533,7 +533,7 @@ export function ProductInput({ value = {}, onChange }) {
                 <div className="bg-blue-500/10 border border-blue-500/30 p-4 rounded-xl mt-4">
                     <label htmlFor="baseImageInput" className="block text-sm font-bold text-blue-700 mb-2 flex flex-col sm:flex-row sm:items-center gap-2">
                         <span>ベース写真・商品画像 <span className="text-gray-700 font-normal text-xs">(推奨)</span></span>
-                        <span className="text-slate-800 font-medium font-normal text-xs bg-white/90 border border-slate-200 shadow-sm text-slate-8000 border border-white shadow-lg/80 px-2 py-0.5 rounded border border-gray-700">複数枚（最大5枚）選択可能</span>
+                        <span className="text-slate-800 font-normal text-xs bg-white/90 border border-slate-200 shadow-sm px-2 py-0.5 rounded">複数枚（最大5枚）選択可能</span>
                     </label>
                     <p className="text-xs text-[#D4A373]/80 mb-3">※複数アップロードすると、AIがそれぞれの画像を使ってバリエーション豊かなカルーセルを生成します。</p>
                     <div className="flex items-center gap-4">
@@ -643,7 +643,7 @@ export function ProductInput({ value = {}, onChange }) {
                             className="w-full max-w-full flex-1 bg-white/80 border border-slate-200 rounded-xl p-2.5 text-slate-600 text-[11px] sm:text-sm file:mr-3 file:sm:mr-5 file:py-2 file:sm:py-2.5 file:px-4 file:sm:px-6 file:rounded-full file:border-0 file:text-[10px] file:sm:text-sm file:font-bold file:bg-slate-900 file:text-white hover:file:bg-slate-800 hover:file:shadow-md hover:file:-translate-y-0.5 file:transition-all cursor-pointer shadow-sm hover:border-slate-300 transition-all font-medium"
                         />
                         {value.logoUrl && (
-                            <div className="h-12 w-12 shrink-0 rounded-full overflow-hidden border-2 border-rose-200 relative group bg-white/90 border border-slate-200 shadow-sm text-slate-8000 border border-white shadow-lg/80">
+                            <div className="h-12 w-12 shrink-0 rounded-full overflow-hidden border-2 border-rose-200 relative group bg-white/90 shadow-lg">
                                 <NextImage src={value.logoUrl} alt="アップロードしたブランドロゴ" fill sizes="48px" unoptimized className="object-cover" />
                                 <button
                                     type="button"
