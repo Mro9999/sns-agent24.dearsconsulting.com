@@ -79,6 +79,7 @@ async function synchronizeSubscriptionAccess(
             stripePriceId: access.priceId,
             stripeSubscriptionStatus: access.status,
             stripeCurrentPeriodEnd: periodEndIso(access.periodEnd),
+            stripeCancelAtPeriodEnd: access.cancelAtPeriodEnd,
             stripeBillingAttentionRequired:
                 billingAttentionRequired ?? access.status === "past_due"
         }

@@ -39,7 +39,9 @@ export function resolveSubscriptionAccess(subscription, priceIds) {
 
     return {
         accessEnabled,
+        cancelAtPeriodEnd: subscription?.cancel_at_period_end === true,
         periodEnd: subscriptionPeriodEnd(subscription),
+        plan: paidRole,
         priceId,
         recognized,
         role: accessEnabled ? paidRole : null,

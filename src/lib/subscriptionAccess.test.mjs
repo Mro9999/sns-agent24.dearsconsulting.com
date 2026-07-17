@@ -22,7 +22,9 @@ const subscription = (status, priceId, extra = {}) => ({
 test('有効なPro契約はPro権限になる', () => {
     assert.deepEqual(resolveSubscriptionAccess(subscription('active', 'price_pro_month'), priceIds), {
         accessEnabled: true,
+        cancelAtPeriodEnd: false,
         periodEnd: 200,
+        plan: 'pro',
         priceId: 'price_pro_month',
         recognized: true,
         role: 'pro',
@@ -38,11 +40,20 @@ test('支払い再試行中は即時停止せず権限を維持する', () => {
     assert.equal(resolveSubscriptionAccess(subscription('past_due', 'price_pro_year'), priceIds).accessEnabled, true);
 });
 
+test('解約予約を契約表示用に返す', () => {
+    const result = resolveSubscriptionAccess(subscription('active', 'price_pro_year', {
+        cancel_at_period_end: true
+    }), priceIds);
+    assert.equal(result.cancelAtPeriodEnd, true);
+    assert.equal(result.plan, 'pro');
+});
+
 for (const status of ['incomplete', 'incomplete_expired', 'canceled', 'unpaid', 'paused']) {
     test(`${status}では有料権限を停止する`, () => {
         const result = resolveSubscriptionAccess(subscription(status, 'price_pro_month'), priceIds);
         assert.equal(result.recognized, true);
         assert.equal(result.accessEnabled, false);
+        assert.equal(result.plan, 'pro');
         assert.equal(result.role, null);
     });
 }
