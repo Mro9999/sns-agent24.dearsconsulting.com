@@ -73,13 +73,13 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-[#111112] text-white font-sans selection:bg-purple-500/30">
             {/* Header */}
             <header className="sticky top-0 z-50 flex w-full flex-col gap-3 border-b border-white/5 bg-black/30 px-4 py-3 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <Link href="/app" className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors">
+                <Link href="/app" className="flex min-h-11 items-center gap-2 rounded-lg px-2 text-gray-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black">
                     <ChevronLeft size={20} aria-hidden="true" /> <span className="text-sm font-bold">作成ツールに戻る</span>
                 </Link>
                 <AccountStatusCard status={accountStatus} variant="dark" />
             </header>
 
-            <main className="max-w-6xl mx-auto px-4 py-8">
+            <main id="main-content" tabIndex={-1} className="max-w-6xl mx-auto px-4 py-8 focus:outline-none">
                 <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <h1 className="text-3xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500 flex items-center gap-3">
                         <Database className="text-purple-400" /> SNS資産ダッシュボード
@@ -91,7 +91,7 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
                     <div className="bg-gradient-to-br from-indigo-900/30 to-purple-900/10 border border-indigo-500/20 rounded-2xl p-6 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-indigo-500/20"></div>
-                        <h3 className="text-indigo-300 text-sm font-bold mb-1 flex items-center gap-2"><ImageIcon size={16} /> 累計生成コンテンツ数</h3>
+                        <h2 className="text-indigo-300 text-sm font-bold mb-1 flex items-center gap-2"><ImageIcon size={16} aria-hidden="true" /> 累計生成コンテンツ数</h2>
                         <div className="flex items-baseline gap-2 relative z-10">
                             <span className="text-5xl font-extrabold text-white">{totalGenerations}</span>
                             <span className="text-indigo-400 font-bold">件</span>
@@ -100,7 +100,7 @@ export default function DashboardPage() {
 
                     <div className="bg-gradient-to-br from-pink-900/30 to-orange-900/10 border border-pink-500/20 rounded-2xl p-6 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-pink-500/20"></div>
-                        <h3 className="text-pink-300 text-sm font-bold mb-1 flex items-center gap-2"><Clock size={16} /> AIが節約した業務時間</h3>
+                        <h2 className="text-pink-300 text-sm font-bold mb-1 flex items-center gap-2"><Clock size={16} aria-hidden="true" /> AIが節約した業務時間</h2>
                         <div className="flex items-baseline gap-2 relative z-10">
                             <span className="text-5xl font-extrabold text-white">{savedHours}</span>
                             <span className="text-pink-400 font-bold">時間</span>
@@ -113,8 +113,9 @@ export default function DashboardPage() {
                 <h2 className="text-xl font-bold mb-6 text-gray-200 border-b border-white/10 pb-4">過去の生成履歴</h2>
 
                 {isLoading ? (
-                    <div className="flex justify-center items-center py-32">
-                        <div className="animate-spin border-4 border-purple-500 border-t-transparent rounded-full w-12 h-12"></div>
+                    <div className="flex justify-center items-center py-32" role="status" aria-live="polite">
+                        <div className="animate-spin border-4 border-purple-500 border-t-transparent rounded-full w-12 h-12" aria-hidden="true"></div>
+                        <span className="sr-only">生成履歴を読み込んでいます</span>
                     </div>
                 ) : loadError ? (
                     <div role="alert" className="text-center py-16 bg-red-500/5 rounded-2xl border border-red-400/20 animate-in zoom-in duration-500">
@@ -184,8 +185,9 @@ export default function DashboardPage() {
                                 <div className="p-4 bg-black/20 border-t border-white/5 flex gap-3 mt-auto">
                                     {gen.caption && (
                                         <button
+                                            type="button"
                                             onClick={() => copyToClipboard(gen.caption)}
-                                            className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all border border-white/5"
+                                            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-white/5 bg-white/5 py-2.5 text-xs font-bold text-gray-300 transition-all hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a24]"
                                         >
                                             <Copy size={14} /> コピー
                                         </button>
@@ -194,7 +196,7 @@ export default function DashboardPage() {
                                         <a
                                             href={gen.image_urls[0]}
                                             download={`sns-agent24-asset-${gen.id.substring(0,6)}.jpg`}
-                                            className="flex-1 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 hover:text-purple-200 text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all border border-purple-500/20"
+                                            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-purple-500/20 bg-purple-600/20 py-2.5 text-xs font-bold text-purple-300 transition-all hover:bg-purple-600/40 hover:text-purple-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a24]"
                                         >
                                             <Download size={14} /> 保存
                                         </a>

@@ -34,7 +34,7 @@ export async function GET(req) {
 2. ご挨拶: 今週もビジネスとSNS運用お疲れ様です。
 3. 今週のトレンド動向 (200文字程度で、幅広いビジネスで有益な見解)
 4. 今週の投稿アイデア (タイトルと、どのような内容を書けばよいかの構成テンプレート)
-5. 行動喚起 (CTAボタン風のリンク): アプリのURL (https://instagram-auto-sigma.vercel.app/) へ誘導し、「SNS Agent24を開いて、このネタを『あなたの自社の事業』に合わせて自動生成してみましょう！」と伝える。
+5. 行動喚起 (CTAボタン風のリンク): アプリのURL (https://sns-agent24.dearsconsulting.com/) へ誘導し、「SNS Agent24を開いて、このネタを『あなたの自社の事業』に合わせて自動生成してみましょう！」と伝える。
         `;
 
         const response = await ai.models.generateContent({

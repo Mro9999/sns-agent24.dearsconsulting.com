@@ -19,7 +19,7 @@ export default async function LandingPage() {
                     </div>
                     <span className="font-bold text-lg tracking-wider text-gray-900">SNS Agent<span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-[#D4AF37]">24</span></span>
                 </div>
-                <div className="flex gap-4">
+                <nav aria-label="主要メニュー" className="flex gap-4">
                     {!isSignedIn && <>
                         <Link
                             href="/sign-in"
@@ -48,8 +48,10 @@ export default async function LandingPage() {
                             履歴を見る
                         </Link>
                     </>}
-                </div>
+                </nav>
             </header>
+
+            <main id="main-content" tabIndex={-1} className="w-full focus:outline-none">
 
             {/* Hero Section */}
             <section className="w-full max-w-6xl mx-auto px-6 pt-24 pb-32 flex flex-col items-center justify-center text-center relative overflow-hidden flex-1 z-0">
@@ -252,6 +254,8 @@ export default async function LandingPage() {
                     )}
                 </div>
             </section>
+
+            </main>
 
             {/* Footer */}
             <footer className="w-full border-t border-gray-200/60 py-12 px-6 flex flex-col items-center justify-center text-center text-sm text-slate-700 font-medium">

@@ -60,7 +60,15 @@ export default function RootLayout({ children }) {
         >
             <html lang="ja" data-scroll-behavior="smooth">
                 <PHProvider>
-                    <body>{children}</body>
+                    <body>
+                        <a
+                            href="#main-content"
+                            className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow-xl transition-transform focus:translate-y-0 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+                        >
+                            本文へ移動
+                        </a>
+                        {children}
+                    </body>
                 </PHProvider>
             </html>
         </ClerkProvider>

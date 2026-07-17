@@ -3,7 +3,7 @@ import { ArrowLeft, Bot, CheckCircle2 } from 'lucide-react';
 
 export default function AuthShell({ eyebrow, title, description, children }) {
     return (
-        <main className="min-h-screen bg-gradient-to-br from-[#f8f9fa] via-[#fcfafb] to-[#f1f3f5] px-4 py-8 sm:py-12">
+        <main id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-[#f8f9fa] via-[#fcfafb] to-[#f1f3f5] px-4 py-8 sm:py-12 focus:outline-none">
             <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
                 <Link href="/" className="inline-flex w-fit items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900">
                     <ArrowLeft size={16} aria-hidden="true" />

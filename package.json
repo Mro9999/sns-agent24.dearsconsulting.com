@@ -10,6 +10,7 @@
         "test:copy-safety": "node --test src/lib/copySafety.test.mjs",
         "test:billing": "node --test src/lib/subscriptionAccess.test.mjs",
         "test:account-status": "node --test src/lib/accountPlan.test.mjs",
+        "test:links": "node --test src/lib/linkSafety.test.mjs",
         "test:vercel-trace": "node scripts/verify-vercel-trace.mjs"
     },
     "dependencies": {

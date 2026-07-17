@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import NextImage from 'next/image';
+import Link from 'next/link';
 import { Check, X, Loader2, Calendar, Sparkles, ArrowLeft, RefreshCcw } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import useAccountStatus from '@/hooks/useAccountStatus';
 import { AccountStatusCard } from '@/components/account/AccountStatusCard';
 // drawCanvasImage は /api/generate-post-image のサーバー側合成へ移行したため、ここでは未使用
@@ -16,7 +16,6 @@ const BATCH_WAIT_MS = 10 * 60 * 1000;
 export default function ApprovePage() {
     const accountStatus = useAccountStatus();
     const { user, isLoaded } = accountStatus;
-    const router = useRouter();
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processingIds, setProcessingIds] = useState(new Set());
@@ -415,68 +414,74 @@ export default function ApprovePage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-950/40 text-white">
-            <div className="max-w-4xl mx-auto px-4 py-8">
+            <header className="max-w-4xl mx-auto px-4 pt-8">
                 <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <button
-                        type="button"
-                        onClick={() => router.push('/app')}
+                    <Link
+                        href="/app"
                         className="flex min-h-11 items-center gap-2 self-start rounded-full px-3 text-sm text-gray-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
                     >
                         <ArrowLeft size={16} aria-hidden="true" /> アプリへ戻る
-                    </button>
+                    </Link>
                     <AccountStatusCard status={accountStatus} variant="dark" />
                 </div>
+            </header>
 
-                <header className="mb-8">
+            <main id="main-content" tabIndex={-1} className="max-w-4xl mx-auto px-4 pb-8 focus:outline-none">
+
+                <div className="mb-8">
                     <h1 className="text-3xl font-bold flex items-center gap-2">
-                        <Sparkles className="text-purple-400" />
+                        <Sparkles className="text-purple-400" aria-hidden="true" />
                         今週の投稿を確認
                     </h1>
                     <p className="text-gray-400 mt-2 text-sm">
                         投稿文と画像を確認し、問題なければ各投稿の承認ボタンで投稿キューに入れます。
                     </p>
-                </header>
+                </div>
 
                 {statusMsg && (
-                    <div className="mb-4 bg-purple-900/30 border border-purple-500/30 rounded-lg px-4 py-3 text-sm flex items-center gap-3">
-                        {generatingIds.size > 0 && <Loader2 size={16} className="animate-spin text-purple-400 flex-shrink-0" />}
+                    <div className="mb-4 bg-purple-900/30 border border-purple-500/30 rounded-lg px-4 py-3 text-sm flex items-center gap-3" role="status" aria-live="polite">
+                        {generatingIds.size > 0 && <Loader2 size={16} className="animate-spin text-purple-400 flex-shrink-0" aria-hidden="true" />}
                         <span className="text-purple-100">{statusMsg}</span>
                     </div>
                 )}
 
-                <div className="flex items-center justify-between mb-4">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-sm text-gray-400">
                         確認待ち: <span className="text-white font-bold">{posts.length}</span> 件
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <button
+                            type="button"
                             onClick={fetchPending}
-                            className="flex items-center gap-2 text-sm bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded"
+                            className="flex min-h-11 items-center gap-2 rounded bg-gray-800 px-3 py-2 text-sm hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
                         >
-                            <RefreshCcw size={14} /> 更新
+                            <RefreshCcw size={14} aria-hidden="true" /> 更新
                         </button>
                         {posts.length > 0 && (
                             <>
                                 <button
+                                    type="button"
                                     onClick={handleRegenerateAllImages}
                                     disabled={processingIds.size > 0 || generatingIds.size > 0}
-                                    className="flex items-center gap-2 text-sm bg-blue-700 hover:bg-blue-600 px-3 py-2 rounded font-bold disabled:opacity-50"
+                                    className="flex min-h-11 items-center gap-2 rounded bg-blue-700 px-3 py-2 text-sm font-bold hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:opacity-50"
                                 >
-                                    <RefreshCcw size={14} /> 画像だけ再生成
+                                    <RefreshCcw size={14} aria-hidden="true" /> 画像だけ再生成
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={handleRejectAll}
                                     disabled={processingIds.size > 0 || generatingIds.size > 0}
-                                    className="flex items-center gap-2 text-sm bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded font-bold disabled:opacity-50"
+                                    className="flex min-h-11 items-center gap-2 rounded bg-gray-700 px-4 py-2 text-sm font-bold hover:bg-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:opacity-50"
                                 >
-                                    <X size={16} /> 全件却下
+                                    <X size={16} aria-hidden="true" /> 全件却下
                                 </button>
 	                                <button
+	                                    type="button"
 	                                    onClick={handleApproveAll}
 	                                    disabled={processingIds.size > 0 || generatingIds.size > 0 || posts.some(p => !hasImages(p))}
-	                                    className="flex items-center gap-2 text-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 px-4 py-2 rounded font-bold disabled:opacity-50"
+	                                    className="flex min-h-11 items-center gap-2 rounded bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2 text-sm font-bold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:opacity-50"
 	                                >
-                                    <Check size={16} /> 全件承認
+                                    <Check size={16} aria-hidden="true" /> 全件承認
                                 </button>
                             </>
                         )}
@@ -484,8 +489,8 @@ export default function ApprovePage() {
                 </div>
 
                 {loading ? (
-                    <div className="text-center py-16 text-gray-500">
-                        <Loader2 className="animate-spin mx-auto mb-2" />
+                    <div className="text-center py-16 text-gray-400" role="status" aria-live="polite">
+                        <Loader2 className="animate-spin mx-auto mb-2" aria-hidden="true" />
                         読み込み中...
                     </div>
                 ) : posts.length === 0 ? (
@@ -509,25 +514,27 @@ export default function ApprovePage() {
                             const isProcessing = processingIds.has(post.id);
                             const isGeneratingImage = generatingIds.has(post.id);
                             const scheduledDate = post.scheduled_at ? new Date(post.scheduled_at) : null;
+                            const scheduledLabel = scheduledDate
+                                ? scheduledDate.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' })
+                                : '予約時刻未設定';
+                            const headingId = `pending-post-${post.id}`;
                             // 画像はサーバー側 (Satori) で合成済みなので post.image_urls をそのまま表示
                             const allImages = Array.isArray(post.image_urls) ? post.image_urls : [];
                             const isCarousel = allImages.length > 1;
                             const imageError = imageErrors[post.id];
                             return (
-                                <div key={post.id} className="bg-gray-900/60 border border-gray-800 rounded-lg overflow-hidden">
+                                <article key={post.id} aria-labelledby={headingId} className="bg-gray-900/60 border border-gray-800 rounded-lg overflow-hidden">
                                     <div className="p-4 space-y-4">
                                         {/* メタ情報 */}
-                                        <div className="flex items-center gap-2 text-xs text-gray-400">
-                                            <Calendar size={14} />
-                                            {scheduledDate
-                                                ? scheduledDate.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' })
-                                                : '予約時刻未設定'}
+                                        <h2 id={headingId} className="flex items-center gap-2 text-xs font-medium text-gray-300">
+                                            <Calendar size={14} aria-hidden="true" />
+                                            {scheduledLabel}
                                             {isCarousel && (
                                                 <span className="ml-2 bg-purple-900/50 px-2 py-0.5 rounded">
                                                     カルーセル {allImages.length}枚
                                                 </span>
                                             )}
-                                        </div>
+                                        </h2>
 
                                         {/* 画像プレビュー: カルーセルは横並び全件、単発は1枚 */}
                                         {allImages.length > 0 ? (
@@ -538,7 +545,7 @@ export default function ApprovePage() {
                                                     <div key={idx} className="bg-gray-950 rounded overflow-hidden aspect-square relative">
                                                         <NextImage
                                                             src={url}
-                                                            alt={`承認待ち投稿の画像 ${idx + 1}枚目`}
+                                                            alt={`承認待ち投稿（${scheduledLabel}）の画像 ${idx + 1}枚目`}
                                                             fill
                                                             sizes={isCarousel ? "33vw" : "320px"}
                                                             className="object-cover"
@@ -575,7 +582,7 @@ export default function ApprovePage() {
                                                 type="button"
                                                 onClick={() => regenerateImagesForPost(post, 0)}
                                                 disabled={isGeneratingImage || isProcessing}
-                                                className="inline-flex items-center gap-2 text-xs bg-blue-900/70 hover:bg-blue-800 px-3 py-2 rounded disabled:opacity-50"
+                                                className="inline-flex min-h-11 items-center gap-2 rounded bg-blue-900/70 px-3 py-2 text-xs hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:opacity-50"
                                             >
                                                 {isGeneratingImage ? <Loader2 size={14} className="animate-spin" /> : <RefreshCcw size={14} />}
                                                 画像だけ再生成
@@ -583,36 +590,39 @@ export default function ApprovePage() {
                                         )}
 
                                         {/* キャプション */}
+                                        <h3 className="sr-only">投稿文</h3>
                                         <div className="text-sm whitespace-pre-wrap text-gray-200">
                                             {post.caption || '(キャプション無し)'}
                                         </div>
 
                                         {/* 承認/却下ボタン */}
                                         <div className="flex gap-2 pt-2">
-		                                            <button
-		                                                onClick={() => handleApprove(post)}
-		                                                disabled={isProcessing || isGeneratingImage || !hasImages(post)}
-		                                                className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 px-3 py-2 rounded font-bold disabled:opacity-50"
+	                                            <button
+	                                                type="button"
+	                                                onClick={() => handleApprove(post)}
+	                                                disabled={isProcessing || isGeneratingImage || !hasImages(post)}
+	                                                className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded bg-green-600 px-3 py-2 font-bold hover:bg-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:opacity-50"
 		                                            >
 		                                                {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
 		                                                {isGeneratingImage ? '画像再生成中' : (hasImages(post) ? '承認' : '画像待ち')}
 		                                            </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleReject(post)}
                                                 disabled={isProcessing || isGeneratingImage}
-                                                className="flex-1 flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded disabled:opacity-50"
+                                                className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded bg-gray-700 px-3 py-2 hover:bg-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:opacity-50"
                                             >
                                                 <X size={16} />
                                                 却下
                                             </button>
                                         </div>
                                     </div>
-                                </div>
+                                </article>
                             );
                         })}
                     </div>
                 )}
-            </div>
+            </main>
         </div>
     );
 }

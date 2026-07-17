@@ -922,7 +922,7 @@ export default function Home() {
             )}
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col items-center mt-12 px-4 w-full">
+            <main id="main-content" tabIndex={-1} className="flex-1 flex flex-col items-center mt-12 px-4 w-full focus:outline-none">
 
                 {step === 0 && (
                     <>
@@ -1049,20 +1049,20 @@ export default function Home() {
 
                             {/* モバイル専用機能についての事前警告（PCアクセス時の不満を防ぐ） */}
                             <div className={`w-full max-w-lg mb-8 p-4 bg-white/40 backdrop-blur-xl border border-white rounded-xl text-center shadow-sm transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-                                <h4 className="text-slate-500 font-bold text-sm mb-1 flex items-center justify-center gap-2">
+                                <h3 className="text-slate-700 font-bold text-sm mb-1 flex items-center justify-center gap-2">
                                     <Smartphone className="w-5 h-5" /> iOS端末からのご利用を推奨
-                                </h4>
-                                <p className="text-slate-400 text-xs leading-relaxed font-medium">
+                                </h3>
+                                <p className="text-slate-600 text-xs leading-relaxed font-medium">
                                     生成した画像の一括保存（カメラロールへのシェア機能等）は、<br className="hidden sm:block" />
-                                    <strong className="text-slate-500">iOS端末専用</strong>の機能となっております。<br />
-                                    <span className="text-[10px] text-slate-400">（※Android環境での動作は未確認のため推奨しておりません）</span><br />
+                                    <strong className="text-slate-700">iOS端末専用</strong>の機能となっております。<br />
+                                    <span className="text-[10px] text-slate-600">（※Android環境での動作は未確認のため推奨しておりません）</span><br />
                                     PC等で生成された場合、ダウンロード機能に制限がありますのでご注意ください。
                                 </p>
                             </div>
 
                             <div className={`w-full max-w-4xl mb-2 transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                                 <div className="text-center mb-4">
-                                    <p className="text-xs font-bold tracking-[0.18em] text-slate-400">PLAN ACTION</p>
+                                    <p className="text-xs font-bold tracking-[0.18em] text-slate-600">PLAN ACTION</p>
                                     <h3 className="text-lg md:text-xl font-bold text-slate-900 mt-1">作成方法を選ぶ</h3>
                                     <p className="text-xs text-slate-500 mt-2">
                                         <strong className="text-slate-700">Pro</strong> は1投稿ずつ作成。<strong className="text-rose-600">Pro Max</strong> はProの単発作成に加えて、1週間分の一括生成もできます。
@@ -1075,7 +1075,7 @@ export default function Home() {
                                                 <PenTool size={16} className="text-slate-500" />
                                                 <span className="text-xs font-bold tracking-widest text-slate-500">PRO</span>
                                             </div>
-                                            <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">基本機能</span>
+                                            <span className="text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-full">基本機能</span>
                                         </div>
                                         <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">1投稿ずつ作成</h4>
                                         <p className="text-xs text-gray-500 leading-relaxed mb-4">
@@ -1108,9 +1108,9 @@ export default function Home() {
                                             <div className="flex items-center justify-between mb-3">
                                                 <div className="flex items-center gap-2">
                                                     <Sparkles size={16} className="text-rose-500" />
-                                                    <span className="text-xs font-bold tracking-widest text-rose-500">PRO MAX</span>
+                                                    <span className="text-xs font-bold tracking-widest text-rose-700">PRO MAX</span>
                                                 </div>
-                                                <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-full">Pro機能 + 一括生成</span>
+                                                <span className="text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-1 rounded-full">Pro機能 + 一括生成</span>
                                             </div>
                                             <h4 className="text-base md:text-lg font-bold text-gray-900 mb-1">単発作成も、一括生成も</h4>
                                             <p className="text-xs text-gray-500 leading-relaxed mb-4">
@@ -1847,7 +1847,7 @@ export default function Home() {
                     href="https://dearsconsulting.com/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex min-h-11 items-center px-2 text-[#E0455B] hover:text-[#FF6B80] text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg"
+                    className="inline-flex min-h-11 items-center px-2 text-rose-700 hover:text-rose-800 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg"
                 >
                     https://dearsconsulting.com/
                 </a>
