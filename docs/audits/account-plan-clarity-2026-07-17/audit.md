@@ -26,12 +26,16 @@
 - 投稿作成、履歴、承認の3画面で同じログイン情報・現在プランを表示する共通部品へ移行した。
 - 3画面すべてで「運営者アカウント」まで確定表示され、承認画面でもアカウントメニューを開けることを確認した。
 - 本番カスタムドメインへの割り当てとトップページHTTP 200を確認した。
-- `test:account-status`、`test:billing`、`test:copy-safety`、`lint`、`build` はすべて成功した。
+- `test:account-status`、`test:billing`、`test:copy-safety`、`lint`、`build`、`test:vercel-trace` はすべて成功した。
 
-## 次の公開阻害要因
+## 画像生成Routeの公開阻害要因と解消
 
-- アカウント表示とは別経路だが、承認画面で画像未生成の投稿を処理すると `POST /api/generate-post-image` がHTTP 500になる。
-- Vercelログでは `next/dist/compiled/@vercel/og/index.node.js` が関数バンドルに含まれず、オーバーレイ合成とテキストフォールバックの両方が失敗している。
-- `next.config.js` の `outputFileTracingIncludes` で、このRouteに必要なNext.js同梱のOG実行ファイルとフォントを明示的に含めて再検証する。
+- 修正前は、承認画面で画像未生成の投稿を処理すると `POST /api/generate-post-image` がHTTP 500になっていた。
+- 原因は `next/dist/compiled/@vercel/og/index.node.js` がVercel Functionのバンドルに含まれず、オーバーレイ合成とテキストフォールバックの両方が失敗していたことだった。
+- `next.config.js` の `outputFileTracingIncludes` で、このRouteに必要なNext.js同梱のOG実行ファイルを明示的に含めた。
+- `test:vercel-trace` を追加し、`index.node.js`、`resvg.wasm`、`yoga.wasm`、日本語フォント2件がビルド出力に含まれることを自動検証した。
+- 本番デプロイ `dpl_3oWoQSNgyFU6hSvx3fV93pURjLK8` で、5回の `POST /api/generate-post-image` がすべてHTTP 200になったことを確認した。
+- 承認画面を再読込し、5投稿・15画像がDBから復元され、失敗表示0件、5投稿すべての承認ボタンが有効になることを確認した。承認・却下・公開操作は行っていない。
+- 同デプロイの直近errorログと5xxログは0件で、`https://sns-agent24.dearsconsulting.com/` はHTTP 200を返した。
 
 画面比較用スクリーンショットにはログイン利用者の情報が含まれるため、目視確認後はGit管理対象から除外した。
