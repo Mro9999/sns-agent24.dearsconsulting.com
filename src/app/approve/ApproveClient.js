@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import NextImage from 'next/image';
-import { useUser } from '@clerk/nextjs';
 import { Check, X, Loader2, Calendar, Sparkles, ArrowLeft, RefreshCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import useAccountStatus from '@/hooks/useAccountStatus';
+import { AccountStatusCard } from '@/components/account/AccountStatusCard';
 // drawCanvasImage は /api/generate-post-image のサーバー側合成へ移行したため、ここでは未使用
 
 // 週次自動生成されたpending_approvalな投稿を確認・承認・却下するページ
@@ -13,7 +14,8 @@ const WEEKLY_BATCH_STARTED_KEY = 'sns-agent24-weekly-generation-started-at';
 const BATCH_WAIT_MS = 10 * 60 * 1000;
 
 export default function ApprovePage() {
-    const { user, isLoaded } = useUser();
+    const accountStatus = useAccountStatus();
+    const { user, isLoaded } = accountStatus;
     const router = useRouter();
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -414,12 +416,16 @@ export default function ApprovePage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-950/40 text-white">
             <div className="max-w-4xl mx-auto px-4 py-8">
-                <button
-                    onClick={() => router.push('/app')}
-                    className="flex items-center gap-2 text-gray-300 hover:text-white mb-6 text-sm"
-                >
-                    <ArrowLeft size={16} /> アプリへ戻る
-                </button>
+                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <button
+                        type="button"
+                        onClick={() => router.push('/app')}
+                        className="flex min-h-11 items-center gap-2 self-start rounded-full px-3 text-sm text-gray-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
+                    >
+                        <ArrowLeft size={16} aria-hidden="true" /> アプリへ戻る
+                    </button>
+                    <AccountStatusCard status={accountStatus} variant="dark" />
+                </div>
 
                 <header className="mb-8">
                     <h1 className="text-3xl font-bold flex items-center gap-2">

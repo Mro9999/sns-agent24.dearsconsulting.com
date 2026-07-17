@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import NextImage from 'next/image';
 import { Gem, Lock, Camera as Instagram, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History, Smartphone, ArrowRight, ArrowDown, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { UserButton, useUser, useClerk, useSession } from "@clerk/nextjs";
+import { useClerk } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
 import { CategorySelector, PurposeSelector, TargetSelector, GenderSelector, BusinessStyleSelector, ToneSelector, LanguageSelector, OverlayLanguageSelector, FormatSelector, ProductInput } from '@/components/features/Selectors';
 import { researchTrends, generatePost, generateImage, scrapeWebsite } from '@/lib/apiService';
@@ -10,60 +10,28 @@ import { drawCanvasImage } from '@/lib/canvasHelper';
 import ProMaxInquiryModal from '@/components/ProMaxInquiryModal';
 import ProfileSetupModal from '@/components/features/ProfileSetupModal';
 import { usePostHog } from 'posthog-js/react';
-import { resolveAccountPlan } from '@/lib/accountPlan.mjs';
+import useAccountStatus from '@/hooks/useAccountStatus';
+import { AccountStatusCard } from '@/components/account/AccountStatusCard';
 
 const WEEKLY_BATCH_STARTED_KEY = 'sns-agent24-weekly-generation-started-at';
 const WEEKLY_BATCH_PENDING_PAYLOAD_KEY = 'sns-agent24-weekly-generation-payload';
 
 export default function Home() {
-    const { user, isLoaded, isSignedIn } = useUser();
-    const { session } = useSession();
+    const accountStatus = useAccountStatus();
+    const {
+        user,
+        isLoaded,
+        isSignedIn,
+        isPro,
+        isProMax,
+        isPlanStatusLoading,
+        billingAttentionRequired,
+        billingPortalAvailable
+    } = accountStatus;
     const { openSignIn, openSignUp } = useClerk();
     const posthog = usePostHog();
 
-    const [serverIsPro, setServerIsPro] = useState(null);
-    const [serverIsProMax, setServerIsProMax] = useState(null);
-    const [serverRole, setServerRole] = useState(null);
-    const [isPlanStatusLoading, setIsPlanStatusLoading] = useState(true);
-    const [billingAttentionRequired, setBillingAttentionRequired] = useState(false);
-    const [billingPortalAvailable, setBillingPortalAvailable] = useState(null);
     const [portalError, setPortalError] = useState('');
-    useEffect(() => {
-        if (isSignedIn) {
-            setIsPlanStatusLoading(true);
-            fetch('/api/user/status')
-                .then(res => {
-                    if (!res.ok) throw new Error(`User status request failed (${res.status})`);
-                    return res.json();
-                })
-                .then(data => {
-                    console.log("Strict Backend Check:", data);
-                    setServerIsPro(Boolean(data.isPro));
-                    setServerIsProMax(Boolean(data.isProMax));
-                    setServerRole(data.role || 'free');
-                    setBillingAttentionRequired(Boolean(data.billingAttentionRequired));
-                    setBillingPortalAvailable(Boolean(data.billingPortalAvailable));
-                })
-                .catch(console.error)
-                .finally(() => setIsPlanStatusLoading(false));
-            return;
-        }
-        if (isLoaded) setIsPlanStatusLoading(false);
-    }, [isLoaded, isSignedIn]);
-
-    // JWTトークン内のメタデータ（ユーザー自身またはカスタムクレーム）を確実に取得
-    const sessionRole = session?.user?.publicMetadata?.role || null;
-    const isProMax = serverIsProMax === true || sessionRole === 'promax' || user?.publicMetadata?.role === 'promax' || sessionRole === 'admin' || user?.publicMetadata?.role === 'admin';
-    const isPro = isProMax || serverIsPro === true || sessionRole === 'pro' || user?.publicMetadata?.role === 'pro';
-    const accountRole = serverRole || sessionRole || user?.publicMetadata?.role || null;
-    const accountPlan = resolveAccountPlan({
-        role: accountRole,
-        isPro,
-        isProMax,
-        isLoading: isSignedIn && isPlanStatusLoading
-    });
-    const accountEmail = user?.primaryEmailAddress?.emailAddress || '';
-    const accountName = user?.fullName?.trim() || user?.username || accountEmail || 'ログイン中のユーザー';
 
     const [step, setStep] = useState(0); // 0: Platform, 1: Process, 2: Result
     const [selectedPlatform, setSelectedPlatform] = useState('instagram');
@@ -903,35 +871,7 @@ export default function Home() {
                     )}
 
                     {mounted && isLoaded && isSignedIn ? (
-                        <section
-                            aria-label="ログイン情報と現在のプラン"
-                            aria-live="polite"
-                            className="ml-auto flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 shadow-[0_8px_24px_rgba(15,23,42,0.08)] sm:w-auto"
-                        >
-                            <div className="min-w-0 flex-1 sm:max-w-52">
-                                <p className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
-                                    <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
-                                    ログイン中
-                                </p>
-                                <p className="truncate text-sm font-bold text-slate-900">{accountName}</p>
-                                {accountEmail && accountEmail !== accountName && (
-                                    <p className="truncate text-xs text-slate-500">{accountEmail}</p>
-                                )}
-                            </div>
-                            <div className="h-10 w-px shrink-0 bg-slate-200" aria-hidden="true"></div>
-                            <div className="min-w-0 shrink-0">
-                                <p className="text-xs font-medium text-slate-500">現在のプラン</p>
-                                <p className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-sm font-bold text-slate-900 ring-1 ring-inset ring-rose-200">
-                                    <Gem size={13} className="text-[#D4A373]" aria-hidden="true" />
-                                    {accountPlan.label}
-                                    <span className="sr-only">。{accountPlan.description}</span>
-                                </p>
-                            </div>
-                            <UserButton
-                                afterSignOutUrl="/"
-                                appearance={{ elements: { avatarBox: "w-11 h-11" } }}
-                            />
-                        </section>
+                        <AccountStatusCard status={accountStatus} className="ml-auto" />
                     ) : mounted && isLoaded ? (
                         <button
                             type="button"

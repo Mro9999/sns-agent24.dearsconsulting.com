@@ -1,12 +1,14 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { useUser, UserButton } from "@clerk/nextjs";
 import { ChevronLeft, Database, Clock, Copy, Download, Image as ImageIcon, Calendar, ArrowRight, RefreshCw, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import NextImage from 'next/image';
+import useAccountStatus from '@/hooks/useAccountStatus';
+import { AccountStatusCard } from '@/components/account/AccountStatusCard';
 
 export default function DashboardPage() {
-    const { user, isLoaded, isSignedIn } = useUser();
+    const accountStatus = useAccountStatus();
+    const { isLoaded, isSignedIn } = accountStatus;
     const [generations, setGenerations] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
@@ -70,13 +72,11 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-[#111112] text-white font-sans selection:bg-purple-500/30">
             {/* Header */}
-            <header className="w-full flex justify-between items-center px-6 py-4 bg-black/30 border-b border-white/5 sticky top-0 z-50 backdrop-blur-md">
+            <header className="sticky top-0 z-50 flex w-full flex-col gap-3 border-b border-white/5 bg-black/30 px-4 py-3 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <Link href="/app" className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors">
-                    <ChevronLeft size={20} /> <span className="text-sm font-bold">作成ツールに戻る</span>
+                    <ChevronLeft size={20} aria-hidden="true" /> <span className="text-sm font-bold">作成ツールに戻る</span>
                 </Link>
-                <div className="flex items-center gap-4">
-                    <UserButton afterSignOutUrl="/" />
-                </div>
+                <AccountStatusCard status={accountStatus} variant="dark" />
             </header>
 
             <main className="max-w-6xl mx-auto px-4 py-8">
