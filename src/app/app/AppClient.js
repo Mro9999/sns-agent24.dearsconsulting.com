@@ -10,6 +10,7 @@ import { drawCanvasImage } from '@/lib/canvasHelper';
 import ProMaxInquiryModal from '@/components/ProMaxInquiryModal';
 import ProfileSetupModal from '@/components/features/ProfileSetupModal';
 import { usePostHog } from 'posthog-js/react';
+import { resolveAccountPlan } from '@/lib/accountPlan.mjs';
 
 const WEEKLY_BATCH_STARTED_KEY = 'sns-agent24-weekly-generation-started-at';
 const WEEKLY_BATCH_PENDING_PAYLOAD_KEY = 'sns-agent24-weekly-generation-payload';
@@ -22,28 +23,47 @@ export default function Home() {
 
     const [serverIsPro, setServerIsPro] = useState(null);
     const [serverIsProMax, setServerIsProMax] = useState(null);
+    const [serverRole, setServerRole] = useState(null);
+    const [isPlanStatusLoading, setIsPlanStatusLoading] = useState(true);
     const [billingAttentionRequired, setBillingAttentionRequired] = useState(false);
     const [billingPortalAvailable, setBillingPortalAvailable] = useState(null);
     const [portalError, setPortalError] = useState('');
     useEffect(() => {
         if (isSignedIn) {
+            setIsPlanStatusLoading(true);
             fetch('/api/user/status')
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) throw new Error(`User status request failed (${res.status})`);
+                    return res.json();
+                })
                 .then(data => {
                     console.log("Strict Backend Check:", data);
                     setServerIsPro(Boolean(data.isPro));
                     setServerIsProMax(Boolean(data.isProMax));
+                    setServerRole(data.role || 'free');
                     setBillingAttentionRequired(Boolean(data.billingAttentionRequired));
                     setBillingPortalAvailable(Boolean(data.billingPortalAvailable));
                 })
-                .catch(console.error);
+                .catch(console.error)
+                .finally(() => setIsPlanStatusLoading(false));
+            return;
         }
-    }, [isSignedIn]);
+        if (isLoaded) setIsPlanStatusLoading(false);
+    }, [isLoaded, isSignedIn]);
 
     // JWTトークン内のメタデータ（ユーザー自身またはカスタムクレーム）を確実に取得
     const sessionRole = session?.user?.publicMetadata?.role || null;
     const isProMax = serverIsProMax === true || sessionRole === 'promax' || user?.publicMetadata?.role === 'promax' || sessionRole === 'admin' || user?.publicMetadata?.role === 'admin';
     const isPro = isProMax || serverIsPro === true || sessionRole === 'pro' || user?.publicMetadata?.role === 'pro';
+    const accountRole = serverRole || sessionRole || user?.publicMetadata?.role || null;
+    const accountPlan = resolveAccountPlan({
+        role: accountRole,
+        isPro,
+        isProMax,
+        isLoading: isSignedIn && isPlanStatusLoading
+    });
+    const accountEmail = user?.primaryEmailAddress?.emailAddress || '';
+    const accountName = user?.fullName?.trim() || user?.username || accountEmail || 'ログイン中のユーザー';
 
     const [step, setStep] = useState(0); // 0: Platform, 1: Process, 2: Result
     const [selectedPlatform, setSelectedPlatform] = useState('instagram');
@@ -831,9 +851,11 @@ export default function Home() {
     return (
         <div className="min-h-screen bg-slate-50 text-gray-900 font-sans selection:bg-purple-500/30 flex flex-col pt-4">
             {/* Header */}
-            <header className="w-full flex justify-end items-center px-6 py-2">
-                <div className="flex items-center gap-4">
-                    {mounted && !isPro ? (
+            <header className="w-full px-4 py-2 sm:px-6">
+                <div className="mx-auto flex w-full max-w-7xl flex-col items-stretch justify-end gap-3 lg:flex-row lg:items-center">
+                    {mounted && isSignedIn && isPlanStatusLoading ? (
+                        <div className="ml-auto h-11 w-40 animate-pulse rounded-full bg-white/80"></div>
+                    ) : mounted && !isPro ? (
                         <button
                             type="button"
                             onClick={() => {
@@ -844,47 +866,82 @@ export default function Home() {
                                 }
                                 document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
                             }}
-                            className="min-h-11 bg-gradient-to-r from-rose-500 to-[#D4A373] hover:from-purple-400 hover:to-indigo-500 text-gray-900 font-bold py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all shadow-[0_4px_20px_rgba(0,0,0,0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                            className="min-h-11 self-end bg-gradient-to-r from-rose-500 to-[#D4A373] hover:from-purple-400 hover:to-indigo-500 text-gray-900 font-bold py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all shadow-[0_4px_20px_rgba(0,0,0,0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
                         >
                             <Gem size={16} className="text-[#D4A373]" />
                             Proにアップグレード
                         </button>
                     ) : mounted && isPro ? (
-                        <div className="flex items-center gap-3">
+                        <nav aria-label="投稿管理" className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
                             <a
                                 href="/approve"
-                                className="bg-gradient-to-r from-purple-100 to-pink-100 hover:opacity-80 border border-purple-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
+                                className="min-h-11 bg-gradient-to-r from-purple-100 to-pink-100 hover:opacity-80 border border-purple-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
                             >
-                                <Sparkles size={16} className="text-purple-500" />
+                                <Sparkles size={16} className="text-purple-500" aria-hidden="true" />
                                 今週の投稿を確認
                             </a>
                             <a
                                 href="/dashboard"
-                                className="bg-white/60 backdrop-blur-xl hover:bg-white/20 border border-rose-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all"
+                                className="min-h-11 bg-white/60 backdrop-blur-xl hover:bg-white border border-rose-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
                             >
-                                <History size={16} className="text-slate-500" />
+                                <History size={16} className="text-slate-500" aria-hidden="true" />
                                 過去の履歴
                             </a>
-                            <button
-                                onClick={handlePortal}
-                                disabled={billingPortalAvailable === false}
-                                className="bg-white/60 backdrop-blur-xl hover:bg-white/20 border border-rose-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all disabled:cursor-default disabled:opacity-80"
-                            >
-                                <Gem size={16} className="text-[#D4A373]" />
-                                {billingPortalAvailable === false ? '運営者アカウント' : 'Proプラン管理'}
-                            </button>
-                        </div>
+                            {billingPortalAvailable === true && (
+                                <button
+                                    type="button"
+                                    onClick={handlePortal}
+                                    className="min-h-11 bg-white/60 backdrop-blur-xl hover:bg-white border border-rose-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                                >
+                                    <Gem size={16} className="text-[#D4A373]" aria-hidden="true" />
+                                    プラン管理
+                                </button>
+                            )}
+                        </nav>
                     ) : (
-                        <div className="w-32 h-8 rounded-full bg-white/80 animate-pulse"></div> // マウント前のプレースホルダー
+                        <div className="ml-auto h-11 w-32 animate-pulse rounded-full bg-white/80"></div>
                     )}
 
                     {mounted && isLoaded && isSignedIn ? (
-                        <UserButton
-                            afterSignOutUrl="/"
-                            appearance={{ elements: { avatarBox: "w-11 h-11" } }}
-                        />
+                        <section
+                            aria-label="ログイン情報と現在のプラン"
+                            aria-live="polite"
+                            className="ml-auto flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 shadow-[0_8px_24px_rgba(15,23,42,0.08)] sm:w-auto"
+                        >
+                            <div className="min-w-0 flex-1 sm:max-w-52">
+                                <p className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
+                                    <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
+                                    ログイン中
+                                </p>
+                                <p className="truncate text-sm font-bold text-slate-900">{accountName}</p>
+                                {accountEmail && accountEmail !== accountName && (
+                                    <p className="truncate text-xs text-slate-500">{accountEmail}</p>
+                                )}
+                            </div>
+                            <div className="h-10 w-px shrink-0 bg-slate-200" aria-hidden="true"></div>
+                            <div className="min-w-0 shrink-0">
+                                <p className="text-xs font-medium text-slate-500">現在のプラン</p>
+                                <p className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-sm font-bold text-slate-900 ring-1 ring-inset ring-rose-200">
+                                    <Gem size={13} className="text-[#D4A373]" aria-hidden="true" />
+                                    {accountPlan.label}
+                                    <span className="sr-only">。{accountPlan.description}</span>
+                                </p>
+                            </div>
+                            <UserButton
+                                afterSignOutUrl="/"
+                                appearance={{ elements: { avatarBox: "w-11 h-11" } }}
+                            />
+                        </section>
+                    ) : mounted && isLoaded ? (
+                        <button
+                            type="button"
+                            onClick={() => openSignIn()}
+                            className="ml-auto min-h-11 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-bold text-slate-900 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+                        >
+                            ログイン
+                        </button>
                     ) : (
-                        <div className="w-8 h-8 rounded-full bg-slate-200 animate-pulse border-2 border-transparent"></div>
+                        <div className="ml-auto h-[62px] w-full animate-pulse rounded-2xl bg-slate-200 sm:w-80"></div>
                     )}
                 </div>
             </header>

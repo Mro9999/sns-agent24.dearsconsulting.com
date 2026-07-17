@@ -8,7 +8,8 @@
         "start": "next start",
         "lint": "eslint .",
         "test:copy-safety": "node --test src/lib/copySafety.test.mjs",
-        "test:billing": "node --test src/lib/subscriptionAccess.test.mjs"
+        "test:billing": "node --test src/lib/subscriptionAccess.test.mjs",
+        "test:account-status": "node --test src/lib/accountPlan.test.mjs"
     },
     "dependencies": {
         "@clerk/localizations": "^4.13.4",
