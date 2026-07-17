@@ -4,15 +4,22 @@ import { Check, Star, Zap, User, Building, Calendar, Mail, MousePointer, Rocket,
 import styles from './PricingSection.module.css';
 import ProMaxInquiryModal from '@/components/ProMaxInquiryModal';
 
-export default function PricingSection({ onUpgrade, isPro, isProMax }) {
+export default function PricingSection({
+    onUpgrade,
+    onManage,
+    currentPlan = 'free',
+    billingPortalAvailable = false
+}) {
     const [billingCycle, setBillingCycle] = useState('month'); // 'month' or 'year'
     const [inquiryOpen, setInquiryOpen] = useState(false);
 
     // 現在のユーザーのティア（free / pro / promax）を判定し、
     // 各プランが「現在のプラン / 下位プラン / 上位プラン」のいずれかを算出する
-    const currentTier = isProMax ? 'promax' : isPro ? 'pro' : 'free';
+    // 「現在のプラン」は利用権限ではなく、Stripeで確認したSNS Agent24の契約だけを基準にする。
+    const currentTier = ['free', 'pro', 'promax'].includes(currentPlan) ? currentPlan : null;
     const tierRank = { free: 0, pro: 1, promax: 2 };
     const relationTo = (planTier) => {
+        if (!currentTier) return 'unknown';
         if (tierRank[planTier] === tierRank[currentTier]) return 'current';
         if (tierRank[planTier] < tierRank[currentTier]) return 'lower';
         return 'upper';
@@ -26,16 +33,22 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
         const relation = relationTo(planTier);
         const isCurrentPlan = relation === 'current';
         const isLower = relation === 'lower';
+        const isUnknown = relation === 'unknown';
 
         let buttonText;
         let buttonStyle;
         let disabled = false;
-        let showPromoBadge = false;
 
-        if (isCurrentPlan) {
-            buttonText = (planTier === 'free') ? 'ご利用中' : 'ご契約内容の管理';
-            buttonStyle = (planTier === 'free') ? 'current' : 'current';
-            disabled = (planTier === 'free'); // Freeは管理するものが無いので非活性
+        if (isUnknown) {
+            buttonText = '契約状況を確認中';
+            buttonStyle = 'secondary';
+            disabled = true;
+        } else if (isCurrentPlan) {
+            buttonText = planTier === 'free'
+                ? 'ご利用中'
+                : (billingPortalAvailable ? 'ご契約内容の管理' : '契約情報を確認できません');
+            buttonStyle = 'current';
+            disabled = planTier === 'free' || !billingPortalAvailable;
         } else if (isLower) {
             buttonText = '現在のプランより下位';
             buttonStyle = 'secondary';
@@ -54,6 +67,7 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
             disabled,
             buttonText,
             buttonStyle,
+            action: isCurrentPlan && planTier !== 'free' ? onManage : base.action,
             // プロモバッジ（人気 No.1 等）はアップグレード候補の時のみ表示する
             badge: !isCurrentPlan && !isLower ? base.badge : null
         };
@@ -112,11 +126,7 @@ export default function PricingSection({ onUpgrade, isPro, isProMax }) {
             ],
             upgradeText: "個別相談を申し込む",
             action: () => {
-                if (isProMax && onUpgrade) {
-                    onUpgrade(billingCycle, 'promax');
-                } else {
-                    setInquiryOpen(true);
-                }
+                setInquiryOpen(true);
             }
         })
     ];

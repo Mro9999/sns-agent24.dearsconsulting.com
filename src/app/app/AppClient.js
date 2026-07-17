@@ -24,6 +24,7 @@ export default function Home() {
         isSignedIn,
         isPro,
         isProMax,
+        accountPlan,
         isPlanStatusLoading,
         billingAttentionRequired,
         billingPortalAvailable
@@ -1829,7 +1830,12 @@ export default function Home() {
                         <p className="text-sm mt-1">Stripeと通信しています。そのままお待ちください。</p>
                     </div>
                 )}
-                <PricingSection onUpgrade={handleCheckout} isPro={isPro} isProMax={isProMax} />
+                <PricingSection
+                    onUpgrade={handleCheckout}
+                    onManage={handlePortal}
+                    currentPlan={accountPlan.plan}
+                    billingPortalAvailable={billingPortalAvailable === true}
+                />
             </div>}
 
             {/* Footer */}
