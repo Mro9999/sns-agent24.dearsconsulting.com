@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const appSource = await readFile(new URL('../app/app/AppClient.js', import.meta.url), 'utf8');
 const selectorSource = await readFile(new URL('../components/features/Selectors.js', import.meta.url), 'utf8');
+const pricingSource = await readFile(new URL('../components/layout/PricingSection.js', import.meta.url), 'utf8');
 
 test('投稿入力の各状態にh1があり、選択項目はh2から始まる', () => {
     assert.match(appSource, /POST SETUP[\s\S]*?<h1[\s\S]*?投稿の条件を入力/);
@@ -34,4 +35,11 @@ test('対応プラットフォームは押せない表示カードとして案�
     assert.match(appSource, /対応プラットフォーム: Instagram/);
     assert.match(appSource, /投稿作成は下の「作成方法を選ぶ」から進めます/);
     assert.doesNotMatch(appSource, /onClick=\{\(\) => setSelectedPlatform\('instagram'\)\}/);
+});
+
+test('Pro Maxの時刻表示は変更可能な設定例だと明示する', () => {
+    assert.match(pricingSource, /曜日・時刻はご希望に合わせて設定できます。以下は設定例です。/);
+    assert.match(pricingSource, /設定例：週に1回の準備/);
+    assert.match(pricingSource, /設定例[\s\S]*毎週日曜 20:00/);
+    assert.match(pricingSource, /STEP 4[\s\S]*設定例[\s\S]*毎日12:00/);
 });

@@ -348,7 +348,8 @@ export default function PricingSection({
                         </h3>
                         <p className="text-gray-600 text-sm md:text-base leading-relaxed">
                             SNSの運用はAIに任せて、あなたはコア業務へ。<br className="hidden md:inline" />
-                            <span className="font-semibold text-gray-800">「週に1回、メールを開いてOKボタンを押すだけ」</span>で1週間分の投稿が完成します。
+                            <span className="font-semibold text-gray-800">「週に1回、メールを開いてOKボタンを押すだけ」</span>で1週間分の投稿が完成します。<br />
+                            <span className="mt-2 inline-block font-semibold text-rose-700">曜日・時刻はご希望に合わせて設定できます。以下は設定例です。</span>
                         </p>
                     </div>
 
@@ -360,7 +361,7 @@ export default function PricingSection({
                         {/* 左ブロック：週1回の準備プロセス (Step 1-3) */}
                         <div className="bg-gray-50/80 border border-gray-200 rounded-3xl p-5 md:p-6 relative">
                             <div className="inline-flex items-center gap-1.5 bg-white text-gray-600 text-[10px] font-bold px-3 py-1 rounded-full border border-gray-200 mb-4 tracking-widest">
-                                週に1回の準備
+                                設定例：週に1回の準備
                             </div>
                             <div className="space-y-3 md:space-y-4">
                                 {/* Step 1 */}
@@ -372,6 +373,7 @@ export default function PricingSection({
                                     <div className="flex-1 pt-1">
                                         <div className="flex items-center gap-2 mb-1">
                                             <Calendar size={16} className="text-rose-500" />
+                                            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[9px] font-black tracking-wider text-rose-700">設定例</span>
                                             <h4 className="font-bold text-gray-900 text-sm">毎週日曜 20:00</h4>
                                         </div>
                                         <p className="text-xs text-gray-600 leading-relaxed">
@@ -453,7 +455,10 @@ export default function PricingSection({
                                                 <Rocket size={28} className="text-white" />
                                             </div>
                                             <div>
-                                                <div className="text-[10px] font-bold text-gray-500 tracking-wider">STEP 4</div>
+                                                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500 tracking-wider">
+                                                    <span>STEP 4</span>
+                                                    <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[9px] font-black tracking-wider text-rose-700">設定例</span>
+                                                </div>
                                                 <h4 className="font-black text-gray-900 text-lg md:text-xl leading-tight">毎日12:00<br className="md:hidden" /> Instagramへ自動投稿</h4>
                                             </div>
                                         </div>
