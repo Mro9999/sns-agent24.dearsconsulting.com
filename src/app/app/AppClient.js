@@ -1031,14 +1031,15 @@ export default function Home() {
                                 対応プラットフォーム
                             </h2>
                             <p className={`mb-8 px-4 text-center text-xs md:text-sm text-slate-600 transition-opacity duration-500 ${!mounted || !isLoaded ? 'opacity-0' : 'opacity-100'}`}>
-                                現在はInstagram投稿に対応しています。投稿作成は下の「作成方法を選ぶ」から進めます。
+                                現在はInstagram投稿に対応しています。カードを押すと、下の「作成方法を選ぶ」へ移動します。
                             </p>
 
                             <div className={`flex justify-center mb-12 w-full px-4 md:px-12 transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                                 {/* Instagram - 公式ブランドカラーのグラデーション (黄→オレンジ→ピンク→紫→青) */}
-                                <div
-                                    aria-label="対応プラットフォーム: Instagram"
-                                    className="flex min-w-44 flex-col items-center justify-center py-7 px-12 rounded-[2rem] border-0 text-white shadow-[0_10px_35px_rgba(214,41,118,0.32)]"
+                                <a
+                                    href="#create-methods"
+                                    aria-label="Instagramの投稿作成方法へ移動"
+                                    className="group flex w-44 flex-col items-center justify-center rounded-[2rem] border-0 px-4 pb-4 pt-5 text-white shadow-[0_10px_35px_rgba(214,41,118,0.32)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_42px_rgba(214,41,118,0.42)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-pink-300 focus-visible:ring-offset-4"
                                     style={{
                                         backgroundImage: 'linear-gradient(135deg, #FEDA75 0%, #FA7E1E 20%, #D62976 45%, #962FBF 75%, #4F5BD5 100%)'
                                     }}
@@ -1048,7 +1049,11 @@ export default function Home() {
                                     </span>
                                     <Instagram size={36} className="mb-3 text-white drop-shadow-md" strokeWidth={1.5} aria-hidden="true" />
                                     <span className="font-bold tracking-wide text-white text-sm drop-shadow-md">Instagram</span>
-                                </div>
+                                    <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-white/95">
+                                        作成方法を見る
+                                        <ArrowDown size={13} className="transition-transform duration-300 group-hover:translate-y-0.5" aria-hidden="true" />
+                                    </span>
+                                </a>
                             </div>
 
                             {/* モバイル専用機能についての事前警告（PCアクセス時の不満を防ぐ） */}
@@ -1064,7 +1069,10 @@ export default function Home() {
                                 </p>
                             </div>
 
-                            <div className={`w-full max-w-4xl mb-2 transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+                            <div
+                                id="create-methods"
+                                className={`w-full max-w-4xl mb-2 scroll-mt-24 transition-all duration-500 ${!mounted || !isLoaded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
+                            >
                                 <div className="text-center mb-4">
                                     <p className="text-xs font-bold tracking-[0.18em] text-slate-600">PLAN ACTION</p>
                                     <h3 className="text-lg md:text-xl font-bold text-slate-900 mt-1">作成方法を選ぶ</h3>

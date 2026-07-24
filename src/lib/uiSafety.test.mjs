@@ -32,9 +32,12 @@ test('料金比較もmainランドマークの内側に含まれる', () => {
     assert.ok(mainStart >= 0 && pricing > mainStart && mainEnd > pricing);
 });
 
-test('対応プラットフォームは押せない表示カードとして案内する', () => {
-    assert.match(appSource, /対応プラットフォーム: Instagram/);
-    assert.match(appSource, /投稿作成は下の「作成方法を選ぶ」から進めます/);
+test('Instagramカードから投稿作成方法へ移動できる', () => {
+    assert.match(appSource, /href="#create-methods"/);
+    assert.match(appSource, /aria-label="Instagramの投稿作成方法へ移動"/);
+    assert.match(appSource, /作成方法を見る/);
+    assert.match(appSource, /id="create-methods"/);
+    assert.match(appSource, /カードを押すと、下の「作成方法を選ぶ」へ移動します/);
     assert.doesNotMatch(appSource, /onClick=\{\(\) => setSelectedPlatform\('instagram'\)\}/);
 });
 
