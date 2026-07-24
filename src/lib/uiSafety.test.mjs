@@ -5,6 +5,7 @@ import test from 'node:test';
 const appSource = await readFile(new URL('../app/app/AppClient.js', import.meta.url), 'utf8');
 const selectorSource = await readFile(new URL('../components/features/Selectors.js', import.meta.url), 'utf8');
 const pricingSource = await readFile(new URL('../components/layout/PricingSection.js', import.meta.url), 'utf8');
+const proMaxInquirySource = await readFile(new URL('../components/ProMaxInquiryModal.js', import.meta.url), 'utf8');
 
 test('投稿入力の各状態にh1があり、選択項目はh2から始まる', () => {
     assert.match(appSource, /POST SETUP[\s\S]*?<h1[\s\S]*?投稿の条件を入力/);
@@ -42,4 +43,17 @@ test('Pro Maxの時刻表示は変更可能な設定例だと明示する', () =
     assert.match(pricingSource, /設定例：週に1回の準備/);
     assert.match(pricingSource, /設定例[\s\S]*毎週日曜 20:00/);
     assert.match(pricingSource, /STEP 4[\s\S]*設定例[\s\S]*毎日12:00/);
+});
+
+test('Pro Maxは自動決済を主導線にし、個別相談も任意で残す', () => {
+    assert.match(pricingSource, /onUpgrade\(billingCycle, 'promax'\)/);
+    assert.match(pricingSource, /Pro Maxを始める/);
+    assert.match(pricingSource, /Pro Maxへアップグレード/);
+    assert.match(pricingSource, /Pro Max Plan はオンラインでお申し込みできます。/);
+    assert.match(pricingSource, /月払い・年払いとも自動更新です。/);
+    assert.match(pricingSource, /相談してから決める/);
+    assert.doesNotMatch(pricingSource, /Pro Max Plan は個別相談制です。/);
+    assert.match(proMaxInquirySource, /オンラインでお申し込みいただけます。/);
+    assert.match(proMaxInquirySource, /任意の相談窓口です。/);
+    assert.doesNotMatch(proMaxInquirySource, /個別相談からご契約まで/);
 });

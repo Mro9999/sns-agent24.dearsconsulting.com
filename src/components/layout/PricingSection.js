@@ -8,7 +8,8 @@ export default function PricingSection({
     onUpgrade,
     onManage,
     currentPlan = 'free',
-    billingPortalAvailable = false
+    billingPortalAvailable = false,
+    checkoutLoading = false
 }) {
     const [billingCycle, setBillingCycle] = useState('month'); // 'month' or 'year'
     const [inquiryOpen, setInquiryOpen] = useState(false);
@@ -111,7 +112,7 @@ export default function PricingSection({
             name: "Pro Max Plan",
             price: billingCycle === 'year' ? "¥298,000" : "¥29,800",
             period: billingCycle === 'year' ? "/年" : "/月",
-            subtext: billingCycle === 'year' ? "（月あたり約 ¥24,833）" : "※個別相談制（カスタム設定が必要なため）",
+            subtext: billingCycle === 'year' ? "（月あたり約 ¥24,833）" : "オンラインでお申し込み・自動更新",
             badge: "エンタープライズ",
             features: [
                 "Pro Planの全機能",
@@ -124,9 +125,10 @@ export default function PricingSection({
                 "専任担当によるオンボーディング",
                 "優先度最上位のプレミアムサポート"
             ],
-            upgradeText: "個別相談を申し込む",
+            upgradeText: currentTier === 'pro' ? "Pro Maxへアップグレード" : "Pro Maxを始める",
             action: () => {
-                setInquiryOpen(true);
+                if (onUpgrade) return onUpgrade(billingCycle, 'promax');
+                window.location.assign('/sign-up');
             }
         })
     ];
@@ -328,9 +330,10 @@ export default function PricingSection({
                                 type="button"
                                 className={`${styles.button} ${styles[plan.buttonStyle]}`}
                                 onClick={plan.action}
-                                disabled={plan.disabled}
+                                disabled={plan.disabled || checkoutLoading}
+                                aria-busy={checkoutLoading && !plan.disabled ? 'true' : undefined}
                             >
-                                {plan.buttonText}
+                                {checkoutLoading && !plan.disabled ? '決済画面を準備中...' : plan.buttonText}
                             </button>
                         </div>
                     ))}
@@ -495,19 +498,20 @@ export default function PricingSection({
                         </div>
                     </div>
 
-                    {/* 個別相談制の案内 */}
+                    {/* 自動決済と任意相談の案内 */}
                     <div className="mt-6 bg-slate-50 border border-slate-200 rounded-2xl p-5 md:p-6 text-center">
                         <p className="text-sm text-gray-700 leading-relaxed">
-                            <span className="font-bold text-gray-900">Pro Max Plan は個別相談制です。</span><br />
+                            <span className="font-bold text-gray-900">Pro Max Plan はオンラインでお申し込みできます。</span><br />
+                            月払い・年払いとも自動更新です。<br />
                             お客様の事業特性・ブランドガイドライン・ターゲット層に合わせたオーダーメイド設定を<br className="hidden md:inline" />
-                            専任担当が行った上で、ご契約・ご利用開始となります。
+                            決済完了後に専任担当がご案内します。相談してから決めたい方は、下のフォームをご利用ください。
                         </p>
                         <button
                             type="button"
                             onClick={() => setInquiryOpen(true)}
                             className="mt-5 inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full text-sm font-bold hover:bg-gray-800 transition-colors"
                         >
-                            <Sparkles size={16} /> 個別相談を申し込む
+                            <Sparkles size={16} /> 相談してから決める
                         </button>
                     </div>
                 </div>

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
 
 // Pro Max Plan 個別相談申込モーダル
-// エンタープライズフロー: 相談 → 個別設定 → 契約 の入口となるフォーム
+// オンライン申込とは別に、導入前の相談を希望する方のための任意フォーム
 export default function ProMaxInquiryModal({ isOpen, onClose, defaultEmail = '', defaultName = '' }) {
     const [form, setForm] = useState({
         company_name: '',
@@ -105,7 +105,7 @@ export default function ProMaxInquiryModal({ isOpen, onClose, defaultEmail = '',
                 ) : (
                     <form onSubmit={handleSubmit} className="p-6 space-y-4">
                         <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 border border-gray-100 rounded-lg p-3">
-                            Pro Max Plan はお客様の事業特性に合わせたカスタム設定をご提供するため、個別相談からご契約までをお受けしております。まずは以下のフォームよりご連絡ください。
+                            Pro Max Plan はオンラインでお申し込みいただけます。このフォームは、導入前に相談したい方のための任意の相談窓口です。運用体制や初期設定について確認したい内容をご入力ください。
                         </p>
 
                         <div className="hidden" aria-hidden="true">

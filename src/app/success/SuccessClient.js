@@ -16,11 +16,11 @@ function SuccessContent() {
     useEffect(() => {
         async function fetchAndReload() {
             if (sessionId) {
-                // セッションがある場合、Clerkのサーバーから最新のユーザーメタデータ(Pro権限)を再取得する
+                // セッションがある場合、Clerkのサーバーから最新の有料プラン権限を再取得する
                 if (user) {
                     try {
                         await user.reload();
-                        console.log("User session reloaded for Pro plan sync");
+                        console.log("User session reloaded for paid plan sync");
                     } catch (e) {
                         console.error("Failed to reload user session", e);
                     }
@@ -52,8 +52,11 @@ function SuccessContent() {
                             アップグレードが<br />完了しました！
                         </h1>
                         <p className="text-gray-300 mb-8 leading-relaxed">
-                            Proプランへのご登録ありがとうございます。<br />
-                            すべての機能が無制限でご利用いただけるようになりました。
+                            有料プランへのご登録ありがとうございます。<br />
+                            ご契約内容に応じた機能をご利用いただけます。<br />
+                            <span className="mt-3 inline-block text-sm text-gray-400">
+                                Pro Maxをご契約の場合は、専任担当から初期設定をご案内します。
+                            </span>
                         </p>
                         <Link
                             href="/app"

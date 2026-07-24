@@ -292,15 +292,14 @@ export default function Home() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ interval, tier })
             });
+            const data = await res.json().catch(() => ({}));
 
             if (!res.ok) {
-                const text = await res.text();
-                throw new Error(`(${res.status}) ${text}`);
+                throw new Error(data.error || `決済画面を準備できませんでした（${res.status}）`);
             }
 
-            const data = await res.json();
             if (data.url) {
-                posthog?.capture('checkout_redirect', { tier, interval });
+                posthog?.capture('checkout_redirect', { tier, interval, mode: data.mode || 'checkout' });
                 window.location.href = data.url;
             } else {
                 throw new Error("決済URLが取得できませんでした");
@@ -1850,6 +1849,7 @@ export default function Home() {
                     onManage={handlePortal}
                     currentPlan={accountPlan.plan}
                     billingPortalAvailable={billingPortalAvailable === true}
+                    checkoutLoading={isCheckoutLoading}
                 />
             </div>}
             </main>
