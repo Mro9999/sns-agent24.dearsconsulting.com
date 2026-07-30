@@ -1,0 +1,14 @@
+# Local build output and dependencies
+.next/
+node_modules/
+.vercel/
+
+# Local secrets
+.env*
+
+# Historical audit evidence is not required at runtime
+artifacts/
+docs/
+
+# Untracked local duplicate retained for the user
+scripts/configure-promax-billing-portal 2.mjs
