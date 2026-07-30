@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import {
+    getPersistableProductContext,
+    getScaledImageDimensions,
+    isTemporaryImageUrl
+} from './clientImageState.mjs';
 
 const appSource = await readFile(new URL('../app/app/AppClient.js', import.meta.url), 'utf8');
 const selectorSource = await readFile(new URL('../components/features/Selectors.js', import.meta.url), 'utf8');
@@ -59,4 +64,33 @@ test('Pro Maxは自動決済を主導線にし、個別相談も任意で残す'
     assert.match(proMaxInquirySource, /オンラインでお申し込みいただけます。/);
     assert.match(proMaxInquirySource, /任意の相談窓口です。/);
     assert.doesNotMatch(proMaxInquirySource, /個別相談からご契約まで/);
+});
+
+test('複数写真はiPadのメモリを圧迫しない方式で1枚ずつ処理する', () => {
+    const productInputSection = selectorSource.match(/export function ProductInput[\s\S]*?export function FormatSelector/)?.[0] || selectorSource.slice(selectorSource.indexOf('export function ProductInput'));
+
+    assert.match(productInputSection, /for \(const file of validFiles\)/);
+    assert.match(productInputSection, /canvas\.toBlob/);
+    assert.match(productInputSection, /URL\.createObjectURL/);
+    assert.doesNotMatch(productInputSection, /Promise\.all\(validFiles\.map/);
+});
+
+test('画像を含む入力状態はlocalStorageへ保存しない', () => {
+    const persistable = getPersistableProductContext({
+        companyName: 'DEARS',
+        baseImages: ['data:image/jpeg;base64,large'],
+        baseImage: 'data:image/jpeg;base64,legacy',
+        logoUrl: 'data:image/png;base64,logo'
+    });
+
+    assert.deepEqual(persistable, { companyName: 'DEARS' });
+    assert.match(appSource, /getPersistableProductContext\(productContext\)/);
+    assert.match(appSource, /try \{[\s\S]*?localStorage\.setItem\('snsAgent24_formState_v2'/);
+});
+
+test('縦長・横長画像とも長辺1200px以内に縮小する', () => {
+    assert.deepEqual(getScaledImageDimensions(4032, 3024), { width: 1200, height: 900 });
+    assert.deepEqual(getScaledImageDimensions(3024, 4032), { width: 900, height: 1200 });
+    assert.deepEqual(getScaledImageDimensions(800, 600), { width: 800, height: 600 });
+    assert.equal(isTemporaryImageUrl('blob:https://example.com/id'), true);
 });

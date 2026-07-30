@@ -1,5 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import NextImage from 'next/image';
+import {
+    getScaledImageDimensions,
+    isTemporaryImageUrl,
+    MAX_BASE_IMAGE_COUNT,
+    MAX_BASE_IMAGE_SOURCE_BYTES
+} from '@/lib/clientImageState.mjs';
 
 // Icons for PurposeSelector
 const CalendarIcon = () => (
@@ -380,25 +386,96 @@ export function OverlayLanguageSelector({ selected, onSelect }) {
 }
 
 export function ProductInput({ value = {}, onChange }) {
+    const [isProcessingImages, setIsProcessingImages] = useState(false);
+    const [processedImageCount, setProcessedImageCount] = useState(0);
+    const [processingImageTotal, setProcessingImageTotal] = useState(0);
+    const [imageUploadError, setImageUploadError] = useState('');
+
     const handleChange = (e) => {
         onChange({ ...value, [e.target.name]: e.target.value });
     };
+
+    const revokeTemporaryImage = (imageUrl) => {
+        if (isTemporaryImageUrl(imageUrl)) {
+            URL.revokeObjectURL(imageUrl);
+        }
+    };
+
+    const compressImageFile = (file) => new Promise((resolve, reject) => {
+        const sourceUrl = URL.createObjectURL(file);
+        const img = new Image();
+
+        const releaseSource = () => {
+            img.onload = null;
+            img.onerror = null;
+            URL.revokeObjectURL(sourceUrl);
+        };
+
+        img.onload = () => {
+            let canvas;
+            try {
+                const dimensions = getScaledImageDimensions(img.naturalWidth || img.width, img.naturalHeight || img.height);
+                canvas = document.createElement('canvas');
+                canvas.width = dimensions.width;
+                canvas.height = dimensions.height;
+
+                const ctx = canvas.getContext('2d');
+                if (!ctx) throw new Error('画像処理を開始できませんでした。');
+
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, dimensions.width, dimensions.height);
+
+                canvas.toBlob((blob) => {
+                    releaseSource();
+                    canvas.width = 1;
+                    canvas.height = 1;
+
+                    if (!blob) {
+                        reject(new Error('画像を軽量化できませんでした。'));
+                        return;
+                    }
+
+                    resolve(URL.createObjectURL(blob));
+                }, 'image/jpeg', 0.82);
+            } catch (error) {
+                releaseSource();
+                if (canvas) {
+                    canvas.width = 1;
+                    canvas.height = 1;
+                }
+                reject(error);
+            }
+        };
+
+        img.onerror = () => {
+            releaseSource();
+            reject(new Error(`「${file.name}」を読み込めませんでした。`));
+        };
+
+        img.decoding = 'async';
+        img.src = sourceUrl;
+    });
 
     const handleBaseImageUpload = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        // 最大5枚までの制限（例）
         const currentCount = (value.baseImages || []).length;
-        if (currentCount + files.length > 5) {
-            alert("画像は最大5枚までアップロード可能です。");
+        if (currentCount + files.length > MAX_BASE_IMAGE_COUNT) {
+            setImageUploadError(`画像は合計${MAX_BASE_IMAGE_COUNT}枚まで選択できます。`);
             e.target.value = '';
             return;
         }
 
+        setImageUploadError('');
         const validFiles = files.filter(file => {
-            if (file.size > 15 * 1024 * 1024) {
-                alert(`【サイズオーバー】\\n画像「${file.name}」が15MBを超えています。スキップされました。`);
+            if (!file.type.startsWith('image/')) {
+                setImageUploadError(`「${file.name}」は画像ファイルではないため追加できませんでした。`);
+                return false;
+            }
+            if (file.size > MAX_BASE_IMAGE_SOURCE_BYTES) {
+                setImageUploadError(`「${file.name}」は15MBを超えているため追加できませんでした。`);
                 return false;
             }
             return true;
@@ -409,49 +486,45 @@ export function ProductInput({ value = {}, onChange }) {
             return;
         }
 
-        const processFile = (file) => {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1200;
-                        let width = img.width;
-                        let height = img.height;
+        setIsProcessingImages(true);
+        setProcessedImageCount(0);
+        setProcessingImageTotal(validFiles.length);
+        const newImages = [];
 
-                        if (width > MAX_WIDTH) {
-                            height = Math.round((height * MAX_WIDTH) / width);
-                            width = MAX_WIDTH;
-                        }
+        try {
+            // iPadで複数の高解像度写真を同時展開しないよう、必ず1枚ずつ処理する。
+            for (const file of validFiles) {
+                try {
+                    newImages.push(await compressImageFile(file));
+                    setProcessedImageCount(newImages.length);
+                    await new Promise(resolve => window.requestAnimationFrame(resolve));
+                } catch (error) {
+                    console.error('Base image processing failed:', error);
+                    setImageUploadError(error instanceof Error ? error.message : '画像の処理に失敗しました。');
+                }
+            }
 
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                        resolve(dataUrl);
-                    };
-                    img.src = reader.result;
-                };
-                reader.readAsDataURL(file);
-            });
-        };
-
-        const newImages = await Promise.all(validFiles.map(processFile));
-
-        // 既存の baseImages 配列に新たに追加する
-        const updatedImages = [...(value.baseImages || []), ...newImages];
-        onChange({ ...value, baseImages: updatedImages });
-
-        // パスをクリアして同じ画像も再アップ可能にする
-        e.target.value = '';
+            if (newImages.length > 0) {
+                onChange({
+                    ...value,
+                    baseImages: [...(value.baseImages || []), ...newImages]
+                });
+            }
+        } finally {
+            setIsProcessingImages(false);
+            e.target.value = '';
+        }
     };
 
     const removeBaseImage = (indexToRemove) => {
+        revokeTemporaryImage((value.baseImages || [])[indexToRemove]);
         const updated = (value.baseImages || []).filter((_, i) => i !== indexToRemove);
         onChange({ ...value, baseImages: updated });
+    };
+
+    const removeAllBaseImages = () => {
+        (value.baseImages || []).forEach(revokeTemporaryImage);
+        onChange({ ...value, baseImages: [] });
     };
 
     return (
@@ -543,25 +616,40 @@ export function ProductInput({ value = {}, onChange }) {
                             accept="image/*"
                             multiple
                             onChange={handleBaseImageUpload}
+                            disabled={isProcessingImages}
+                            aria-describedby="base-image-upload-help"
                             className="min-h-11 w-full text-sm text-slate-800 font-medium file:mr-4 file:min-h-11 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 transition-all cursor-pointer"
                         />
                     </div>
+                    <p id="base-image-upload-help" className="mt-2 text-xs text-slate-600">
+                        選択した写真は端末内で1枚ずつ軽量化します。写真本体はブラウザへ保存しません。
+                    </p>
+                    {isProcessingImages && (
+                        <p className="mt-2 text-sm font-bold text-blue-800" role="status" aria-live="polite">
+                            写真を軽量化しています… {processedImageCount}/{processingImageTotal}
+                        </p>
+                    )}
+                    {imageUploadError && (
+                        <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+                            {imageUploadError}
+                        </p>
+                    )}
                     {value.baseImages && value.baseImages.length > 0 && (
                         <div className="mt-4 p-3 bg-slate-100 rounded-lg border border-blue-200 shadow-sm">
                             <p className="text-xs text-slate-700 font-medium mb-3 flex items-center justify-between gap-3">
                                 アップロード済みプレビュー ({value.baseImages.length}/5)
                                 <button
                                     type="button"
-                                    onClick={() => onChange({ ...value, baseImages: [] })}
+                                    onClick={removeAllBaseImages}
                                     className="min-h-11 px-2 -my-2 text-red-700 hover:text-red-800 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 rounded"
                                 >
                                     すべて削除
                                 </button>
                             </p>
                             <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
-                                {value.baseImages.map((imgBase64, idx) => (
+                                {value.baseImages.map((imageUrl, idx) => (
                                     <div key={idx} className="relative group shrink-0">
-                                        <NextImage src={imgBase64} alt={`アップロードした商品画像 ${idx + 1}枚目`} width={96} height={96} unoptimized className="h-24 w-24 object-cover rounded border border-gray-600 shadow-md" />
+                                        <NextImage src={imageUrl} alt={`アップロードした商品画像 ${idx + 1}枚目`} width={96} height={96} unoptimized className="h-24 w-24 object-cover rounded border border-gray-600 shadow-md" />
                                         <button
                                             type="button"
                                             onClick={() => removeBaseImage(idx)}

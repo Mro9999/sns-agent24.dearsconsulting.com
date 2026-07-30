@@ -12,6 +12,7 @@ import ProfileSetupModal from '@/components/features/ProfileSetupModal';
 import { usePostHog } from 'posthog-js/react';
 import useAccountStatus from '@/hooks/useAccountStatus';
 import { AccountStatusCard } from '@/components/account/AccountStatusCard';
+import { getPersistableProductContext } from '@/lib/clientImageState.mjs';
 
 const WEEKLY_BATCH_STARTED_KEY = 'sns-agent24-weekly-generation-started-at';
 const WEEKLY_BATCH_PENDING_PAYLOAD_KEY = 'sns-agent24-weekly-generation-payload';
@@ -106,9 +107,14 @@ export default function Home() {
                 if (parsed.selectedLanguage) setSelectedLanguage(parsed.selectedLanguage);
                 if (parsed.selectedOverlayLanguage) setSelectedOverlayLanguage(parsed.selectedOverlayLanguage);
                 if (parsed.selectedFormat) setSelectedFormat(parsed.selectedFormat);
-                if (parsed.productContext) setProductContext(parsed.productContext);
+                if (parsed.productContext) {
+                    // 写真やロゴのbase64を復元するとモバイル端末のメモリを圧迫するため、
+                    // 永続化可能なテキスト項目だけを復元する。
+                    setProductContext(getPersistableProductContext(parsed.productContext));
+                }
             } catch (e) {
                 console.error("Failed to parse form state", e);
+                localStorage.removeItem('snsAgent24_formState_v2');
             }
         }
         setIsStateLoaded(true);
@@ -116,7 +122,7 @@ export default function Home() {
 
     useEffect(() => {
         if (isStateLoaded) {
-            localStorage.setItem('snsAgent24_formState_v2', JSON.stringify({
+            const formState = JSON.stringify({
                 selectedPlatform,
                 selectedCategory,
                 selectedPurpose,
@@ -127,8 +133,21 @@ export default function Home() {
                 selectedLanguage,
                 selectedOverlayLanguage,
                 selectedFormat,
-                productContext
-            }));
+                // 画像本体はメモリ内だけで扱い、容量制限の小さいlocalStorageへ保存しない。
+                productContext: getPersistableProductContext(productContext)
+            });
+
+            try {
+                localStorage.setItem('snsAgent24_formState_v2', formState);
+            } catch (error) {
+                console.warn('Failed to persist form state; clearing stale image data.', error);
+                localStorage.removeItem('snsAgent24_formState_v2');
+                try {
+                    localStorage.setItem('snsAgent24_formState_v2', formState);
+                } catch (retryError) {
+                    console.warn('Form state persistence remains unavailable.', retryError);
+                }
+            }
         }
     }, [selectedPlatform, selectedCategory, selectedPurpose, selectedTarget, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, selectedOverlayLanguage, selectedFormat, productContext, isStateLoaded]);
 
