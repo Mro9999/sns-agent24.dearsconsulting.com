@@ -5,6 +5,7 @@ import { auth } from '@clerk/nextjs/server';
 import { getSupabaseAdmin } from './supabaseAdmin';
 import crypto from 'crypto';
 import { findUnsupportedMetricMatch, removeUnsupportedNumericClaims } from './copySafety.mjs';
+import { reserveGenerationQuota, releaseGenerationQuota } from './generationQuotaServer';
 
 // 注: "use server" ファイルでは async 関数以外を export できないため、
 // maxDuration はここに置けない (Next.js の制約)。Server Action のタイムアウトは
@@ -590,7 +591,17 @@ ${siteContent ? `- 参考サイト情報: ${siteContent.substring(0, 1000)}...` 
  * 投稿内容生成
  */
 export async function generatePost(research, platformId, category, targetLabel, gender, businessStyle, tone, language = 'ja', textContext, siteContent, format = 'single', userProfile = {}, purpose = null, overlayLanguage = 'ja') {
+    let quotaReservation = null;
     try {
+        quotaReservation = await reserveGenerationQuota();
+        if (!quotaReservation.allowed) {
+            return {
+                quota_blocked: true,
+                daily_limit: quotaReservation.limit,
+                remaining_count: 0
+            };
+        }
+
         // ---- A. キャプション・本文系の言語 (キャプション/ハッシュタグ/スライド本文 text/image_idea) ----
         // 多言語併記可。インバウンド対応はここでハンドル。
         let captionLangInstruction = "**必ず完全で自然な「日本語」のみ**で作成してください。";
@@ -1082,10 +1093,13 @@ ${textContext?.websiteUrl || textContext?.snsUrl ? `\n※重要事項2: 最後�
             console.warn('[generatePost] unsafe copy remained after repair; marking as blocked:', JSON.stringify(qualityIssues).slice(0, 300));
             generatedPost.quality_blocked = true;
             generatedPost.quality_issues = qualityIssues;
+            await releaseGenerationQuota(quotaReservation);
+            quotaReservation = null;
         }
 
         return generatedPost;
     } catch (error) {
+        await releaseGenerationQuota(quotaReservation);
         console.error("generatePost error:", error);
         throw new Error("投稿内容の生成に失敗しました。");
     }

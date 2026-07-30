@@ -12,6 +12,7 @@
         "test:account-status": "node --test src/lib/accountPlan.test.mjs",
         "test:links": "node --test src/lib/linkSafety.test.mjs",
         "test:ui-safety": "node --test src/lib/uiSafety.test.mjs",
+        "test:generation-quota": "node --test src/lib/generationQuota.test.mjs",
         "test:vercel-trace": "node scripts/verify-vercel-trace.mjs",
         "billing:inspect": "node --env-file=.env.local scripts/configure-promax-billing-portal.mjs",
         "billing:configure-portal": "node --env-file=.env.local scripts/configure-promax-billing-portal.mjs --apply"

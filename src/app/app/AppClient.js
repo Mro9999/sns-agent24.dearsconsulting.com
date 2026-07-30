@@ -15,6 +15,7 @@ import useAccountStatus from '@/hooks/useAccountStatus';
 import { AccountStatusCard } from '@/components/account/AccountStatusCard';
 import { getPersistableProductContext } from '@/lib/clientImageState.mjs';
 import { formatVideoScriptForClipboard } from '@/lib/videoScriptClipboard.mjs';
+import { FREE_DAILY_GENERATION_LIMIT, freeGenerationLimitMessage } from '@/lib/generationQuota.mjs';
 
 const WEEKLY_BATCH_STARTED_KEY = 'sns-agent24-weekly-generation-started-at';
 const WEEKLY_BATCH_PENDING_PAYLOAD_KEY = 'sns-agent24-weekly-generation-payload';
@@ -166,55 +167,6 @@ export default function Home() {
     // Pro Max Plan 個別相談モーダル表示制御
     const [proMaxInquiryOpen, setProMaxInquiryOpen] = useState(false);
     const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
-
-    // アカウント作成から7日以内か判定し、無料生成枠の上限を返す
-    const getDailyFreeLimit = () => {
-        if (!user || !user.createdAt) return 1;
-        const createdDate = new Date(user.createdAt);
-        const now = new Date();
-        const diffTime = Math.abs(now - createdDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        // 最初の7日間はハビットトライアル（習慣化期間）として回数を大幅緩和、それ以降は1日3回
-        return diffDays <= 7 ? 999 : 3;
-    };
-
-    // 回数制限のチェック関数 (localStorageベース)
-    const checkLimitAndRecord = () => {
-        if (isPro) return true; // Proプランは無制限
-
-        const maxLimit = getDailyFreeLimit();
-        const today = new Date().toLocaleDateString('ja-JP');
-        const usageDataStr = localStorage.getItem('snsAgent24_usage');
-        let usageData = usageDataStr ? JSON.parse(usageDataStr) : { date: today, count: 0 };
-
-        // 日付が変わっていればリセット
-        if (usageData.date !== today) {
-            usageData = { date: today, count: 0 };
-        }
-
-        if (usageData.count >= maxLimit) {
-            return false; // 制限オーバー
-        }
-
-        // カウントアップして保存
-        usageData.count += 1;
-        localStorage.setItem('snsAgent24_usage', JSON.stringify(usageData));
-        return true;
-    };
-
-    const refundDailyFreeUsage = () => {
-        if (isPro || typeof window === 'undefined') return;
-        try {
-            const today = new Date().toLocaleDateString('ja-JP');
-            const usageDataStr = localStorage.getItem('snsAgent24_usage');
-            const usageData = usageDataStr ? JSON.parse(usageDataStr) : null;
-            if (!usageData || usageData.date !== today) return;
-            usageData.count = Math.max(0, Number(usageData.count || 0) - 1);
-            localStorage.setItem('snsAgent24_usage', JSON.stringify(usageData));
-        } catch (err) {
-            console.warn('Failed to refund daily usage:', err);
-        }
-    };
 
     // エラーログを管理者へ通知する共通関数
     const reportErrorToAdmin = async (error, context) => {
@@ -392,19 +344,6 @@ export default function Home() {
             platform: selectedPlatform
         });
 
-        // 無料プランの回数制限チェック
-        const maxLimit = getDailyFreeLimit();
-        if (!checkLimitAndRecord()) {
-            posthog?.capture('free_limit_hit', { daily_limit: maxLimit, platform: selectedPlatform });
-            setGenerationError({
-                title: '本日の無料生成枠を使い切りました',
-                message: `無料プランは1日${maxLimit}回まで生成できます。明日もう一度お試しいただくか、無制限で使えるProプランをご確認ください。`,
-                showUpgrade: true
-            });
-            window.setTimeout(() => document.getElementById('generation-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
-            return;
-        }
-
         setLoading(true);
         setLoadingProgress(0); // 確実に0からプログレスアニメーションをスタートさせる
         setLoadingPhase(0); // 0: "世界中のトレンドを分析しています..."
@@ -451,9 +390,21 @@ export default function Home() {
             // 2. キャプション生成 (言語指定・フォーマット指定・ユーザープロフィールを追加)
             currentStep = 'generatePost';
             const post = await generatePost(research, selectedPlatform, selectedCategory, targetLabel, selectedGender, selectedBusinessStyle, selectedTone, selectedLanguage, cleanProductContext, siteContent, selectedFormat, userProfile, selectedPurpose, selectedOverlayLanguage);
+            if (post?.quota_blocked) {
+                posthog?.capture('free_limit_hit', {
+                    daily_limit: post.daily_limit || FREE_DAILY_GENERATION_LIMIT,
+                    platform: selectedPlatform
+                });
+                setGenerationError({
+                    title: '本日の無料生成枠を使い切りました',
+                    message: freeGenerationLimitMessage(post.daily_limit || FREE_DAILY_GENERATION_LIMIT),
+                    showUpgrade: true
+                });
+                window.setTimeout(() => document.getElementById('generation-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
+                return;
+            }
             if (post?.quality_blocked) {
-                refundDailyFreeUsage();
-                throw new Error('生成内容が安全基準を満たさなかったため表示を停止しました。無料生成回数は戻しています。もう一度お試しください。');
+                throw new Error('生成内容が安全基準を満たさなかったため表示を停止しました。無料生成回数には数えていません。もう一度お試しください。');
             }
             setLoadingPhase(2); // 2: "デザインを作成中..."
             await new Promise(resolve => setTimeout(resolve, 300)); // ReactのUI再レンダリングを確実に行わせるための待機
@@ -466,25 +417,27 @@ export default function Home() {
                 baseImagesArray = [productContext.baseImage];
             }
 
-            if (baseImagesArray.length === 0) {
-                // ユーザーアップロード画像がない場合、AIで背景用画像を生成する
-                setLoadingPhase(3); // 3: "画像を生成・合成中..."
-                await new Promise(resolve => setTimeout(resolve, 300)); // UI更新の待機
+            if (selectedFormat !== 'video_script') {
+                if (baseImagesArray.length === 0) {
+                    // ユーザーアップロード画像がない場合、AIで背景用画像を生成する
+                    setLoadingPhase(3); // 3: "画像を生成・合成中..."
+                    await new Promise(resolve => setTimeout(resolve, 300)); // UI更新の待機
 
-                const imgContext = post.image_idea || research.insight_summary;
-                // カルーセルの場合は3枚生成して視覚的バリエーションを確保（5枚だとAPI負荷が大きいため3枚をローテーション）
-                const imgCount = selectedFormat === 'carousel' ? 3 : 1;
-                currentStep = 'generateImage';
-                const generated = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, imgCount);
+                    const imgContext = post.image_idea || research.insight_summary;
+                    // カルーセルの場合は3枚生成して視覚的バリエーションを確保（5枚だとAPI負荷が大きいため3枚をローテーション）
+                    const imgCount = selectedFormat === 'carousel' ? 3 : 1;
+                    currentStep = 'generateImage';
+                    const generated = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, imgCount);
 
-                if (generated && generated.length > 0) {
-                    baseImagesArray = generated;
+                    if (generated && generated.length > 0) {
+                        baseImagesArray = generated;
+                    } else {
+                        throw new Error("AI画像生成に失敗しました（結果が空です）。");
+                    }
                 } else {
-                    throw new Error("AI画像生成に失敗しました（結果が空です）。");
+                    setLoadingPhase(3); // 3: "画像を生成・合成中..."
+                    await new Promise(resolve => setTimeout(resolve, 300)); // UI更新の待機
                 }
-            } else {
-                setLoadingPhase(3); // 3: "画像を生成・合成中..."
-                await new Promise(resolve => setTimeout(resolve, 300)); // UI更新の待機
             }
             currentStep = 'drawCanvasImage';
 
@@ -540,7 +493,6 @@ export default function Home() {
             console.error(e);
             const isLoadFailed = /load failed|failed to fetch|network/i.test(e?.message || '');
             if (isLoadFailed) {
-                refundDailyFreeUsage();
                 posthog?.capture('generation_response_lost', {
                     format: selectedFormat,
                     platform: selectedPlatform,
