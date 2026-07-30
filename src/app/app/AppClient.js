@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import NextImage from 'next/image';
+import Link from 'next/link';
 import { Gem, Lock, Camera as Instagram, Sparkles, Download, Copy, RefreshCw, ChevronLeft, Globe, Building, Target, Lightbulb, PenTool, ImageIcon, BrainCircuit, Search, Brain, Palette, Rocket, Zap, History, Smartphone, ArrowRight, ArrowDown, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useClerk } from "@clerk/nextjs";
 import PricingSection from '@/components/layout/PricingSection';
@@ -867,13 +868,13 @@ export default function Home() {
                                 <Sparkles size={16} className="text-purple-500" aria-hidden="true" />
                                 今週の投稿を確認
                             </a>
-                            <a
+                            <Link
                                 href="/dashboard"
                                 className="min-h-11 bg-white/60 backdrop-blur-xl hover:bg-white border border-rose-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
                             >
                                 <History size={16} className="text-slate-500" aria-hidden="true" />
                                 過去の履歴
-                            </a>
+                            </Link>
                             {billingPortalAvailable === true && (
                                 <button
                                     type="button"

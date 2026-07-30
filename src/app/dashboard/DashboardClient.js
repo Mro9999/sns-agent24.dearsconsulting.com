@@ -6,48 +6,109 @@ import NextImage from 'next/image';
 import useAccountStatus from '@/hooks/useAccountStatus';
 import { AccountStatusCard } from '@/components/account/AccountStatusCard';
 
+const HISTORY_CACHE_TTL_MS = 30 * 1000;
+let historyPageCache = {
+    userId: null,
+    items: [],
+    total: 0,
+    hasMore: false,
+    loadedAt: 0,
+    initialized: false
+};
+
 export default function DashboardPage() {
     const accountStatus = useAccountStatus();
-    const { isLoaded, isSignedIn } = accountStatus;
+    const { user, isLoaded, isSignedIn } = accountStatus;
     const [generations, setGenerations] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [loadError, setLoadError] = useState('');
+    const [totalGenerations, setTotalGenerations] = useState(0);
+    const [hasMore, setHasMore] = useState(false);
 
-    const loadGenerations = useCallback(async () => {
-        setIsLoading(true);
+    const loadGenerations = useCallback(async ({ offset = 0, append = false, background = false } = {}) => {
+        if (append) {
+            setIsLoadingMore(true);
+        } else if (!background) {
+            setIsLoading(true);
+        }
         setLoadError('');
 
         try {
-            const response = await fetch('/api/generations', { cache: 'no-store' });
-            const data = await response.json().catch(() => null);
+            const response = await fetch(`/api/generations?limit=8&offset=${offset}`, { cache: 'no-store' });
+            const payload = await response.json().catch(() => null);
 
             if (!response.ok) {
-                throw new Error(data?.error || '履歴を取得できませんでした。');
+                throw new Error(payload?.error || '履歴を取得できませんでした。');
             }
 
-            setGenerations(Array.isArray(data) ? data : []);
+            const items = Array.isArray(payload?.items) ? payload.items : [];
+            const total = Number.isFinite(payload?.total) ? payload.total : items.length;
+            const nextHasMore = payload?.hasMore === true;
+
+            setGenerations((current) => {
+                const existingIds = new Set(current.map((item) => item.id));
+                const nextItems = append
+                    ? [...current, ...items.filter((item) => !existingIds.has(item.id))]
+                    : items;
+
+                historyPageCache = {
+                    userId: user?.id || null,
+                    items: nextItems,
+                    total,
+                    hasMore: nextHasMore,
+                    loadedAt: Date.now(),
+                    initialized: true
+                };
+
+                return nextItems;
+            });
+            setTotalGenerations(total);
+            setHasMore(nextHasMore);
         } catch (error) {
             console.error('Error fetching history:', error);
             setLoadError('生成履歴を読み込めませんでした。時間をおいて、もう一度お試しください。');
         } finally {
-            setIsLoading(false);
+            if (append) {
+                setIsLoadingMore(false);
+            } else if (!background) {
+                setIsLoading(false);
+            }
         }
-    }, []);
+    }, [user?.id]);
 
     useEffect(() => {
         if (isLoaded && isSignedIn) {
+            const isSameUserCache = historyPageCache.initialized && historyPageCache.userId === user?.id;
+            if (isSameUserCache) {
+                setGenerations(historyPageCache.items);
+                setTotalGenerations(historyPageCache.total);
+                setHasMore(historyPageCache.hasMore);
+                setIsLoading(false);
+
+                if (Date.now() - historyPageCache.loadedAt >= HISTORY_CACHE_TTL_MS) {
+                    loadGenerations({ background: true });
+                }
+                return;
+            }
+
+            setGenerations([]);
+            setTotalGenerations(0);
+            setHasMore(false);
             loadGenerations();
         } else if (isLoaded && !isSignedIn) {
-            // Not signed in
             setIsLoading(false);
         }
-    }, [isLoaded, isSignedIn, loadGenerations]);
+    }, [isLoaded, isSignedIn, user?.id, loadGenerations]);
 
     if (!isLoaded || (isLoaded && !isSignedIn)) {
         return (
             <div className="min-h-screen bg-[#111112] flex flex-col items-center justify-center text-white">
                 {!isLoaded ? (
-                    <div className="animate-spin border-4 border-purple-500 border-t-transparent rounded-full w-12 h-12 mb-4"></div>
+                    <div className="text-center" role="status" aria-live="polite">
+                        <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" aria-hidden="true"></div>
+                        <p className="font-bold text-gray-200">ログイン情報を確認しています</p>
+                    </div>
                 ) : (
                     <div className="text-center">
                         <Database size={48} className="text-gray-600 mx-auto mb-4" />
@@ -59,8 +120,6 @@ export default function DashboardPage() {
         );
     }
 
-    // 計算
-    const totalGenerations = generations.length;
     // 1投稿あたり約2時間を節約したと仮定（ゲーミフィケーション要素）
     const savedHours = totalGenerations * 2;
 
@@ -73,7 +132,7 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-[#111112] text-white font-sans selection:bg-purple-500/30">
             {/* Header */}
             <header className="sticky top-0 z-50 flex w-full flex-col gap-3 border-b border-white/5 bg-black/30 px-4 py-3 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <Link href="/app" className="flex min-h-11 items-center gap-2 rounded-lg px-2 text-gray-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black">
+                <Link href="/app" replace className="flex min-h-11 items-center gap-2 rounded-lg px-2 text-gray-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black">
                     <ChevronLeft size={20} aria-hidden="true" /> <span className="text-sm font-bold">作成ツールに戻る</span>
                 </Link>
                 <AccountStatusCard status={accountStatus} variant="dark" />
@@ -110,21 +169,32 @@ export default function DashboardPage() {
                 </div>
 
                 {/* 履歴リスト */}
-                <h2 className="text-xl font-bold mb-6 text-gray-200 border-b border-white/10 pb-4">過去の生成履歴</h2>
+                <div className="mb-6 flex flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                    <h2 className="text-xl font-bold text-gray-200">過去の生成履歴</h2>
+                    <button
+                        type="button"
+                        onClick={() => loadGenerations()}
+                        disabled={isLoading || isLoadingMore}
+                        className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-gray-200 transition-colors hover:bg-white/10 disabled:cursor-wait disabled:opacity-60 sm:self-auto"
+                    >
+                        <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} aria-hidden="true" />
+                        履歴を更新
+                    </button>
+                </div>
 
-                {isLoading ? (
-                    <div className="flex justify-center items-center py-32" role="status" aria-live="polite">
+                {isLoading && generations.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center gap-4 py-32" role="status" aria-live="polite">
                         <div className="animate-spin border-4 border-purple-500 border-t-transparent rounded-full w-12 h-12" aria-hidden="true"></div>
-                        <span className="sr-only">生成履歴を読み込んでいます</span>
+                        <span className="text-sm font-bold text-gray-300">生成履歴を読み込んでいます</span>
                     </div>
-                ) : loadError ? (
+                ) : loadError && generations.length === 0 ? (
                     <div role="alert" className="text-center py-16 bg-red-500/5 rounded-2xl border border-red-400/20 animate-in zoom-in duration-500">
                         <AlertTriangle size={48} className="text-red-300 mx-auto mb-4" aria-hidden="true" />
                         <h3 className="text-lg font-bold text-gray-100 mb-2">履歴を読み込めませんでした</h3>
                         <p className="text-gray-400 text-sm mb-6">{loadError}</p>
                         <button
                             type="button"
-                            onClick={loadGenerations}
+                            onClick={() => loadGenerations()}
                             className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white px-6 py-3 rounded-full font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-400"
                         >
                             <RefreshCw size={18} aria-hidden="true" /> もう一度読み込む
@@ -135,14 +205,15 @@ export default function DashboardPage() {
                         <Database size={48} className="text-gray-600 mx-auto mb-4" />
                         <h3 className="text-lg font-bold text-gray-300 mb-2">まだ履歴がありません</h3>
                         <p className="text-gray-500 text-sm mb-6">最初の投稿を生成して、SNS資産を積み上げましょう！</p>
-                        <Link href="/app" className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-8 py-4 rounded-full font-bold transition-all shadow-lg hover:shadow-purple-500/25">
+                        <Link href="/app" replace className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-8 py-4 rounded-full font-bold transition-all shadow-lg hover:shadow-purple-500/25">
                             投稿を作成する <ArrowRight size={18} />
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                        {generations.map((gen) => (
-                            <div key={gen.id} className="bg-[#1a1a24] border border-white/5 rounded-2xl overflow-hidden hover:border-purple-500/30 transition-all group flex flex-col h-full shadow-[0_4px_20px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_30px_rgba(147,51,234,0.15)]">
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                            {generations.map((gen) => (
+                                <div key={gen.id} className="bg-[#1a1a24] border border-white/5 rounded-2xl overflow-hidden hover:border-purple-500/30 transition-all group flex flex-col h-full shadow-[0_4px_20px_rgba(0,0,0,0.5)] hover:shadow-[0_8px_30px_rgba(147,51,234,0.15)]">
                                 {/* Header / Date */}
                                 <div className="p-4 border-b border-white/5 flex justify-between items-center bg-black/20">
                                     <div className="flex items-center gap-2">
@@ -158,8 +229,8 @@ export default function DashboardPage() {
                                 <div className="p-5 flex-1 flex flex-col">
                                     {/* Images preview (if any) */}
                                     {gen.image_urls && gen.image_urls.length > 0 && (
-                                        <div className="mb-4 flex gap-2 overflow-x-auto pb-3 snap-x scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                                            {gen.image_urls.map((url, idx) => (
+                                        <div className="relative mb-4 flex gap-2 overflow-hidden">
+                                            {gen.image_urls.slice(0, 1).map((url, idx) => (
                                                 <NextImage
                                                     key={idx}
                                                     src={url}
@@ -170,6 +241,11 @@ export default function DashboardPage() {
                                                     className="w-24 h-24 object-cover rounded-lg border border-white/10 snap-center shrink-0 shadow-md"
                                                 />
                                             ))}
+                                            {gen.image_count > 1 && (
+                                                <span className="absolute bottom-1 left-1 rounded-full bg-black/75 px-2 py-1 text-[10px] font-bold text-white">
+                                                    全{gen.image_count}枚のうち代表1枚
+                                                </span>
+                                            )}
                                         </div>
                                     )}
 
@@ -202,9 +278,30 @@ export default function DashboardPage() {
                                         </a>
                                     )}
                                 </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {loadError && (
+                            <div role="alert" className="mt-6 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                                {loadError}
                             </div>
-                        ))}
-                    </div>
+                        )}
+
+                        {hasMore && (
+                            <div className="mt-8 flex justify-center">
+                                <button
+                                    type="button"
+                                    onClick={() => loadGenerations({ offset: generations.length, append: true })}
+                                    disabled={isLoadingMore}
+                                    className="inline-flex min-h-11 items-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-7 py-3 text-sm font-bold text-white shadow-lg transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+                                >
+                                    <RefreshCw size={16} className={isLoadingMore ? 'animate-spin' : ''} aria-hidden="true" />
+                                    {isLoadingMore ? '次の履歴を読み込んでいます' : 'さらに8件表示'}
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </main>
         </div>

@@ -11,6 +11,10 @@ const appSource = await readFile(new URL('../app/app/AppClient.js', import.meta.
 const selectorSource = await readFile(new URL('../components/features/Selectors.js', import.meta.url), 'utf8');
 const pricingSource = await readFile(new URL('../components/layout/PricingSection.js', import.meta.url), 'utf8');
 const proMaxInquirySource = await readFile(new URL('../components/ProMaxInquiryModal.js', import.meta.url), 'utf8');
+const dashboardSource = await readFile(new URL('../app/dashboard/DashboardClient.js', import.meta.url), 'utf8');
+const dashboardLoadingSource = await readFile(new URL('../app/dashboard/loading.js', import.meta.url), 'utf8');
+const appLoadingSource = await readFile(new URL('../app/app/loading.js', import.meta.url), 'utf8');
+const generationsRouteSource = await readFile(new URL('../app/api/generations/route.js', import.meta.url), 'utf8');
 
 test('投稿入力の各状態にh1があり、選択項目はh2から始まる', () => {
     assert.match(appSource, /POST SETUP[\s\S]*?<h1[\s\S]*?投稿の条件を入力/);
@@ -93,4 +97,27 @@ test('縦長・横長画像とも長辺1200px以内に縮小する', () => {
     assert.deepEqual(getScaledImageDimensions(3024, 4032), { width: 900, height: 1200 });
     assert.deepEqual(getScaledImageDimensions(800, 600), { width: 800, height: 600 });
     assert.equal(isTemporaryImageUrl('blob:https://example.com/id'), true);
+});
+
+test('履歴画面への往復は全ページ再読み込みと同じ履歴への逆戻りを避ける', () => {
+    assert.match(appSource, /import Link from 'next\/link'/);
+    assert.match(appSource, /<Link\s+href="\/dashboard"/);
+    assert.doesNotMatch(appSource, /<a\s+href="\/dashboard"/);
+    assert.match(dashboardSource, /<Link href="\/app" replace/);
+});
+
+test('履歴は8件ずつ取得し、一覧へは代表画像1枚だけを返す', () => {
+    assert.match(generationsRouteSource, /DEFAULT_HISTORY_PAGE_SIZE = 8/);
+    assert.match(generationsRouteSource, /\.range\(offset, offset \+ limit - 1\)/);
+    assert.match(generationsRouteSource, /image_urls: imageUrls\.slice\(0, 1\)/);
+    assert.match(generationsRouteSource, /hasMore:/);
+    assert.match(dashboardSource, /さらに8件表示/);
+});
+
+test('投稿画面と履歴画面は遷移中も白紙にしない', () => {
+    assert.match(dashboardLoadingSource, /生成履歴を準備しています/);
+    assert.match(dashboardLoadingSource, /role="status"/);
+    assert.match(appLoadingSource, /投稿作成画面を準備しています/);
+    assert.match(appLoadingSource, /role="status"/);
+    assert.match(dashboardSource, /ログイン情報を確認しています/);
 });
