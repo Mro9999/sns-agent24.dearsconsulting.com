@@ -6,6 +6,7 @@ import {
     getScaledImageDimensions,
     isTemporaryImageUrl
 } from './clientImageState.mjs';
+import { formatVideoScriptForClipboard } from './videoScriptClipboard.mjs';
 
 const appSource = await readFile(new URL('../app/app/AppClient.js', import.meta.url), 'utf8');
 const selectorSource = await readFile(new URL('../components/features/Selectors.js', import.meta.url), 'utf8');
@@ -120,4 +121,33 @@ test('投稿画面と履歴画面は遷移中も白紙にしない', () => {
     assert.match(appLoadingSource, /投稿作成画面を準備しています/);
     assert.match(appLoadingSource, /role="status"/);
     assert.match(dashboardSource, /ログイン情報を確認しています/);
+});
+
+test('ショート動画台本は音声・映像・テロップをまとめてコピーできる', () => {
+    const copyText = formatVideoScriptForClipboard([
+        {
+            time: '0-3秒',
+            audio: '最初の一言',
+            visual: '商品を映す',
+            text_overlay: '悩みを解決'
+        },
+        {
+            time: '3-8秒',
+            audio: '詳しい説明',
+            visual: '使い方を見せる',
+            text_overlay: '3つのポイント'
+        }
+    ]);
+
+    assert.equal(
+        copyText,
+        [
+            'ショート動画台本（TikTok / Reels / Shorts）',
+            '【シーン1｜0-3秒】\n音声：最初の一言\n映像：商品を映す\n画面テロップ：悩みを解決',
+            '【シーン2｜3-8秒】\n音声：詳しい説明\n映像：使い方を見せる\n画面テロップ：3つのポイント'
+        ].join('\n\n')
+    );
+    assert.match(appSource, /video_script_copied/);
+    assert.match(appSource, /台本をすべてコピー/);
+    assert.match(appSource, /type="button"[\s\S]*?台本をすべてコピー/);
 });

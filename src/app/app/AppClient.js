@@ -14,6 +14,7 @@ import { usePostHog } from 'posthog-js/react';
 import useAccountStatus from '@/hooks/useAccountStatus';
 import { AccountStatusCard } from '@/components/account/AccountStatusCard';
 import { getPersistableProductContext } from '@/lib/clientImageState.mjs';
+import { formatVideoScriptForClipboard } from '@/lib/videoScriptClipboard.mjs';
 
 const WEEKLY_BATCH_STARTED_KEY = 'sns-agent24-weekly-generation-started-at';
 const WEEKLY_BATCH_PENDING_PAYLOAD_KEY = 'sns-agent24-weekly-generation-payload';
@@ -1603,6 +1604,29 @@ export default function Home() {
                                             </div>
                                         ))}
                                     </div>
+
+                                    {(result.post.video_script || []).length > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                const videoScriptText = formatVideoScriptForClipboard(result.post.video_script);
+
+                                                try {
+                                                    await navigator.clipboard.writeText(videoScriptText);
+                                                    posthog?.capture('video_script_copied', {
+                                                        scene_count: result.post.video_script.length
+                                                    });
+                                                    alert('ショート動画台本をコピーしました！');
+                                                } catch (error) {
+                                                    console.error('Failed to copy video script:', error);
+                                                    alert('台本をコピーできませんでした。ブラウザのクリップボード権限をご確認ください。');
+                                                }
+                                            }}
+                                            className="mt-5 flex min-h-11 w-full flex-row items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                                        >
+                                            <Copy size={16} aria-hidden="true" /> 台本をすべてコピー
+                                        </button>
+                                    )}
                                 </>
                             ) : (
                                 <>
