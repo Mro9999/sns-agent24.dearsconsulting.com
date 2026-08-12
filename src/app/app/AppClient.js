@@ -492,6 +492,21 @@ export default function Home() {
         } catch (e) {
             console.error(e);
             const errorMessage = e?.message || '';
+            const isDeploymentMismatch = /failed to find server action|server action[\s\S]*was not found on the server|older or newer deployment/i.test(errorMessage);
+            if (isDeploymentMismatch) {
+                posthog?.capture('generation_deployment_mismatch', {
+                    format: selectedFormat,
+                    platform: selectedPlatform,
+                    failed_step: currentStep
+                });
+                setGenerationError({
+                    title: 'サービスが更新されました',
+                    message: '入力した文章や選択項目は端末に保存されています。「最新版を読み込む」を押してから、もう一度生成してください。アップロードした画像は再選択が必要です。',
+                    requiresRefresh: true
+                });
+                window.setTimeout(() => document.getElementById('generation-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
+                return;
+            }
             const isLoadFailed = /load failed|failed to fetch|network/i.test(errorMessage);
             if (isLoadFailed) {
                 posthog?.capture('generation_response_lost', {
@@ -1436,19 +1451,30 @@ export default function Home() {
                                                             料金プランを見る
                                                         </button>
                                                     )}
+                                                    {generationError.requiresRefresh && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => window.location.reload()}
+                                                            className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-slate-900 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                                                        >
+                                                            <RefreshCw size={16} aria-hidden="true" /> 最新版を読み込む
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
                                     )}
-                                    <button
-                                        type="button"
-                                        onClick={handleGenerate}
-                                        aria-describedby={generationError ? 'generation-error' : undefined}
-                                        className="w-[320px] h-16 rounded-full overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.25)] hover:scale-105 hover:-translate-y-1 transition-all duration-300 text-white font-extrabold tracking-widest text-lg flex items-center justify-center gap-3 bg-slate-900 border border-slate-700/50"
-                                    >
-                                        <Sparkles size={22} className="text-white" />
-                                        生成する
-                                    </button>
+                                    {!generationError?.requiresRefresh && (
+                                        <button
+                                            type="button"
+                                            onClick={handleGenerate}
+                                            aria-describedby={generationError ? 'generation-error' : undefined}
+                                            className="w-[320px] h-16 rounded-full overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.25)] hover:scale-105 hover:-translate-y-1 transition-all duration-300 text-white font-extrabold tracking-widest text-lg flex items-center justify-center gap-3 bg-slate-900 border border-slate-700/50"
+                                        >
+                                            <Sparkles size={22} className="text-white" />
+                                            生成する
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )}

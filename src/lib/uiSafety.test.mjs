@@ -131,6 +131,14 @@ test('投稿生成Server Actionは品質修復が60秒を超えても処理を�
     assert.match(appSource, /通常1〜2分ほどかかります/);
 });
 
+test('公開切替で古いServer Actionになった場合は最新版の再読み込みを案内する', () => {
+    assert.match(appSource, /failed to find server action/);
+    assert.match(appSource, /サービスが更新されました/);
+    assert.match(appSource, /requiresRefresh: true/);
+    assert.match(appSource, /最新版を読み込む/);
+    assert.match(appSource, /window\.location\.reload\(\)/);
+});
+
 test('ショート動画台本は音声・映像・テロップをまとめてコピーできる', () => {
     const copyText = formatVideoScriptForClipboard([
         {
