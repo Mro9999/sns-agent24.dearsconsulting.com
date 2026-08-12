@@ -15,6 +15,7 @@ const proMaxInquirySource = await readFile(new URL('../components/ProMaxInquiryM
 const dashboardSource = await readFile(new URL('../app/dashboard/DashboardClient.js', import.meta.url), 'utf8');
 const dashboardLoadingSource = await readFile(new URL('../app/dashboard/loading.js', import.meta.url), 'utf8');
 const appLoadingSource = await readFile(new URL('../app/app/loading.js', import.meta.url), 'utf8');
+const appPageSource = await readFile(new URL('../app/app/page.js', import.meta.url), 'utf8');
 const generationsRouteSource = await readFile(new URL('../app/api/generations/route.js', import.meta.url), 'utf8');
 
 test('投稿入力の各状態にh1があり、選択項目はh2から始まる', () => {
@@ -121,6 +122,13 @@ test('投稿画面と履歴画面は遷移中も白紙にしない', () => {
     assert.match(appLoadingSource, /投稿作成画面を準備しています/);
     assert.match(appLoadingSource, /role="status"/);
     assert.match(dashboardSource, /ログイン情報を確認しています/);
+});
+
+test('投稿生成Server Actionは品質修復が60秒を超えても処理を継続できる', () => {
+    assert.match(appPageSource, /export const maxDuration = 300/);
+    assert.match(appSource, /unexpected response was received from the server/);
+    assert.match(appSource, /生成処理が時間内に完了しませんでした/);
+    assert.match(appSource, /通常1〜2分ほどかかります/);
 });
 
 test('ショート動画台本は音声・映像・テロップをまとめてコピーできる', () => {

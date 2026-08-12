@@ -491,7 +491,8 @@ export default function Home() {
             }, 100);
         } catch (e) {
             console.error(e);
-            const isLoadFailed = /load failed|failed to fetch|network/i.test(e?.message || '');
+            const errorMessage = e?.message || '';
+            const isLoadFailed = /load failed|failed to fetch|network/i.test(errorMessage);
             if (isLoadFailed) {
                 posthog?.capture('generation_response_lost', {
                     format: selectedFormat,
@@ -502,9 +503,14 @@ export default function Home() {
                 reportErrorToAdmin(e, `handleGenerate - mobile/background network interrupted at step: ${currentStep}`);
                 return;
             }
+            const isUnexpectedServerResponse = /unexpected response was received from the server|server action.*failed|\b504\b/i.test(errorMessage);
             setGenerationError({
-                title: '生成を完了できませんでした',
-                message: e?.message || '時間をおいて、もう一度お試しください。'
+                title: isUnexpectedServerResponse
+                    ? '生成処理が時間内に完了しませんでした'
+                    : '生成を完了できませんでした',
+                message: isUnexpectedServerResponse
+                    ? '入力内容は残っています。通信環境を確認し、少し時間をおいてからもう一度「生成する」を押してください。'
+                    : (errorMessage || '時間をおいて、もう一度お試しください。')
             });
             window.setTimeout(() => document.getElementById('generation-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 0);
             // 失敗ステップ名を context に含めて管理者に通知 → スタックが空でも切り分け可能
@@ -1372,7 +1378,7 @@ export default function Home() {
                                 </div>
 
                                 <div className="w-64 h-[1px] bg-gradient-to-r from-transparent via-purple-500 to-transparent mt-12 animate-pulse"></div>
-                                <p className="text-xs text-slate-600 mt-4">※高精度な解析と画像生成を行うため、通常50〜60秒ほどかかります。そのままお待ちください。</p>
+                                <p className="text-xs text-slate-600 mt-4">※高精度な解析と品質確認を行うため、通常1〜2分ほどかかります。そのままお待ちください。</p>
                             </div>
                         ) : (
                             <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-500 gap-2">
