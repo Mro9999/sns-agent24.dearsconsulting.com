@@ -1294,6 +1294,9 @@ Slide body text (additional context):
 Requirements:
 - 40-60 English words
 - Must visually communicate THE EXACT specific message of this slide, not a generic version
+- Create ONE continuous, edge-to-edge, full-bleed photographic scene
+- Never create a collage, montage, split screen, diptych, triptych, photo grid, mosaic, contact sheet, brochure layout, or multiple framed panels
+- No white/gray borders, gutters, blank quadrants, empty rectangles, or graphic-layout margins; every corner must belong to the same real photographic scene
 - Use a natural Japanese service, retail, hospitality, craft, product, storefront, customer touchpoint, or quiet consultation setting
 - Use realistic camera language: natural window light, ordinary materials, human-scale composition, slight real-life imperfection, clean negative space for overlay copy
 - If the slide mentions "3 steps" / "3つのステップ", show 3 simple real objects or service touchpoints in a believable scene, not fantasy symbols
@@ -1345,6 +1348,9 @@ export async function generateImage(category, targetLabel, gender, imageContext,
 
 REALISTIC PHOTO CONSTRAINT (HIGHEST PRIORITY):
 The image must look like a believable photograph taken by a human photographer in a real Japanese business, service, retail, hospitality, craft, product, or consultation setting.
+- Create ONE continuous, edge-to-edge, full-bleed photographic scene that fills the entire square
+- NEVER create a collage, montage, split screen, diptych, triptych, photo grid, mosaic, contact sheet, brochure layout, or multiple framed panels
+- No white/gray borders, gutters, blank quadrants, empty rectangles, or graphic-layout margins; every corner must belong to the same real photographic scene
 - No CGI, no 3D render, no illustration, no anime, no surreal or fantasy objects
 - No glowing particles, neon sci-fi effects, abstract brain/data graphics, impossible architecture, or synthetic diagram overlays
 - No overly perfect stock-photo staging, plastic skin, distorted anatomy, uncanny faces, or complicated close-up hands

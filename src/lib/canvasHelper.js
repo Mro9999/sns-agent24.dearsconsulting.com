@@ -152,15 +152,15 @@ export async function drawCanvasImage(textToOverlay, bgUrl, index = 0, options =
                 return false;
             };
 
-            // 動的フォントサイズ: 文字数に応じて段階的に初期値を決定
-            // 長い文は最初から小さく始める（「100年続くブランド」などで切れにくく）
+            // 動的フォントサイズ: スマホで約320px幅まで縮小されても
+            // 画像内コピーが25px前後で読める大きさを優先する。
             let fontSize;
-            if (text.length > 40) fontSize = 50;
-            else if (text.length > 28) fontSize = 58;
-            else if (text.length > 18) fontSize = 68;
-            else fontSize = 80;
+            if (text.length > 40) fontSize = 72;
+            else if (text.length > 28) fontSize = 80;
+            else if (text.length > 18) fontSize = 88;
+            else fontSize = 96;
 
-            const MIN_FONT_SIZE = 40;
+            const MIN_FONT_SIZE = 68;
             let lines = wrapLines(fontSize);
 
             // 不自然な改行が検出される間、フォントサイズを下げて再試行
@@ -190,7 +190,7 @@ export async function drawCanvasImage(textToOverlay, bgUrl, index = 0, options =
             ctx.shadowOffsetX = 4;
             ctx.shadowOffsetY = 4;
 
-            const lineHeight = fontSize * 1.5;
+            const lineHeight = fontSize * 1.32;
             const totalTextHeight = (lines.length - 1) * lineHeight;
             const startY = (canvas.height / 2) - (totalTextHeight / 2);
 

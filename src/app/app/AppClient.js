@@ -1482,10 +1482,10 @@ export default function Home() {
                 )}
 
                 {step === 2 && result && (
-                    <div className="w-full max-w-3xl px-4 flex flex-col items-center animate-in fade-in duration-500">
+                    <div className="w-full max-w-3xl px-3 sm:px-4 flex flex-col items-center animate-in fade-in duration-500">
                         <div className="w-full flex items-center mb-8">
                             <button type="button" onClick={() => { setStep(0); setResult(null); }} className="min-h-11 px-2 -ml-2 text-slate-800 font-medium hover:text-gray-900 flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg">
-                                <ChevronLeft size={20} /> <span className="text-sm">トップに戻る</span>
+                                <ChevronLeft size={20} /> <span className="text-base">トップに戻る</span>
                             </button>
                         </div>
 
@@ -1493,51 +1493,51 @@ export default function Home() {
                             生成が完了しました！
                         </h1>
 
-                        <p role="note" className="mb-6 w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
+                        <p role="note" className="mb-6 w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-base leading-7 text-amber-950">
                             AIが公開情報をもとに作成した参考案です。数値や固有情報は、投稿前に一次情報をご確認ください。
                         </p>
 
-                        <div className="mb-6 w-full rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+                        <div className="mb-6 w-full rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
                             <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900">
                                 <BrainCircuit size={20} /> 3D AIトレンドリサーチ
                             </h2>
 
                             <div className="space-y-4">
                                 <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-4 rounded-xl border border-white shadow-lg/5">
-                                    <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
+                                    <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-slate-900">
                                         <Globe size={16} className="text-rose-600" /> ① 世の中の大きなトレンド
                                     </h3>
-                                    <p className="text-slate-800 font-medium text-sm leading-relaxed">{result.research.insight_macro}</p>
+                                    <p className="text-slate-800 font-medium text-base leading-7">{result.research.insight_macro}</p>
                                 </div>
                                 <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-4 rounded-xl border border-white shadow-lg/5">
-                                    <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
+                                    <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-slate-900">
                                         <Building size={16} className="text-rose-600" /> ② 業界内でのトレンド
                                     </h3>
-                                    <p className="text-slate-800 font-medium text-sm leading-relaxed">{result.research.insight_industry}</p>
+                                    <p className="text-slate-800 font-medium text-base leading-7">{result.research.insight_industry}</p>
                                 </div>
                                 <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-4 rounded-xl border border-white shadow-lg/5">
-                                    <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-900">
+                                    <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-slate-900">
                                         <Target size={16} className="text-rose-600" /> ③ ターゲット層のトレンド
                                     </h3>
-                                    <p className="text-slate-800 font-medium text-sm leading-relaxed">{result.research.insight_target}</p>
+                                    <p className="text-slate-800 font-medium text-base leading-7">{result.research.insight_target}</p>
                                 </div>
 
                                 <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-5">
-                                    <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-blue-950">
+                                    <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-blue-950">
                                         <Lightbulb size={16} className="text-blue-700" /> 統合インサイト（今回のアプローチ方針）
                                     </h3>
-                                    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                                    <p className="text-gray-700 text-base leading-7 whitespace-pre-wrap">
                                         {result.research.insight_summary}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="mb-6 w-full rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+                        <div className="mb-6 w-full rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
                             <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
                                 <PenTool size={20} className="text-rose-600" /> 生成されたキャプション {selectedFormat === 'video_script' && '（投稿文用）'}
                             </h2>
-                            <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg/5 p-4 rounded-xl mb-4 text-sm leading-relaxed whitespace-pre-wrap">
+                            <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg/5 p-4 rounded-xl mb-4 text-base leading-7 whitespace-pre-wrap">
                                 {result.post.caption}
                                 {'\n\n'}
                                 <span className="text-[#D4A373]">
@@ -1550,19 +1550,19 @@ export default function Home() {
                                     posthog?.capture('content_copied', { format: selectedFormat });
                                     alert('コピーしました！');
                                 }}
-                                className="flex w-full flex-row items-center justify-center gap-2 rounded-lg bg-slate-900 py-3 text-sm font-bold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                                className="flex min-h-12 w-full flex-row items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-3 text-base font-bold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
                             >
                                 <Copy size={16} /> キャプションをコピー
                             </button>
                         </div>
 
-                        <div className="mb-8 w-full rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+                        <div className="mb-8 w-full rounded-2xl border border-slate-200 bg-white p-3 sm:p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
                             {selectedFormat === 'video_script' ? (
                                 <>
                                     <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
                                         <ImageIcon size={20} className="text-rose-600" /> ショート動画台本 (TikTok / Reels / Shorts)
                                     </h2>
-                                    <p className="text-xs text-slate-600 mb-4">{result.post.image_idea}</p>
+                                    <p className="mb-4 text-base leading-7 text-slate-700">{result.post.image_idea}</p>
 
                                     <div className="space-y-4">
                                         {(result.post.video_script || []).map((script, idx) => (
@@ -1617,7 +1617,7 @@ export default function Home() {
                                     <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
                                         <ImageIcon size={20} className="text-rose-600" /> {selectedFormat === 'carousel' ? 'カルーセル用 画像一覧' : 'AI生成画像'}
                                     </h2>
-                                    <p className="text-xs text-slate-600 mb-4">{result.post.image_idea}</p>
+                                    <p className="mb-5 text-base leading-7 text-slate-700">画像内の文字と写真の内容を確認してから保存してください。</p>
 
                                     {/* 複数枚画像コンテナ (スマホでは縦積み100%幅、PC等ではFlex横並び) */}
                                     <div className="w-full flex flex-col md:flex-row md:flex-wrap justify-center gap-6 pb-4">
@@ -1634,7 +1634,7 @@ export default function Home() {
                                                     />
 
                                                     {selectedFormat === 'carousel' && (
-                                                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-md font-bold border border-rose-200">
+                                                        <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-sm text-white text-base px-3 py-2 rounded-lg font-bold border border-rose-200">
                                                             {idx + 1}枚目
                                                         </div>
                                                     )}
@@ -1794,11 +1794,11 @@ export default function Home() {
                                                 }
                                             }
                                         }}
-                                        className="w-full py-3 mt-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 rounded-lg text-sm font-bold text-white flex flex-row items-center justify-center gap-2 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 focus-visible:ring-offset-2"
+                                        className="mt-4 flex min-h-14 w-full flex-row items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 px-4 py-4 text-base font-bold text-white shadow-lg transition-all hover:from-orange-400 hover:to-red-500 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 focus-visible:ring-offset-2"
                                     >
                                         <Download size={16} /> {selectedFormat === 'carousel' ? 'すべての画像をダウンロード' : '画像をダウンロード'}
                                     </button>
-                                    <p className="text-[11px] text-slate-800 font-medium mt-2 text-center leading-relaxed">
+                                    <p className="mt-3 text-center text-sm font-medium leading-6 text-slate-800">
                                         ※画像保存（シェア機能）は<strong className="text-gray-700">スマートフォン専用</strong>です。<br />
                                         PC等をご利用の方は、お手数ですがスマホから再度ご確認ください。
                                     </p>
@@ -1812,27 +1812,27 @@ export default function Home() {
                             <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl -ml-8 -mb-8 pointer-events-none"></div>
 
                             <div className="relative z-10">
-                                <h2 className="text-xl font-bold mb-2 flex items-center justify-center gap-2 text-slate-900">
+                                <h2 className="mb-3 flex items-center justify-center gap-2 text-2xl font-bold text-slate-900">
                                     <Rocket size={24} className="text-slate-500" /> 次にやること（Next Action）
                                 </h2>
-                                <p className="text-center text-slate-700 text-sm mb-6">
+                                <p className="mb-6 text-center text-base leading-7 text-slate-700">
                                     AIが生成した最高のコンテンツを、今すぐ世界に届けましょう！
                                 </p>
 
                                 <div className="space-y-3 mb-6 max-w-lg mx-auto">
                                     <div className="flex items-center gap-3 bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-3 rounded-xl">
-                                        <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm">1</div>
-                                        <div className="flex-1 text-sm text-slate-800">画像をダウンロードする</div>
+                                        <div className="w-9 h-9 rounded-full bg-indigo-500/20 text-indigo-700 flex items-center justify-center font-bold text-base">1</div>
+                                        <div className="flex-1 text-base text-slate-800">画像をダウンロードする</div>
                                         <Download size={16} className="text-slate-600" />
                                     </div>
                                     <div className="flex items-center gap-3 bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-3 rounded-xl">
-                                        <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm">2</div>
-                                        <div className="flex-1 text-sm text-slate-800">キャプションとハッシュタグをコピーする</div>
+                                        <div className="w-9 h-9 rounded-full bg-indigo-500/20 text-indigo-700 flex items-center justify-center font-bold text-base">2</div>
+                                        <div className="flex-1 text-base text-slate-800">キャプションとハッシュタグをコピーする</div>
                                         <Copy size={16} className="text-slate-600" />
                                     </div>
                                     <div className="flex items-center gap-3 bg-indigo-500/20 border border-indigo-500/30 p-3 rounded-xl shadow-[0_0_15px_rgba(99,102,241,0.2)]">
-                                        <div className="w-8 h-8 rounded-full bg-indigo-500 text-gray-900 flex items-center justify-center font-bold text-sm shadow-lg border border-indigo-400">3</div>
-                                        <div className="flex-1 text-sm font-bold text-gray-900">アプリを開いて貼り付け、投稿を完了する！</div>
+                                        <div className="w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-base shadow-lg border border-indigo-400">3</div>
+                                        <div className="flex-1 text-base font-bold text-gray-900">アプリを開いて貼り付け、投稿を完了する！</div>
                                         <Zap size={16} className="text-yellow-400 animate-pulse" />
                                     </div>
                                 </div>
@@ -1858,7 +1858,7 @@ export default function Home() {
                                         <Instagram size={20} />
                                         Instagramを開いて投稿する
                                     </button>
-                                    <p className="text-[11px] text-center text-indigo-300/60 mt-3">
+                                    <p className="mt-3 text-center text-sm leading-6 text-indigo-800">
                                         ※スマホでアプリがインストールされている場合は直接起動します
                                     </p>
                                 </div>

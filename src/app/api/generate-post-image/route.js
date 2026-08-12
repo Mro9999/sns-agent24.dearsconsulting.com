@@ -36,6 +36,9 @@ async function composeFallbackSlide(userId, overlayText, index, productContext, 
 
 const buildNaturalPhotoConstraints = (slideNumber, totalSlides) => `[Style constraints]
 - Natural documentary/editorial photograph, Instagram-ready 4:5 portrait composition
+- ONE continuous, edge-to-edge, full-bleed photographic scene that fills the entire frame
+- No collage, montage, split screen, diptych, triptych, photo grid, mosaic, contact sheet, brochure layout, or multiple framed panels
+- No borders, gutters, blank quadrants, empty rectangles, or graphic-layout margins; every corner belongs to the same real photographic scene
 - Use a believable real-world Japanese service, retail, hospitality, craft, product, or consultation setting
 - Real camera look: natural window light, ordinary materials, human-scale composition, slight real-life imperfection
 - Keep the scene quiet and specific, with clean negative space for the Japanese overlay copy

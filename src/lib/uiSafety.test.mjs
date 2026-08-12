@@ -17,6 +17,9 @@ const dashboardLoadingSource = await readFile(new URL('../app/dashboard/loading.
 const appLoadingSource = await readFile(new URL('../app/app/loading.js', import.meta.url), 'utf8');
 const appPageSource = await readFile(new URL('../app/app/page.js', import.meta.url), 'utf8');
 const generationsRouteSource = await readFile(new URL('../app/api/generations/route.js', import.meta.url), 'utf8');
+const canvasSource = await readFile(new URL('./canvasHelper.js', import.meta.url), 'utf8');
+const serverOverlaySource = await readFile(new URL('./serverOverlayHelper.js', import.meta.url), 'utf8');
+const imageGenerationSource = await readFile(new URL('./apiService.js', import.meta.url), 'utf8');
 
 test('投稿入力の各状態にh1があり、選択項目はh2から始まる', () => {
     assert.match(appSource, /POST SETUP[\s\S]*?<h1[\s\S]*?投稿の条件を入力/);
@@ -137,6 +140,16 @@ test('公開切替で古いServer Actionになった場合は最新版の再読�
     assert.match(appSource, /requiresRefresh: true/);
     assert.match(appSource, /最新版を読み込む/);
     assert.match(appSource, /window\.location\.reload\(\)/);
+});
+
+test('投稿画像は空き枠のない全面写真とスマホで読める大きな文字を使う', () => {
+    assert.match(imageGenerationSource, /ONE continuous, edge-to-edge, full-bleed photographic scene/);
+    assert.match(imageGenerationSource, /No white\/gray borders, gutters, blank quadrants/);
+    assert.match(canvasSource, /else if \(text\.length > 18\) fontSize = 88/);
+    assert.match(canvasSource, /const MIN_FONT_SIZE = 68/);
+    assert.match(serverOverlaySource, /const FIXED_FONT_SIZE = 88/);
+    assert.match(appSource, /text-base px-3 py-2/);
+    assert.match(appSource, /画像内の文字と写真の内容を確認してから保存してください/);
 });
 
 test('ショート動画台本は音声・映像・テロップをまとめてコピーできる', () => {

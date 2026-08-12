@@ -41,13 +41,13 @@ function getSlideEffect(index) {
 
 // スマホ表示で読めることを優先し、画像上の文字は大きめに固定する。
 // 文章量は生成プロンプト側で短く制限し、ここでは1メッセージを強く見せる。
-const FIXED_FONT_SIZE = 72;
+const FIXED_FONT_SIZE = 88;
 const TEXT_AREA_WIDTH = 840; // 1080 - 左右120px ずつのマージン (Instagram 4:5 グリッドクロップ対策)
 // 1行の最大文字数 (全角換算)。
 // 文字を大きくした分、1行は短くして2行でも読み切れる見出しにする。
-// 句読点単体の overflow は +1 文字許容 (= 12 chars max) とする。
-// 11 chars * 72px ≈ 792px ≤ 840px で Satori の auto-wrap も発動しない範囲。
-const MAX_CHARS_PER_LINE = 11;
+// 句読点単体の overflow は +1 文字許容 (= 10 chars max) とする。
+// 9 chars * 88px ≈ 792px ≤ 840px で Satori の auto-wrap も発動しない範囲。
+const MAX_CHARS_PER_LINE = 9;
 
 function sanitizeOverlayText(text) {
     return String(text || '')
@@ -180,7 +180,7 @@ export async function composeOverlayImage(bgImageUrl, overlayText, index = 0, op
     const { companyName } = options;
     const text = sanitizeOverlayText((overlayText && overlayText.trim()) || `${companyName || ''}\n最新のトレンド情報をチェック`);
     const fontSize = FIXED_FONT_SIZE;
-    const lineHeight = Math.round(fontSize * 1.35);
+    const lineHeight = Math.round(fontSize * 1.3);
     const effect = getSlideEffect(index);
     const backgroundSrc = await resolveBackgroundImageSrc(bgImageUrl);
     // 日本語を意識した改行を事前計算 (句読点優先で各行に分割)
@@ -285,7 +285,7 @@ export async function composeTextOnlySlide(overlayText, index = 0, options = {})
     const { companyName } = options;
     const text = sanitizeOverlayText((overlayText && overlayText.trim()) || `${companyName || 'SNS Agent 24'}\n投稿案`);
     const fontSize = FIXED_FONT_SIZE;
-    const lineHeight = Math.round(fontSize * 1.35);
+    const lineHeight = Math.round(fontSize * 1.3);
     const lines = wrapJapaneseTextLines(text);
 
     const accentSets = [
