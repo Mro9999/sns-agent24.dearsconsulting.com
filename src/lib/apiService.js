@@ -6,6 +6,11 @@ import { getSupabaseAdmin } from './supabaseAdmin';
 import crypto from 'crypto';
 import { findUnsupportedMetricMatch, removeUnsupportedNumericClaims } from './copySafety.mjs';
 import { reserveGenerationQuota, releaseGenerationQuota } from './generationQuotaServer';
+import {
+    extractGeminiInlineImages,
+    getGeminiImageModelCandidates,
+    isGeminiImageModelUnavailable
+} from './geminiImage.mjs';
 
 // 注: "use server" ファイルでは async 関数以外を export できないため、
 // maxDuration はここに置けない (Next.js の制約)。Server Action を呼ぶ
@@ -94,7 +99,7 @@ const TEXT_MODEL = 'gemini-2.5-pro'; // 高機能・最新の文章・推論用�
 // researchTrends は Google Search Grounding が情報源なので flash で十分 + 暗黙キャッシュ閾値が 1,024 tok と低く効きやすい
 // (Pro は 4,096 tok 以上必要 → researchTrends 静的部 1,149 tok では Pro キャッシュ発動不可)
 const RESEARCH_MODEL = 'gemini-2.5-flash';
-const IMAGE_MODEL = 'imagen-4.0-generate-001'; // 最新の画像生成モデル
+const IMAGE_MODEL = 'gemini-3.1-flash-image';
 
 const STEP_PROMISE_PATTERN = /([3３]\s*(?:つの)?(?:具体的な)?\s*(?:ステップ|手順|工程)|三\s*(?:つの)?(?:具体的な)?\s*(?:ステップ|手順|工程)|[3３]\s*steps?)/i;
 const STEP_EXPLANATION_PROMISE_PATTERN = /(?:以下の)?[3３]\s*(?:つの)?\s*(?:具体的な)?\s*(?:ステップ|手順|工程).{0,16}(?:解説|紹介|お伝え)します|(?:解説|紹介|お伝え)する.{0,16}[3３]\s*(?:つの)?\s*(?:具体的な)?\s*(?:ステップ|手順|工程)/i;
@@ -1337,12 +1342,12 @@ Output ONLY the English image prompt itself. No prefix, no explanation, no quote
 }
 
 /**
- * 画像生成 (Gemini 3 Pro Image = imagen-4.0-generate-001 利用)
+ * 画像生成 (Geminiのネイティブ画像生成モデルを利用)
  */
 export async function generateImage(category, targetLabel, gender, imageContext, textContext, platformId, visualDescription, count = 1) {
     try {
         // "Japanese" (日本人) を被写体として強力に指定し、かつ「文字を絶対に入れない」ようにネガティブプロンプト的に指示
-        // Imagen 4 は日本語テキストを生成できず、強制的に描こうとすると文字化けした「日本語に見える模様」を
+        // 画像モデルは文字を背景へ描き込むことがあるため、文字化けした「日本語に見える模様」も含めて
         // 背景に描き込んでしまう (実観測あり)。anti-text 指示は徹底的に強化する。
         const basePrompt = `Realistic documentary/editorial photograph for ${platformId}, featuring Japanese ${targetLabel} ${gender}. Category: ${category?.label || category}. ${imageContext}.
 
@@ -1373,40 +1378,65 @@ If a book or document appears, it must be CLOSED or shown from an angle where an
             ? `${basePrompt}, incorporating product style: ${visualDescription}, specifically featuring Japanese/Asian models.`
             : `${basePrompt}, specifically featuring Japanese/Asian models.`;
 
-        // Gemini 3.0 ImagenのURL (v1beta) - APIキーを埋め込み
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${process.env.GEMINI_API_KEY}`;
+        const ai = getAI();
+        const modelCandidates = getGeminiImageModelCandidates(process.env.GEMINI_IMAGE_MODEL || IMAGE_MODEL);
+        const requestedCount = Math.max(1, Math.min(Number(count) || 1, 3));
 
-        const response = await withRetry(async () => {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    instances: [
-                        { prompt: finalPrompt }
-                    ],
-                    parameters: {
-                        sampleCount: count,
-                        aspectRatio: '1:1',
-                        outputOptions: {
-                            mimeType: 'image/jpeg'
+        const generatedImages = [];
+        const failedImages = [];
+
+        // 複数枚を同時発火すると短時間のレート制限を招きやすいので、画像APIは1枚ずつ呼ぶ。
+        // 途中で失敗した場合は成功済みの画像を残し、同じ失敗を残り枚数分繰り返さない。
+        for (let index = 0; index < requestedCount; index++) {
+            let lastError = null;
+
+            try {
+                for (let modelIndex = 0; modelIndex < modelCandidates.length; modelIndex++) {
+                    const model = modelCandidates[modelIndex];
+                    try {
+                        const response = await withRetry(() => ai.interactions.create({
+                            model,
+                            input: `${finalPrompt}\n\nCreate variation ${index + 1} of ${requestedCount}. Keep the same visual direction while changing the camera angle or scene details.`,
+                            response_modalities: ['image'],
+                            generation_config: {
+                                image_config: {
+                                    aspect_ratio: '1:1'
+                                }
+                            },
+                            store: false
+                        }));
+                        const images = extractGeminiInlineImages(response);
+                        if (images.length === 0) {
+                            throw new Error(`Gemini image response contained no inline image data for model ${model}`);
                         }
+                        generatedImages.push({ ...images[0], model });
+                        lastError = null;
+                        break;
+                    } catch (error) {
+                        lastError = error;
+                        const canUseFallback = isGeminiImageModelUnavailable(error)
+                            && modelIndex < modelCandidates.length - 1;
+                        if (!canUseFallback) throw error;
+                        console.warn(`[generateImage] model ${model} unavailable; trying ${modelCandidates[modelIndex + 1]}`);
                     }
-                })
-            });
+                }
 
-            if (!res.ok) {
-                const errText = await res.text();
-                throw new Error(`Gemini Image API Error (Status ${res.status}): ${errText}`);
+                if (lastError) throw lastError;
+            } catch (error) {
+                failedImages.push(error);
+                break;
             }
-            return res;
-        });
+        }
 
-        const data = await response.json();
+        if (generatedImages.length === 0) {
+            throw failedImages[0] || new Error('No image data returned from Gemini.');
+        }
+        if (failedImages.length > 0) {
+            console.warn(`[generateImage] partial success: ${generatedImages.length}/${requestedCount} images generated`);
+        }
 
-        // Base64エンコードされた画像の配列を取得してData URIに変換
-        if (data && data.predictions && data.predictions.length > 0) {
+        // Base64エンコードされた画像を永続ストレージへ保存
+        if (generatedImages.length > 0) {
             const BUCKET_NAME = 'generated-images';
             const supabaseAdmin = getSupabaseAdmin();
             if (!supabaseAdmin) {
@@ -1418,9 +1448,9 @@ If a book or document appears, it must be CLOSED or shown from an angle where an
                 if (clerkAuth && clerkAuth.userId) currentUserId = clerkAuth.userId;
             } catch (e) {}
 
-            const uploadPromises = data.predictions.map(async (pred) => {
+            const uploadPromises = generatedImages.map(async (generated) => {
                 try {
-                    const rawBase64 = pred.bytesBase64Encoded;
+                    const rawBase64 = generated.base64;
                     const buffer = Buffer.from(rawBase64, 'base64');
                     const isPng = buffer.length >= 8
                         && buffer[0] === 0x89
@@ -1431,8 +1461,10 @@ If a book or document appears, it must be CLOSED or shown from an angle where an
                         && buffer[5] === 0x0a
                         && buffer[6] === 0x1a
                         && buffer[7] === 0x0a;
-                    const contentType = isPng ? 'image/png' : 'image/jpeg';
-                    const extension = isPng ? 'png' : 'jpg';
+                    const contentType = isPng
+                        ? 'image/png'
+                        : (generated.mimeType === 'image/webp' ? 'image/webp' : 'image/jpeg');
+                    const extension = isPng ? 'png' : (contentType === 'image/webp' ? 'webp' : 'jpg');
                     
                     const randomString = crypto.randomBytes(16).toString('hex');
                     const fileName = `${currentUserId}/${Date.now()}_${randomString}.${extension}`;
@@ -1456,22 +1488,18 @@ If a book or document appears, it must be CLOSED or shown from an angle where an
                     return publicUrlData.publicUrl;
                 } catch (err) {
                     console.error("Image Processing Error:", err);
-                    return `data:image/jpeg;base64,${pred.bytesBase64Encoded}`;
+                    return `data:${generated.mimeType || 'image/png'};base64,${generated.base64}`;
                 }
             });
 
             const publicUrls = await Promise.all(uploadPromises);
-            return count === 1 ? [publicUrls[0]] : publicUrls;
+            return publicUrls;
         } else {
             throw new Error("No image data returned from API.");
         }
     } catch (error) {
         console.error("generateImage error:", error);
-        // フォールバック
-        let searchKeyword = 'business';
-        if (category?.label) searchKeyword = category.label;
-        const fallback = Array(count).fill(`https://source.unsplash.com/random/800x800/?${encodeURIComponent(searchKeyword)}`);
-        return count === 1 ? fallback : fallback;
+        throw error;
     }
 }
 

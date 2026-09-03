@@ -16,6 +16,7 @@ import { AccountStatusCard } from '@/components/account/AccountStatusCard';
 import { getPersistableProductContext } from '@/lib/clientImageState.mjs';
 import { formatVideoScriptForClipboard } from '@/lib/videoScriptClipboard.mjs';
 import { FREE_DAILY_GENERATION_LIMIT, freeGenerationLimitMessage } from '@/lib/generationQuota.mjs';
+import { createGeminiImageUserMessage } from '@/lib/geminiImage.mjs';
 
 const WEEKLY_BATCH_STARTED_KEY = 'sns-agent24-weekly-generation-started-at';
 const WEEKLY_BATCH_PENDING_PAYLOAD_KEY = 'sns-agent24-weekly-generation-payload';
@@ -61,6 +62,7 @@ export default function Home() {
     const [batchCompleted, setBatchCompleted] = useState(null); // バッチ完了後の永続的な確認カード用 ({ count: number } or null)
     const [generationRecoveryNotice, setGenerationRecoveryNotice] = useState('');
     const [generationError, setGenerationError] = useState(null);
+    const [isRetryingImages, setIsRetryingImages] = useState(false);
 
     // パーソナライズされた動的ログの生成関数
     const getDynamicLogs = (category, targetLabel) => {
@@ -357,6 +359,7 @@ export default function Home() {
         // 直近のステップ名を track する。"TypeError: Load failed" のように
         // ブラウザ側でスタックが空になるケースでも切り分けが可能になる。
         let currentStep = 'init';
+        let imageGenerationWarning = '';
 
         try {
             // APIに巨大な画像データ(Base64)が含まれたまま送るとVercelの制限(Server Action)でエラーになる原因を防ぐため、裏側へ送信するデータからは画像を除外する
@@ -427,12 +430,21 @@ export default function Home() {
                     // カルーセルの場合は3枚生成して視覚的バリエーションを確保（5枚だとAPI負荷が大きいため3枚をローテーション）
                     const imgCount = selectedFormat === 'carousel' ? 3 : 1;
                     currentStep = 'generateImage';
-                    const generated = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, imgCount);
+                    try {
+                        const generated = await generateImage(selectedCategory, targetLabel, selectedGender, imgContext, cleanProductContext, selectedPlatform, null, imgCount);
 
-                    if (generated && generated.length > 0) {
-                        baseImagesArray = generated;
-                    } else {
-                        throw new Error("AI画像生成に失敗しました（結果が空です）。");
+                        if (generated && generated.length > 0) {
+                            baseImagesArray = generated;
+                        } else {
+                            throw new Error("AI画像生成の結果が空でした。");
+                        }
+                    } catch (imageError) {
+                        imageGenerationWarning = createGeminiImageUserMessage(imageError);
+                        posthog?.capture('image_generation_deferred', {
+                            format: selectedFormat,
+                            platform: selectedPlatform
+                        });
+                        reportErrorToAdmin(imageError, 'handleGenerate - image generation deferred; post copy preserved');
                     }
                 } else {
                     setLoadingPhase(3); // 3: "画像を生成・合成中..."
@@ -465,6 +477,10 @@ export default function Home() {
                 }
             }
 
+            if (selectedFormat !== 'video_script' && imageUrls.length === 0 && !imageGenerationWarning) {
+                imageGenerationWarning = createGeminiImageUserMessage(new Error('No composed image was produced'));
+            }
+
             currentStep = 'saveHistory';
             // 履歴の自動保存 (非同期で裏側で実行し、UIをブロックしない)
             fetch('/api/generations', {
@@ -480,7 +496,7 @@ export default function Home() {
                 })
             }).catch(err => console.error("Error saving history:", err));
 
-            setResult({ research, post, imageUrls, isSynthesized: true });
+            setResult({ research, post, imageUrls, isSynthesized: true, imageGenerationWarning });
             posthog?.capture('generation_completed', {
                 format: selectedFormat,
                 platform: selectedPlatform
@@ -532,6 +548,101 @@ export default function Home() {
             reportErrorToAdmin(e, `handleGenerate - failed at step: ${currentStep}`);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRetryImages = async () => {
+        if (!result?.post || selectedFormat === 'video_script') return;
+
+        setIsRetryingImages(true);
+        posthog?.capture('image_only_retry_started', {
+            format: selectedFormat,
+            platform: selectedPlatform
+        });
+
+        try {
+            const cleanProductContext = { ...productContext };
+            delete cleanProductContext.logoUrl;
+            delete cleanProductContext.baseImage;
+            delete cleanProductContext.baseImages;
+
+            const targetLabel = selectedTarget === 'teens'
+                ? '10代'
+                : selectedTarget === 'young_adults'
+                    ? '20-30代'
+                    : selectedTarget === 'parents'
+                        ? 'パパママ'
+                        : selectedTarget === 'high_end'
+                            ? '富裕層・ハイエンド'
+                            : 'ビジネス層';
+            const imgCount = selectedFormat === 'carousel' ? 3 : 1;
+            const imgContext = result.post.image_idea || result.research?.insight_summary || '';
+            const generated = await generateImage(
+                selectedCategory,
+                targetLabel,
+                selectedGender,
+                imgContext,
+                cleanProductContext,
+                selectedPlatform,
+                null,
+                imgCount
+            );
+
+            if (!Array.isArray(generated) || generated.length === 0) {
+                throw new Error('AI画像生成の結果が空でした。');
+            }
+
+            const imageUrls = [];
+            const canvasOptions = { companyName: productContext.companyName };
+            if (selectedFormat === 'carousel' && Array.isArray(result.post.carousel_slides)) {
+                for (let i = 0; i < result.post.carousel_slides.length; i++) {
+                    const slide = result.post.carousel_slides[i];
+                    const imgData = await drawCanvasImage(
+                        slide.overlay_copy,
+                        generated[i % generated.length],
+                        i,
+                        canvasOptions
+                    );
+                    if (imgData) imageUrls.push(imgData);
+                }
+            } else {
+                const imgData = await drawCanvasImage(
+                    result.post.overlay_copy,
+                    generated[0],
+                    0,
+                    canvasOptions
+                );
+                if (imgData) imageUrls.push(imgData);
+            }
+
+            if (imageUrls.length === 0) {
+                throw new Error('画像への文字合成を完了できませんでした。');
+            }
+
+            setResult((current) => ({
+                ...current,
+                imageUrls,
+                imageGenerationWarning: ''
+            }));
+            posthog?.capture('image_only_retry_completed', {
+                format: selectedFormat,
+                platform: selectedPlatform,
+                image_count: imageUrls.length
+            });
+            window.setTimeout(() => document.getElementById('generated-images')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+        } catch (error) {
+            console.error('Image-only retry failed:', error);
+            setResult((current) => ({
+                ...current,
+                imageGenerationWarning: createGeminiImageUserMessage(error)
+            }));
+            posthog?.capture('image_only_retry_failed', {
+                format: selectedFormat,
+                platform: selectedPlatform
+            });
+            reportErrorToAdmin(error, 'handleRetryImages - failed; post copy preserved');
+        } finally {
+            setIsRetryingImages(false);
         }
     };
 
@@ -1490,19 +1601,44 @@ export default function Home() {
                         </div>
 
                         <h1 className="text-2xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
-                            生成が完了しました！
+                            {result.imageGenerationWarning ? '投稿文が完成しました！' : '生成が完了しました！'}
                         </h1>
 
                         <p role="note" className="mb-6 w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-base leading-7 text-amber-950">
                             AIが公開情報をもとに作成した参考案です。数値や固有情報は、投稿前に一次情報をご確認ください。
                         </p>
 
-                        <div className="mb-6 w-full rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
-                            <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-900">
-                                <BrainCircuit size={20} /> 3D AIトレンドリサーチ
-                            </h2>
+                        {result.imageGenerationWarning && (
+                            <div
+                                role="status"
+                                aria-live="polite"
+                                className="mb-6 w-full rounded-2xl border border-amber-300 bg-amber-50 px-5 py-5 text-left shadow-sm"
+                            >
+                                <div className="flex items-start gap-3">
+                                    <AlertTriangle size={22} className="mt-0.5 flex-shrink-0 text-amber-700" aria-hidden="true" />
+                                    <div className="flex-1">
+                                        <h2 className="text-lg font-bold text-amber-950">投稿文はそのまま使えます</h2>
+                                        <p className="mt-2 text-base leading-7 text-amber-950">{result.imageGenerationWarning}</p>
+                                        <button
+                                            type="button"
+                                            onClick={handleRetryImages}
+                                            disabled={isRetryingImages}
+                                            className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-base font-bold text-white transition-colors hover:bg-slate-800 disabled:cursor-wait disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2"
+                                        >
+                                            <RefreshCw size={18} className={isRetryingImages ? 'animate-spin' : ''} aria-hidden="true" />
+                                            {isRetryingImages ? '画像だけ再生成しています…' : '画像だけ再生成する'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
-                            <div className="space-y-4">
+                        <details className="mb-6 w-full rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+                            <summary className="flex min-h-12 cursor-pointer items-center gap-2 rounded-lg text-lg font-bold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2">
+                                <BrainCircuit size={20} /> 投稿案の根拠を見る（AIトレンドリサーチ）
+                            </summary>
+
+                            <div className="mt-4 space-y-4">
                                 <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-4 rounded-xl border border-white shadow-lg/5">
                                     <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-slate-900">
                                         <Globe size={16} className="text-rose-600" /> ① 世の中の大きなトレンド
@@ -1531,7 +1667,7 @@ export default function Home() {
                                     </p>
                                 </div>
                             </div>
-                        </div>
+                        </details>
 
                         <div className="mb-6 w-full rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
                             <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
@@ -1556,7 +1692,7 @@ export default function Home() {
                             </button>
                         </div>
 
-                        <div className="mb-8 w-full rounded-2xl border border-slate-200 bg-white p-3 sm:p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+                        <div id="generated-images" className="mb-8 w-full scroll-mt-6 rounded-2xl border border-slate-200 bg-white p-3 sm:p-6 text-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
                             {selectedFormat === 'video_script' ? (
                                 <>
                                     <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-slate-900">
@@ -1568,21 +1704,21 @@ export default function Home() {
                                         {(result.post.video_script || []).map((script, idx) => (
                                             <div key={idx} className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-xl p-4 flex flex-col gap-2">
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <span className="bg-orange-500/20 text-orange-400 px-2 py-1 rounded text-xs font-bold">{script.time}</span>
+                                                    <span className="rounded bg-orange-100 px-2 py-1 text-sm font-bold text-orange-800">{script.time}</span>
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <h3 className="text-[10px] font-bold text-slate-800 font-medium mb-1">【映像・音声】</h3>
-                                                        <p className="text-sm font-medium text-gray-900 mb-2 max-w-full">
+                                                        <h3 className="mb-2 text-sm font-bold text-slate-800">【映像・音声】</h3>
+                                                        <p className="mb-3 max-w-full text-base font-medium leading-7 text-gray-900">
                                                             <span className="text-blue-500 font-bold">[音声] </span>{script.audio}
                                                         </p>
-                                                        <p className="text-xs text-slate-800 font-medium">
+                                                        <p className="text-base font-medium leading-7 text-slate-800">
                                                             <span className="text-slate-600 font-bold">[映像] </span>{script.visual}
                                                         </p>
                                                     </div>
                                                     <div className="bg-white/90 border border-slate-200 shadow-sm text-slate-800 p-3 rounded-lg border border-white shadow-lg/5">
-                                                        <h3 className="text-[10px] font-bold text-slate-800 font-medium mb-1">【画面テロップ】</h3>
-                                                        <p className="text-sm font-bold text-center text-slate-900 py-4">{script.text_overlay}</p>
+                                                        <h3 className="mb-2 text-sm font-bold text-slate-800">【画面テロップ】</h3>
+                                                        <p className="py-4 text-center text-base font-bold leading-7 text-slate-900">{script.text_overlay}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1641,7 +1777,11 @@ export default function Home() {
                                                 </div>
                                             ))
                                         ) : (
-                                            <div className="w-full aspect-square flex items-center justify-center text-slate-600 text-sm bg-white/90 border border-slate-200 shadow-sm text-slate-800 rounded-xl">画像生成に失敗しました（または制限）</div>
+                                            <div className="flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-5 text-center text-base leading-7 text-amber-950">
+                                                <ImageIcon size={28} aria-hidden="true" />
+                                                <span className="font-bold">画像はまだありません</span>
+                                                <span>上の「画像だけ再生成する」から、文章を作り直さずに再試行できます。</span>
+                                            </div>
                                         )}
                                     </div>
                                 </>
@@ -1816,19 +1956,23 @@ export default function Home() {
                                     <Rocket size={24} className="text-slate-500" /> 次にやること（Next Action）
                                 </h2>
                                 <p className="mb-6 text-center text-base leading-7 text-slate-700">
-                                    AIが生成した最高のコンテンツを、今すぐ世界に届けましょう！
+                                    できあがった投稿案を確認して、Instagramでの発信につなげましょう。
                                 </p>
 
                                 <div className="space-y-3 mb-6 max-w-lg mx-auto">
                                     <div className="flex items-center gap-3 bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-3 rounded-xl">
                                         <div className="w-9 h-9 rounded-full bg-indigo-500/20 text-indigo-700 flex items-center justify-center font-bold text-base">1</div>
-                                        <div className="flex-1 text-base text-slate-800">画像をダウンロードする</div>
-                                        <Download size={16} className="text-slate-600" />
+                                        <div className="flex-1 text-base text-slate-800">キャプションとハッシュタグをコピーする</div>
+                                        <Copy size={16} className="text-slate-600" />
                                     </div>
                                     <div className="flex items-center gap-3 bg-white/90 border border-slate-200 shadow-sm text-slate-800 border border-white shadow-lg shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-3 rounded-xl">
                                         <div className="w-9 h-9 rounded-full bg-indigo-500/20 text-indigo-700 flex items-center justify-center font-bold text-base">2</div>
-                                        <div className="flex-1 text-base text-slate-800">キャプションとハッシュタグをコピーする</div>
-                                        <Copy size={16} className="text-slate-600" />
+                                        <div className="flex-1 text-base text-slate-800">
+                                            {result.imageUrls?.length > 0 ? '画像を保存する' : '画像だけ再生成する'}
+                                        </div>
+                                        {result.imageUrls?.length > 0
+                                            ? <Download size={16} className="text-slate-600" />
+                                            : <RefreshCw size={16} className="text-slate-600" />}
                                     </div>
                                     <div className="flex items-center gap-3 bg-indigo-500/20 border border-indigo-500/30 p-3 rounded-xl shadow-[0_0_15px_rgba(99,102,241,0.2)]">
                                         <div className="w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-base shadow-lg border border-indigo-400">3</div>
@@ -1839,7 +1983,10 @@ export default function Home() {
 
                                 <div className="max-w-lg mx-auto">
                                     <button
+                                        type="button"
+                                        disabled={!result.imageUrls?.length}
                                         onClick={() => {
+                                            if (!result.imageUrls?.length) return;
                                             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                                             if (isMobile) {
                                                 // スマホの場合はまずアプリ起動を試みる
@@ -1853,13 +2000,15 @@ export default function Home() {
                                                 window.open('https://www.instagram.com/', '_blank');
                                             }
                                         }}
-                                        className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-xl text-md font-bold text-gray-900 flex flex-row items-center justify-center gap-3 transition-all shadow-[0_0_20px_rgba(147,51,234,0.4)] hover:shadow-[0_0_30px_rgba(147,51,234,0.6)] transform hover:-translate-y-1"
+                                        className="flex min-h-14 w-full flex-row items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-4 text-base font-bold text-white shadow-[0_0_20px_rgba(147,51,234,0.4)] transition-all hover:-translate-y-1 hover:from-purple-500 hover:to-indigo-500 hover:shadow-[0_0_30px_rgba(147,51,234,0.6)] disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-500 disabled:shadow-none disabled:hover:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-700 focus-visible:ring-offset-2"
                                     >
                                         <Instagram size={20} />
-                                        Instagramを開いて投稿する
+                                        {result.imageUrls?.length > 0 ? 'Instagramを開いて投稿する' : '画像を準備すると投稿へ進めます'}
                                     </button>
                                     <p className="mt-3 text-center text-sm leading-6 text-indigo-800">
-                                        ※スマホでアプリがインストールされている場合は直接起動します
+                                        {result.imageUrls?.length > 0
+                                            ? '※スマホでアプリがインストールされている場合は直接起動します'
+                                            : '投稿文は先にコピーできます。画像だけの再生成をお試しください。'}
                                     </p>
                                 </div>
                             </div>

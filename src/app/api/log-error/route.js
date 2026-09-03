@@ -49,6 +49,15 @@ export async function POST(request) {
         const errorContext = String(body?.errorContext || '').slice(0, 500);
         const timestamp = String(body?.timestamp || new Date().toISOString()).slice(0, 80);
 
+        // メール通知が停止していても、Vercelのランタイムログには必ず残す。
+        console.error('[APP ERROR]', JSON.stringify({
+            timestamp,
+            errorName,
+            errorMessage,
+            errorContext,
+            userId
+        }));
+
         // 環境変数から送信元と送信先のアドレスを取得（未設定の場合はプレースホルダー）
         // ※ SENDGRID_FROM_EMAIL は SendGrid で Verified Sender として登録されている必要があります
         const adminEmail = process.env.ADMIN_EMAIL || process.env.SENDGRID_FROM_EMAIL;
@@ -56,12 +65,12 @@ export async function POST(request) {
 
         if (!process.env.SENDGRID_API_KEY) {
             console.error("[ERROR NOTIFIER] SENDGRID_API_KEY is not set. Cannot send error email.");
-            return NextResponse.json({ success: false, error: "SENDGRID_API_KEY missing" }, { status: 500 });
+            return NextResponse.json({ success: true, logged: true, emailDelivered: false }, { status: 202 });
         }
 
         if (!adminEmail) {
             console.error("[ERROR NOTIFIER] ADMIN_EMAIL or SENDGRID_FROM_EMAIL is not set.");
-            return NextResponse.json({ success: false, error: "Admin email missing" }, { status: 500 });
+            return NextResponse.json({ success: true, logged: true, emailDelivered: false }, { status: 202 });
         }
 
         const msg = {
@@ -105,10 +114,12 @@ ${errorStack}
         await sgMail.send(msg);
         console.log(`[ERROR NOTIFIER] Error notification email sent to ${adminEmail}`);
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, logged: true, emailDelivered: true });
     } catch (error) {
         console.error("[ERROR NOTIFIER] Failed to send error notification email via SendGrid:", error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        // 通知失敗そのものを500で返すと、元の障害に別のAPI障害が重なって見える。
+        // console.error はVercelログへ残るため、受付済みとして返してユーザー処理を妨げない。
+        return NextResponse.json({ success: true, logged: true, emailDelivered: false }, { status: 202 });
     }
 }
 

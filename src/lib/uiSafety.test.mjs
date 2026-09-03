@@ -20,6 +20,7 @@ const generationsRouteSource = await readFile(new URL('../app/api/generations/ro
 const canvasSource = await readFile(new URL('./canvasHelper.js', import.meta.url), 'utf8');
 const serverOverlaySource = await readFile(new URL('./serverOverlayHelper.js', import.meta.url), 'utf8');
 const imageGenerationSource = await readFile(new URL('./apiService.js', import.meta.url), 'utf8');
+const errorNotifierSource = await readFile(new URL('../app/api/log-error/route.js', import.meta.url), 'utf8');
 
 test('投稿入力の各状態にh1があり、選択項目はh2から始まる', () => {
     assert.match(appSource, /POST SETUP[\s\S]*?<h1[\s\S]*?投稿の条件を入力/);
@@ -179,4 +180,23 @@ test('ショート動画台本は音声・映像・テロップをまとめて�
     assert.match(appSource, /video_script_copied/);
     assert.match(appSource, /台本をすべてコピー/);
     assert.match(appSource, /type="button"[\s\S]*?台本をすべてコピー/);
+    assert.doesNotMatch(appSource, /text-\[10px\][^>]*>【映像・音声】/);
+    assert.doesNotMatch(appSource, /text-\[10px\][^>]*>【画面テロップ】/);
+});
+
+test('画像生成だけ失敗しても投稿文を保持し、画像だけ再生成できる', () => {
+    assert.match(appSource, /imageGenerationWarning/);
+    assert.match(appSource, /投稿文はそのまま使えます/);
+    assert.match(appSource, /画像だけ再生成する/);
+    assert.match(appSource, /handleRetryImages/);
+    assert.match(appSource, /投稿案の根拠を見る（AIトレンドリサーチ）/);
+    assert.doesNotMatch(imageGenerationSource, /source\.unsplash\.com\/random/);
+    assert.match(imageGenerationSource, /for \(let index = 0; index < requestedCount; index\+\+\)/);
+    assert.doesNotMatch(imageGenerationSource, /Promise\.allSettled\(generationTasks\)/);
+});
+
+test('障害通知メールが失敗してもエラー受付ログは成功扱いで残す', () => {
+    assert.match(errorNotifierSource, /\[APP ERROR\]/);
+    assert.match(errorNotifierSource, /emailDelivered: false/);
+    assert.match(errorNotifierSource, /status: 202/);
 });
