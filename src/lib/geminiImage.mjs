@@ -10,18 +10,32 @@ export function getGeminiImageModelCandidates(configuredModel = '') {
 }
 
 export function extractGeminiInlineImages(response) {
-    const interactionImages = [
-        ...(Array.isArray(response?.outputs) ? response.outputs : []),
-        ...(response?.output_image ? [response.output_image] : [])
-    ].flatMap((output) => {
-        const data = output?.data;
+    const extractImages = (contents) => contents.flatMap((content) => {
+        if (content?.type !== 'image' && !content?.data) return [];
+
+        const data = content?.data;
         if (typeof data !== 'string' || data.length === 0) return [];
 
         return [{
             base64: data,
-            mimeType: output.mime_type || output.mimeType || 'image/png'
+            mimeType: content.mime_type || content.mimeType || 'image/jpeg'
         }];
     });
+
+    const outputImage = extractImages(response?.output_image ? [response.output_image] : []);
+    if (outputImage.length > 0) return outputImage;
+
+    const stepImages = extractImages(
+        (Array.isArray(response?.steps) ? response.steps : [])
+            .filter((step) => step?.type === 'model_output')
+            .flatMap((step) => Array.isArray(step?.content) ? step.content : [])
+    );
+    if (stepImages.length > 0) return stepImages;
+
+    // Legacy Interactions responses are retained only for defensive compatibility.
+    const interactionImages = extractImages(
+        Array.isArray(response?.outputs) ? response.outputs : []
+    );
 
     if (interactionImages.length > 0) return interactionImages;
 

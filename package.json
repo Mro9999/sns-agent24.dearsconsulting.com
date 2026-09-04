@@ -22,7 +22,7 @@
         "@clerk/localizations": "^4.13.4",
         "@clerk/nextjs": "^7.5.19",
         "@fontsource/noto-serif-jp": "^5.2.8",
-        "@google/genai": "latest",
+        "@google/genai": "^2.21.0",
         "@sendgrid/mail": "^8.1.6",
         "@stripe/stripe-js": "^4.0.0",
         "@supabase/supabase-js": "^2.99.1",

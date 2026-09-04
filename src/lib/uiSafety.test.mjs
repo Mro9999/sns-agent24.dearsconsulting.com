@@ -193,6 +193,9 @@ test('画像生成だけ失敗しても投稿文を保持し、画像だけ再�
     assert.doesNotMatch(imageGenerationSource, /source\.unsplash\.com\/random/);
     assert.match(imageGenerationSource, /for \(let index = 0; index < requestedCount; index\+\+\)/);
     assert.doesNotMatch(imageGenerationSource, /Promise\.allSettled\(generationTasks\)/);
+    assert.match(imageGenerationSource, /response_format:[\s\S]*?type: 'image'[\s\S]*?mime_type: 'image\/jpeg'[\s\S]*?aspect_ratio: '1:1'/);
+    assert.doesNotMatch(imageGenerationSource, /response_modalities:/);
+    assert.doesNotMatch(imageGenerationSource, /image_config:/);
 });
 
 test('障害通知メールが失敗してもエラー受付ログは成功扱いで残す', () => {

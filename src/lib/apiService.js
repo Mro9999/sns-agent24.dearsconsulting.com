@@ -1397,11 +1397,11 @@ If a book or document appears, it must be CLOSED or shown from an angle where an
                         const response = await withRetry(() => ai.interactions.create({
                             model,
                             input: `${finalPrompt}\n\nCreate variation ${index + 1} of ${requestedCount}. Keep the same visual direction while changing the camera angle or scene details.`,
-                            response_modalities: ['image'],
-                            generation_config: {
-                                image_config: {
-                                    aspect_ratio: '1:1'
-                                }
+                            response_format: {
+                                type: 'image',
+                                mime_type: 'image/jpeg',
+                                aspect_ratio: '1:1',
+                                image_size: '1K'
                             },
                             store: false
                         }));

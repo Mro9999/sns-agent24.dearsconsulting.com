@@ -21,13 +21,22 @@ test('current image model is preferred and the lighter current model remains a f
     ]);
 });
 
-test('image output is extracted from the current Gemini Interactions response', () => {
+test('SDK convenience image output is extracted from the current Gemini Interactions response', () => {
     assert.deepEqual(extractGeminiInlineImages({
-        outputs: [
-            { type: 'text', text: 'done' },
-            { type: 'image', data: 'interaction-base64', mime_type: 'image/webp' }
-        ]
-    }), [{ base64: 'interaction-base64', mimeType: 'image/webp' }]);
+        output_image: { type: 'image', data: 'interaction-base64', mime_type: 'image/jpeg' }
+    }), [{ base64: 'interaction-base64', mimeType: 'image/jpeg' }]);
+});
+
+test('image output is extracted from current Gemini Interactions model output steps', () => {
+    assert.deepEqual(extractGeminiInlineImages({
+        steps: [{
+            type: 'model_output',
+            content: [
+                { type: 'text', text: 'done' },
+                { type: 'image', data: 'step-base64', mime_type: 'image/jpeg' }
+            ]
+        }]
+    }), [{ base64: 'step-base64', mimeType: 'image/jpeg' }]);
 });
 
 test('inline image parts are also extracted from the former generateContent response', () => {
