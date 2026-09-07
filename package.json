@@ -12,6 +12,7 @@
         "test:account-status": "node --test src/lib/accountPlan.test.mjs",
         "test:links": "node --test src/lib/linkSafety.test.mjs",
         "test:ui-safety": "node --test src/lib/uiSafety.test.mjs",
+        "test:post-safety": "node --experimental-vm-modules --test src/lib/postSafety.test.mjs src/lib/postSafetyRoutes.test.mjs",
         "test:generation-quota": "node --test src/lib/generationQuota.test.mjs",
         "test:image-generation": "node --test src/lib/geminiImage.test.mjs",
         "test:vercel-trace": "node scripts/verify-vercel-trace.mjs",

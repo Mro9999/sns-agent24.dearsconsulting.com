@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabaseAdmin';
+import { isDuePost, matchPostSnapshot, publishingWindow } from '@/lib/postSafety.mjs';
+import { verifyPostImages } from '@/lib/server/postImageSafety.mjs';
 
 // Make.comからの認証用シークレット。未設定ならfail closed。
 const ADMIN_SECRET = process.env.ADMIN_QUEUE_SECRET;
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 function authorizeAdminQueue(req) {
     if (!ADMIN_SECRET) {
@@ -35,15 +38,16 @@ export async function GET(req) {
             return NextResponse.json({ error: 'Platform parameter is required' }, { status: 400 });
         }
 
-        const nowIso = new Date().toISOString();
+        const window = publishingWindow();
 
-        // 予約時刻が現在時刻以前の、最も古い未投稿データを1件取得
+        // 30分を超えて遅れた投稿は取得しない。記録は変更せず、別途日程の確認を行う。
         const { data: posts, error: fetchError } = await supabase
             .from('scheduled_posts')
             .select('*')
             .eq('status', 'queued')
             .eq('platform', platform)
-            .lte('scheduled_at', nowIso)
+            .gte('scheduled_at', window.earliest)
+            .lte('scheduled_at', window.latest)
             .order('scheduled_at', { ascending: true })
             .limit(1);
 
@@ -53,13 +57,22 @@ export async function GET(req) {
             return NextResponse.json({ message: `No queued posts available for ${platform}` }, { status: 404 });
         }
 
+        const candidate = posts[0];
+        if (!isDuePost(candidate)) return NextResponse.json({ error: 'Publishing window expired' }, { status: 409 });
+        if (platform === 'instagram') {
+            if (!candidate.caption?.trim()) return NextResponse.json({ error: 'Post caption is missing' }, { status: 422 });
+            const validation = await verifyPostImages(candidate);
+            if (!validation.ok) return NextResponse.json({ error: validation.error }, { status: 422 });
+        }
+
         // 状態を 'publishing' にclaimして二重取得を防ぐ。
         // 実際の投稿成功後は PATCH で 'published' に更新する。
-        const { data: claimed, error: updateError } = await supabase
-            .from('scheduled_posts')
-            .update({ status: 'publishing' })
-            .eq('id', posts[0].id)
-            .eq('status', 'queued')
+        const claimWindow = publishingWindow();
+        const { data: claimed, error: updateError } = await matchPostSnapshot(
+            supabase.from('scheduled_posts').update({ status: 'publishing' }), candidate
+        )
+            .gte('scheduled_at', claimWindow.earliest)
+            .lte('scheduled_at', claimWindow.latest)
             .select('*')
             .maybeSingle();
 

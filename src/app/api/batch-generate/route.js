@@ -47,7 +47,8 @@ export async function POST(req) {
             .from('scheduled_posts')
             .select('id', { count: 'exact', head: true })
             .eq('user_id', userId)
-            .eq('status', 'pending_approval');
+            .eq('status', 'pending_approval')
+            .gt('scheduled_at', new Date().toISOString());
 
         if (pendingError) throw pendingError;
         if ((pendingCount || 0) > 0) {

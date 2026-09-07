@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabaseAdmin';
 import { authorizeCronRequest } from '@/lib/server/cronAuth';
+import { approvalIssue, matchPostSnapshot } from '@/lib/postSafety.mjs';
+import { verifyPostImages } from '@/lib/server/postImageSafety.mjs';
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 // 自動承認 Cron
 // 毎日 11:50 JST (= 02:50 UTC) に実行
 // 予約時刻(12:00 JST = 03:00 UTC)が10分以内に迫っていて、まだ pending_approval の投稿は
 // 自動的に queued に切り替えて、Make.com 側のポーリングで投稿される状態にする。
-// ※ この時点では overlay_copy の再合成は行わない（画像はオーバーレイ無しのAI生素画像のまま投稿）
-//   これは、ユーザーが期限内に承認できなかった場合の最終バックアップ。
+// 保存された合成済み画像を検証する。過去日時・不完全な画像は承認しない。
+// この変更はcronの有効化や外部スケジューラの再開を行わない。
 
 export async function GET(req) {
     try {
@@ -21,9 +24,12 @@ export async function GET(req) {
 
         const { data: targets, error: fetchErr } = await supabase
             .from('scheduled_posts')
-            .select('id')
+            .select('*')
             .eq('status', 'pending_approval')
-            .lte('scheduled_at', cutoff);
+            .gt('scheduled_at', new Date().toISOString())
+            .lte('scheduled_at', cutoff)
+            .order('scheduled_at', { ascending: true })
+            .limit(10);
 
         if (fetchErr) throw fetchErr;
 
@@ -34,21 +40,30 @@ export async function GET(req) {
             });
         }
 
-        const ids = targets.map(t => t.id);
-
-        const { error: upErr } = await supabase
-            .from('scheduled_posts')
-            .update({ status: 'queued' })
-            .in('id', ids);
-
-        if (upErr) throw upErr;
+        const ids = [];
+        const blocked = [];
+        for (const post of targets) {
+            const issue = approvalIssue(post);
+            const validation = issue ? { ok: false, error: issue } : await verifyPostImages(post);
+            if (!validation.ok) {
+                blocked.push({ id: post.id, error: validation.error });
+                continue;
+            }
+            const { data: updated, error: upErr } = await matchPostSnapshot(
+                supabase.from('scheduled_posts').update({ status: 'queued' }), post
+            ).gt('scheduled_at', new Date().toISOString()).select('id').maybeSingle();
+            if (upErr) throw upErr;
+            if (updated) ids.push(updated.id);
+            else blocked.push({ id: post.id, error: '投稿が変更されたか予定時刻を過ぎました' });
+        }
 
         console.log(`[auto-approve] ${ids.length}件を自動承認（queued化）`);
 
         return NextResponse.json({
-            success: true,
+            success: blocked.length === 0,
             auto_approved: ids.length,
-            ids
+            ids,
+            blocked
         });
     } catch (error) {
         console.error('[auto-approve] error:', error);

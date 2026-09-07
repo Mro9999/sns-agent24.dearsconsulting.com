@@ -6,10 +6,9 @@ import Link from 'next/link';
 import { Check, X, Loader2, Calendar, Sparkles, ArrowLeft, RefreshCcw } from 'lucide-react';
 import useAccountStatus from '@/hooks/useAccountStatus';
 import { AccountStatusCard } from '@/components/account/AccountStatusCard';
-// drawCanvasImage は /api/generate-post-image のサーバー側合成へ移行したため、ここでは未使用
-
-// 週次自動生成されたpending_approvalな投稿を確認・承認・却下するページ
-// 承認時は現在のブラウザ上でCanvasオーバーレイ合成を実行し、合成済画像を再アップロード
+import { isFuturePost, previewIssue } from '@/lib/postSafety.mjs';
+// 保存済みの文章と合成済み画像を確認してから承認する。
+// 期限切れを分離し、サーバーでも同じ画像と日時を再検証する。
 const WEEKLY_BATCH_STARTED_KEY = 'sns-agent24-weekly-generation-started-at';
 const BATCH_WAIT_MS = 10 * 60 * 1000;
 
@@ -17,6 +16,10 @@ export default function ApprovePage() {
     const accountStatus = useAccountStatus();
     const { user, isLoaded } = accountStatus;
     const [posts, setPosts] = useState([]);
+    const [expiredPosts, setExpiredPosts] = useState([]);
+    const [loadedImages, setLoadedImages] = useState({});
+    const [batchBusy, setBatchBusy] = useState(false);
+    const [clock, setClock] = useState(() => Date.now());
     const [loading, setLoading] = useState(true);
     const [processingIds, setProcessingIds] = useState(new Set());
     const [statusMsg, setStatusMsg] = useState('');
@@ -40,6 +43,7 @@ export default function ApprovePage() {
             const json = await res.json();
             const fetched = json.posts || [];
             setPosts(fetched);
+            setExpiredPosts(json.expiredPosts || []);
             const shouldWait = fetched.length === 0 && hasRecentBatchStart();
             setWaitingForBatch(shouldWait);
 
@@ -80,6 +84,9 @@ export default function ApprovePage() {
     };
 
     const hasImages = (post) => Array.isArray(post.image_urls) && post.image_urls.length > 0;
+    const approvalBlocker = (post) => imageErrors[post.id] || previewIssue(post, loadedImages);
+    const activePosts = posts.filter(post => isFuturePost(post, clock));
+    const pastPosts = [...expiredPosts, ...posts.filter(post => !isFuturePost(post, clock))];
 
     // 画像未生成の投稿について、投稿文の確認を止めずに /api/generate-post-image を裏側で叩いて埋める
     const generateMissingImages = async (list) => {
@@ -257,7 +264,7 @@ export default function ApprovePage() {
     };
 
     const handleRegenerateAllImages = async () => {
-        const targets = posts.filter(hasImages);
+        const targets = activePosts.filter(hasImages);
         if (targets.length === 0) {
             setStatusMsg('再生成できる画像がまだありません。画像生成中の投稿は完了を待ってください。');
             return;
@@ -287,6 +294,11 @@ export default function ApprovePage() {
     }, [isLoaded, user]);
 
     useEffect(() => {
+        const timer = setInterval(() => setClock(Date.now()), 15000);
+        return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
         if (!waitingForBatch || !isLoaded || !user) return;
 
         const timer = setInterval(() => {
@@ -303,9 +315,10 @@ export default function ApprovePage() {
     };
 
     const handleApprove = async (post) => {
-        if (!hasImages(post)) {
-            setStatusMsg('この投稿はまだ画像生成中です。文章確認はできますが、承認は画像が揃ってから実行してください。');
-            return;
+        const blocker = approvalBlocker(post);
+        if (blocker) {
+            setStatusMsg(blocker);
+            return false;
         }
         setProcessingIds(prev => new Set(prev).add(post.id));
         setStatusMsg(`${post.id.slice(0, 8)}... を承認しています`);
@@ -317,14 +330,24 @@ export default function ApprovePage() {
                 body: JSON.stringify({
                     action: 'approve',
                     id: post.id,
-                    image_urls: composedUrls
+                    image_urls: composedUrls,
+                    reviewedPost: {
+                        platform: post.platform,
+                        caption: post.caption,
+                        scheduled_at: post.scheduled_at,
+                        image_urls: post.image_urls,
+                        carousel_slides: post.carousel_slides
+                    }
                 })
             });
-            if (!res.ok) throw new Error('承認APIエラー');
+            const result = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(result.error || '承認できませんでした。時間をおいて再試行してください。');
             setPosts(prev => prev.filter(p => p.id !== post.id));
             setStatusMsg(`承認完了: ${post.id.slice(0, 8)}...`);
+            return true;
         } catch (e) {
             setStatusMsg(`承認エラー: ${e.message}`);
+            return false;
         } finally {
             setProcessingIds(prev => {
                 const s = new Set(prev);
@@ -358,25 +381,33 @@ export default function ApprovePage() {
     };
 
     const handleApproveAll = async () => {
-        const notReadyCount = posts.filter(p => !hasImages(p)).length;
+        const targets = [...activePosts];
+        const notReadyCount = targets.filter(p => approvalBlocker(p)).length;
         if (notReadyCount > 0) {
-            setStatusMsg(`${notReadyCount}件はまだ画像生成中です。全件承認は画像が揃ってから実行してください。`);
+            setStatusMsg(`${notReadyCount}件は承認できません。各投稿の画像と予定日時をご確認ください。`);
             return;
         }
-        if (!confirm(`${posts.length}件すべてを承認しますか？`)) return;
-        for (const p of [...posts]) {
-            await handleApprove(p);
+        if (!targets.length || !confirm(`${targets.length}件すべてを承認しますか？`)) return;
+        setBatchBusy(true);
+        let succeeded = 0;
+        try {
+            for (const p of targets) {
+                if (await handleApprove(p)) succeeded++;
+            }
+            setStatusMsg(`承認完了 ${succeeded}件 ／ 未完了 ${targets.length - succeeded}件。未完了の投稿は残しています。`);
+        } finally {
+            setBatchBusy(false);
         }
-        setStatusMsg('全件承認完了');
     };
 
     const handleRejectAll = async () => {
-        if (!confirm(`${posts.length}件すべてを却下しますか？この操作は取り消せません。`)) return;
-        const targets = [...posts];
+        if (!confirm(`${activePosts.length}件すべてを却下しますか？この操作は取り消せません。`)) return;
+        const targets = [...activePosts];
         // 並列で却下API を叩く (確認ダイアログは handleReject 側ではスキップしたいので直接呼ぶ)
         setProcessingIds(new Set(targets.map(p => p.id)));
+        setBatchBusy(true);
         try {
-            await Promise.all(targets.map(async (post) => {
+            const results = await Promise.all(targets.map(async (post) => {
                 try {
                     const res = await fetch('/api/batch-approve', {
                         method: 'POST',
@@ -384,16 +415,20 @@ export default function ApprovePage() {
                         body: JSON.stringify({ action: 'reject', id: post.id })
                     });
                     if (!res.ok) throw new Error(`却下API失敗 (${post.id.slice(0, 8)})`);
+                    return post.id;
                 } catch (e) {
                     console.error('rejectAll item error:', e);
+                    return null;
                 }
             }));
-            setPosts([]);
-            setStatusMsg(`${targets.length}件すべてを却下しました`);
+            const succeeded = new Set(results.filter(Boolean));
+            setPosts(prev => prev.filter(post => !succeeded.has(post.id)));
+            setStatusMsg(`却下完了 ${succeeded.size}件 ／ 未完了 ${targets.length - succeeded.size}件。未完了の投稿は残しています。`);
         } catch (e) {
             setStatusMsg(`全件却下エラー: ${e.message}`);
         } finally {
             setProcessingIds(new Set());
+            setBatchBusy(false);
         }
     };
 
@@ -431,10 +466,10 @@ export default function ApprovePage() {
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold flex items-center gap-2">
                         <Sparkles className="text-purple-400" aria-hidden="true" />
-                        今週の投稿を確認
+                        これからの投稿を確認
                     </h1>
                     <p className="text-gray-400 mt-2 text-sm">
-                        投稿文と画像を確認し、問題なければ各投稿の承認ボタンで投稿キューに入れます。
+                        投稿文・すべての画像・予定日時をご確認ください。画像が表示され、予定日時が有効な投稿だけ承認できます。
                     </p>
                 </div>
 
@@ -447,22 +482,23 @@ export default function ApprovePage() {
 
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-sm text-gray-400">
-                        確認待ち: <span className="text-white font-bold">{posts.length}</span> 件
+                        確認待ち: <span className="text-white font-bold">{activePosts.length}</span> 件
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <button
                             type="button"
                             onClick={fetchPending}
+                            disabled={batchBusy || processingIds.size > 0 || generatingIds.size > 0}
                             className="flex min-h-11 items-center gap-2 rounded bg-gray-800 px-3 py-2 text-sm hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
                         >
                             <RefreshCcw size={14} aria-hidden="true" /> 更新
                         </button>
-                        {posts.length > 0 && (
+                        {activePosts.length > 0 && (
                             <>
                                 <button
                                     type="button"
                                     onClick={handleRegenerateAllImages}
-                                    disabled={processingIds.size > 0 || generatingIds.size > 0}
+                                    disabled={batchBusy || processingIds.size > 0 || generatingIds.size > 0}
                                     className="flex min-h-11 items-center gap-2 rounded bg-blue-700 px-3 py-2 text-sm font-bold hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:opacity-50"
                                 >
                                     <RefreshCcw size={14} aria-hidden="true" /> 画像だけ再生成
@@ -470,7 +506,7 @@ export default function ApprovePage() {
                                 <button
                                     type="button"
                                     onClick={handleRejectAll}
-                                    disabled={processingIds.size > 0 || generatingIds.size > 0}
+                                    disabled={batchBusy || processingIds.size > 0 || generatingIds.size > 0}
                                     className="flex min-h-11 items-center gap-2 rounded bg-gray-700 px-4 py-2 text-sm font-bold hover:bg-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:opacity-50"
                                 >
                                     <X size={16} aria-hidden="true" /> 全件却下
@@ -478,7 +514,7 @@ export default function ApprovePage() {
 	                                <button
 	                                    type="button"
 	                                    onClick={handleApproveAll}
-	                                    disabled={processingIds.size > 0 || generatingIds.size > 0 || posts.some(p => !hasImages(p))}
+	                                    disabled={batchBusy || processingIds.size > 0 || generatingIds.size > 0 || activePosts.some(p => approvalBlocker(p))}
 	                                    className="flex min-h-11 items-center gap-2 rounded bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2 text-sm font-bold hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:opacity-50"
 	                                >
                                     <Check size={16} aria-hidden="true" /> 全件承認
@@ -488,12 +524,25 @@ export default function ApprovePage() {
                     </div>
                 </div>
 
+                {pastPosts.length > 0 && (
+                    <details className="mb-6 rounded-lg border border-amber-700 bg-amber-950/30 p-4 text-base text-amber-100">
+                        <summary className="min-h-11 cursor-pointer font-bold">期限切れ・日時未設定：{pastPosts.length}件（承認・自動配信の対象外）</summary>
+                        <p className="my-3">過去の投稿は削除せずに残しています。今日へ自動的に繰り越すことはありません。再利用する場合は内容と日程の再確認が必要です。</p>
+                        <ul className="space-y-3">
+                            {pastPosts.map(post => <li key={post.id} className="border-t border-amber-800 pt-3">
+                                <span className="block font-bold">{post.scheduled_at ? new Date(post.scheduled_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : '日時未設定'}</span>
+                                <span className="line-clamp-2">{post.caption || '投稿文なし'}</span>
+                            </li>)}
+                        </ul>
+                    </details>
+                )}
+
                 {loading ? (
                     <div className="text-center py-16 text-gray-400" role="status" aria-live="polite">
                         <Loader2 className="animate-spin mx-auto mb-2" aria-hidden="true" />
                         読み込み中...
                     </div>
-                ) : posts.length === 0 ? (
+                ) : activePosts.length === 0 ? (
                     <div className="text-center py-16 bg-gray-900/50 rounded-lg border border-gray-800">
                         {waitingForBatch ? (
                             <>
@@ -504,13 +553,13 @@ export default function ApprovePage() {
                         ) : (
                             <>
                                 <p className="text-gray-400">確認待ちの投稿はありません</p>
-                                <p className="text-gray-600 text-sm mt-2">次の日曜日 20:00 に自動生成が実行されます</p>
+                                <p className="text-gray-400 text-base mt-2">期限切れの投稿は上の一覧に分けています。新しい投稿はアプリから作成できます。</p>
                             </>
                         )}
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {posts.map(post => {
+                        {activePosts.map(post => {
                             const isProcessing = processingIds.has(post.id);
                             const isGeneratingImage = generatingIds.has(post.id);
                             const scheduledDate = post.scheduled_at ? new Date(post.scheduled_at) : null;
@@ -522,11 +571,12 @@ export default function ApprovePage() {
                             const allImages = Array.isArray(post.image_urls) ? post.image_urls : [];
                             const isCarousel = allImages.length > 1;
                             const imageError = imageErrors[post.id];
+                            const blocker = approvalBlocker(post);
                             return (
                                 <article key={post.id} aria-labelledby={headingId} className="bg-gray-900/60 border border-gray-800 rounded-lg overflow-hidden">
                                     <div className="p-4 space-y-4">
                                         {/* メタ情報 */}
-                                        <h2 id={headingId} className="flex items-center gap-2 text-xs font-medium text-gray-300">
+                                        <h2 id={headingId} className="flex flex-wrap items-center gap-2 text-base font-medium text-gray-300">
                                             <Calendar size={14} aria-hidden="true" />
                                             {scheduledLabel}
                                             {isCarousel && (
@@ -539,18 +589,24 @@ export default function ApprovePage() {
                                         {/* 画像プレビュー: カルーセルは横並び全件、単発は1枚 */}
                                         {allImages.length > 0 ? (
                                             <div className={isCarousel
-                                                ? "grid grid-cols-3 gap-2"
+                                                ? "grid grid-cols-1 sm:grid-cols-3 gap-3"
                                                 : "max-w-xs"}>
                                                 {allImages.map((url, idx) => (
-                                                    <div key={idx} className="bg-gray-950 rounded overflow-hidden aspect-square relative">
+                                                    <div key={url} className="bg-gray-950 rounded overflow-hidden aspect-square relative">
                                                         <NextImage
                                                             src={url}
                                                             alt={`承認待ち投稿（${scheduledLabel}）の画像 ${idx + 1}枚目`}
                                                             fill
-                                                            sizes={isCarousel ? "33vw" : "320px"}
+                                                            sizes={isCarousel ? "(max-width: 640px) 90vw, 280px" : "320px"}
                                                             className="object-cover"
                                                             unoptimized
+                                                            onLoad={(event) => {
+                                                                const state = event.currentTarget.naturalWidth > 0 ? 'loaded' : 'error';
+                                                                setLoadedImages(prev => ({ ...prev, [url]: state }));
+                                                            }}
+                                                            onError={() => setLoadedImages(prev => ({ ...prev, [url]: 'error' }))}
                                                         />
+                                                        {loadedImages[url] === 'error' && <div role="status" className="absolute inset-0 flex items-center justify-center bg-red-950 px-4 text-center text-base text-red-100">画像を読み込めません。画像だけ再生成してください。</div>}
                                                         {isCarousel && (
                                                             <span className="absolute top-1 left-1 bg-black/70 text-white text-xs px-2 py-0.5 rounded">
                                                                 {idx + 1}/{allImages.length}
@@ -581,7 +637,7 @@ export default function ApprovePage() {
                                             <button
                                                 type="button"
                                                 onClick={() => regenerateImagesForPost(post, 0)}
-                                                disabled={isGeneratingImage || isProcessing}
+                                                disabled={batchBusy || isGeneratingImage || isProcessing}
                                                 className="inline-flex min-h-11 items-center gap-2 rounded bg-blue-900/70 px-3 py-2 text-xs hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:opacity-50"
                                             >
                                                 {isGeneratingImage ? <Loader2 size={14} className="animate-spin" /> : <RefreshCcw size={14} />}
@@ -591,25 +647,28 @@ export default function ApprovePage() {
 
                                         {/* キャプション */}
                                         <h3 className="sr-only">投稿文</h3>
-                                        <div className="text-sm whitespace-pre-wrap text-gray-200">
+                                        <div className="text-base whitespace-pre-wrap text-gray-200">
                                             {post.caption || '(キャプション無し)'}
                                         </div>
+
+                                        {blocker && <p id={`approval-blocker-${post.id}`} role="status" className="text-base text-amber-200">{blocker}</p>}
 
                                         {/* 承認/却下ボタン */}
                                         <div className="flex gap-2 pt-2">
 	                                            <button
 	                                                type="button"
 	                                                onClick={() => handleApprove(post)}
-	                                                disabled={isProcessing || isGeneratingImage || !hasImages(post)}
+	                                                disabled={batchBusy || isProcessing || isGeneratingImage || Boolean(blocker)}
+                                                    aria-describedby={blocker ? `approval-blocker-${post.id}` : undefined}
 	                                                className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded bg-green-600 px-3 py-2 font-bold hover:bg-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:opacity-50"
 		                                            >
 		                                                {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-		                                                {isGeneratingImage ? '画像再生成中' : (hasImages(post) ? '承認' : '画像待ち')}
+		                                                {isGeneratingImage ? '画像再生成中' : (blocker ? '確認が必要' : '承認')}
 		                                            </button>
                                             <button
                                                 type="button"
                                                 onClick={() => handleReject(post)}
-                                                disabled={isProcessing || isGeneratingImage}
+                                                disabled={batchBusy || isProcessing || isGeneratingImage}
                                                 className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded bg-gray-700 px-3 py-2 hover:bg-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:opacity-50"
                                             >
                                                 <X size={16} />

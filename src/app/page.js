@@ -2,7 +2,7 @@ import React from 'react';
 import { Bot, Sparkles, PenTool, ImageIcon, Search, Zap, CheckCircle2, ArrowRight, Camera as Instagram, ChevronRight, ChevronLeft, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { auth } from '@clerk/nextjs/server';
-import PricingSection from '@/components/layout/PricingSection';
+import AccountPricingSection from '@/components/layout/AccountPricingSection';
 
 export default async function LandingPage() {
     const { userId } = await auth();
@@ -225,7 +225,7 @@ export default async function LandingPage() {
 
             {/* Pricing Section (Re-used Component) */}
             <div className="w-full mt-12 bg-white/90 border border-slate-200 shadow-sm text-slate-800 backdrop-blur-md border-y border-gray-200/60 pt-16">
-                <PricingSection />
+                <AccountPricingSection />
             </div>
 
             {/* Footer CTA */}

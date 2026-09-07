@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import { Check, Star, Zap, User, Building, Calendar, Mail, MousePointer, Rocket, Sparkles, X, AlertTriangle, TrendingDown, Crown } from 'lucide-react';
 import styles from './PricingSection.module.css';
 import ProMaxInquiryModal from '@/components/ProMaxInquiryModal';
+import { pricingRelation } from '@/lib/pricingState.mjs';
 
 export default function PricingSection({
     onUpgrade,
     onManage,
-    currentPlan = 'free',
+    currentPlan = null,
     billingPortalAvailable = false,
     checkoutLoading = false
 }) {
@@ -18,13 +19,7 @@ export default function PricingSection({
     // 各プランが「現在のプラン / 下位プラン / 上位プラン」のいずれかを算出する
     // 「現在のプラン」は利用権限ではなく、Stripeで確認したSNS Agent24の契約だけを基準にする。
     const currentTier = ['free', 'pro', 'promax'].includes(currentPlan) ? currentPlan : null;
-    const tierRank = { free: 0, pro: 1, promax: 2 };
-    const relationTo = (planTier) => {
-        if (!currentTier) return 'unknown';
-        if (tierRank[planTier] === tierRank[currentTier]) return 'current';
-        if (tierRank[planTier] < tierRank[currentTier]) return 'lower';
-        return 'upper';
-    };
+    const relationTo = (planTier) => pricingRelation(currentPlan, planTier);
 
     // プランごとの表示情報を一元化
     // relation === 'current': 現在のプラン（赤バッジ＋赤枠）
@@ -41,7 +36,7 @@ export default function PricingSection({
         let disabled = false;
 
         if (isUnknown) {
-            buttonText = '契約状況を確認中';
+            buttonText = currentPlan === 'loading' ? '契約状況を確認中' : '契約状況を確認できません';
             buttonStyle = 'secondary';
             disabled = true;
         } else if (isCurrentPlan) {
@@ -86,7 +81,8 @@ export default function PricingSection({
                 "広告なし",
                 "商用利用不可（個人利用・お試しのみ）"
             ],
-            action: null
+            upgradeText: '無料で始める',
+            action: () => window.location.assign('/sign-up')
         }),
         buildPlanCard('pro', {
             name: "Pro Plan",

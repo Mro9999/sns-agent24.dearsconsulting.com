@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import sharp from 'sharp';
 import { generateImage, refineSlideImageHint, auditSlideImage } from '@/lib/apiService';
 import { composeOverlayImage, composeTextOnlySlide } from '@/lib/serverOverlayHelper';
+import { isFuturePost, matchPostSnapshot } from '@/lib/postSafety.mjs';
 
 export const dynamic = "force-dynamic";
 // 画像生成 (Imagen) + 各スライドの overlay 合成 (Satori) で時間がかかるため maxDuration を伸ばす
@@ -149,6 +150,9 @@ export async function POST(req) {
         if (fetchErr) throw fetchErr;
         if (!post) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
         if (post.user_id !== userId) return new NextResponse('Forbidden', { status: 403 });
+        if (post.status !== 'pending_approval' || !isFuturePost(post)) {
+            return NextResponse.json({ error: '処理済みまたは予定日時を過ぎた投稿の画像は変更できません。画面を更新してください。' }, { status: 409 });
+        }
 
         // 既に画像がある場合はスキップ。ただし承認画面からの明示的な再生成は許可する。
         if (!force && Array.isArray(post.image_urls) && post.image_urls.length > 0) {
@@ -335,12 +339,12 @@ ${buildNaturalPhotoConstraints(i + 1, imgCount)}`;
         }
 
         // DBに保存
-        const { error: upErr } = await supabase
-            .from('scheduled_posts')
-            .update({ image_urls: composedUrls })
-            .eq('id', postId);
+        const { data: updated, error: upErr } = await matchPostSnapshot(
+            supabase.from('scheduled_posts').update({ image_urls: composedUrls }), post
+        ).gt('scheduled_at', new Date().toISOString()).select('id').maybeSingle();
 
         if (upErr) throw upErr;
+        if (!updated) return NextResponse.json({ error: '生成中に投稿が変更されたか予定時刻を過ぎました。画面を更新してください。' }, { status: 409 });
 
         return NextResponse.json({
             success: true,
