@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir, access } from 'node:fs/promises';
 import path from 'node:path';
 
 const tracePath = path.join(
@@ -31,3 +31,30 @@ if (missing.length > 0) {
 }
 
 console.log(`画像生成Routeの実行ファイルを確認しました (${requiredSuffixes.length}件)`);
+
+// Build success alone does not prove that a native module will start inside a
+// Vercel Function. Check the actual trace, including libvips shared libraries.
+const platform = process.platform === 'linux' && !process.report.getReport().header.glibcVersionRuntime
+    ? `linuxmusl-${process.arch}` : `${process.platform}-${process.arch}`;
+const bindingDir = `node_modules/@img/sharp-${platform}/lib`;
+const vipsDir = `node_modules/@img/sharp-libvips-${platform}/lib`;
+const bindings = (await readdir(bindingDir)).filter(file => file.endsWith('.node'));
+const libraries = (await readdir(vipsDir)).filter(file => /\.(?:so(?:\.\d+)*|dylib|dll)$/.test(file));
+if (!bindings.length || !libraries.length) {
+    throw new Error(`sharp/libvips の実行ファイルが見つかりません (${platform})`);
+}
+const nativeSuffixes = [
+    ...bindings.map(file => `${bindingDir}/${file}`),
+    ...libraries.map(file => `${vipsDir}/${file}`),
+];
+for (const route of ['batch-approve', 'admin/queue', 'cron/auto-approve', 'generate-post-image']) {
+    const file = path.join(process.cwd(), `.next/server/app/api/${route}/route.js.nft.json`);
+    const routeTrace = JSON.parse(await readFile(file, 'utf8'));
+    const traced = (routeTrace.files || []).map(entry => entry.replaceAll('\\', '/'));
+    for (const suffix of nativeSuffixes) {
+        const entry = traced.find(item => item.endsWith(suffix));
+        if (!entry) throw new Error(`/api/${route} に必要なファイルが同梱されていません: ${suffix}`);
+        await access(path.resolve(path.dirname(file), entry));
+    }
+    console.log(`/api/${route}: sharp と libvips の同梱を確認 (${platform})`);
+}

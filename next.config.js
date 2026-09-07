@@ -1,10 +1,21 @@
+const nativeImageFiles = [
+    './node_modules/sharp/**/*',
+    './node_modules/@img/sharp-*/**/*',
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    serverExternalPackages: ['@google/genai', 'stripe'],
+    serverExternalPackages: ['@google/genai', 'stripe', 'sharp'],
     // @vercel/og は Next.js 内部の実行ファイルを動的に読み込むため、
     // Node File Trace が検出できない場合がある。画像合成Routeだけへ明示的に同梱する。
     outputFileTracingIncludes: {
+        // sharp 0.35 のネイティブ共有ライブラリは自動トレースだけでは欠落する。
+        // 画像検査・合成を実行するRouteに限定して、各ビルド環境の実ファイルを含める。
+        '/api/batch-approve': nativeImageFiles,
+        '/api/admin/queue': nativeImageFiles,
+        '/api/cron/auto-approve': nativeImageFiles,
         '/api/generate-post-image': [
+            ...nativeImageFiles,
             './node_modules/next/dist/compiled/@vercel/og/**/*',
         ],
     },
